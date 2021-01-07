@@ -1,0 +1,19 @@
+# folders:
+\!*/
+.*/
+_*/
+TIMIT*/
+
+.DS_Store
+
+# files:
+#.*
+\!*.*
+*.zip
+*.asv
+*.m~
+*.mat
+*.asv
+*.png
+*.fig
+*.wav

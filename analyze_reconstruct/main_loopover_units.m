@@ -1,0 +1,410 @@
+%
+% main_loopover_units.m
+%
+% Description:
+% This script loops over all loaded measurements and reconstruct the
+% spectrogram using various size of database.
+%
+% Notes:
+% * 11/11/2020: add the option to train for more than 1 DRR condition
+%
+%
+clc
+% close all
+% clear all
+
+fignum = 11;
+verbose = 1;
+
+% Add the path of the StimViewerGUI GUI
+%addpath(genpath('../../StimViewerGUI'));
+addpath('../');
+
+FigSetup;
+
+
+addpath(genpath('../fastASD'));
+
+
+
+
+%% Paths
+% Path to the Impale's data
+path_root_mat = load.path_to_data('Impale_data');
+
+% Path to the RAW data
+path_root_raw = load.path_to_data('raw');
+
+
+%% Load the measurement's table
+if ~exist('tbl_impale', 'var')
+    % Save time, load this table only once 
+    tbl_impale = readtable([path_root_mat, 'LabNoteBook_Reverb.xlsx'], 'Sheet', 'Spch');
+    
+    % Valid list of spiking measurements
+    %spk_list = find( tbl_impale.SPK );
+end
+    
+drr = get_DRR_list_and_indices;
+n_drr = 5;  % N DRRs TO USE
+
+
+
+%% Load data
+% !!! NOTE !!!
+%   Run [main_aggregate_MUA_data.m] again to update this file if needed
+% 
+% Load:
+% 
+% 'H', 'tbl_impale', 'spec_st', 'stim_st'
+%
+data_type    = 'MUA'    % {'SU', MUA'}
+fn.load.path = '../.data';
+switch upper(data_type)
+    case 'SU'
+        % Loads a struct with fields:
+        %               H: [3600×6×150 double]
+        %          S_list: {1×150 cell}
+        %     neuron_list: [150×1 double]
+        %         spec_st: [1×1 struct]
+        %      tbl_impale: [437×20 table]
+        
+        %fn.load.file = 'data_SU_(09-Jul-2020)_bw(10)_fbands(30)_win(NaN)ms_spec(gammatone).mat';
+        fn.load.file = 'data_SU_(10-Jul-2020)_bw(5)_fbands(30)_win(NaN)ms_spec(gammatone).mat';       
+        
+    case 'MUA'
+        %Loads a struct with fields:
+        %               H: [7200×6×356 double]
+        %        H_labels: [356×6 double]
+        %     neuron_list: [356×1 double]
+        %         spec_st: [1×1 struct]
+        %         stim_st: [1×1 struct]
+        %      tbl_impale: [437×20 table]
+        
+        %fn.load.file = 'data_MUA_(09-Jul-2020)_bw(10)_fbands(30)_win(NaN)ms_spec(gammatone).mat';
+        % ** fn.load.file = 'data_MUA_(10-Jul-2020)_bw(5)_fbands(30)_win(NaN)ms_spec(gammatone).mat';        
+        %fn.load.file = 'data_MUA_(23-Jul-2020)_bw(1)_fbands(30)_win(NaN)ms_spec(gammatone)';
+        %fn.load.file = 'data_MUA_(03-Aug-2020)_bw(5)_fbands(60)_win(NaN)ms_spec(gammatone)';
+        %fn.load.file = 'data_MUA_(03-Aug-2020)_bw(5)_fbands(30)_win(10)ms_spec(stft)';
+        %fn.load.file = 'data_MUA_(10-Nov-2020)_bw(25)_fbands(30)_win(NaN)ms_spec(gammatone)';
+        %fn.load.file = 'data_MUA_(11-Nov-2020)_bw(5)_fbands(30)_win(NaN)ms_spec(gammatone)';
+        fn.load.file = 'data_MUA_(07-Dec-2020)_bw(5)_fbands(64)_win(NaN)ms_spec(gammatone).mat';        
+        %fn.load.file = 'data_MUA_(10-Dec-2020)_bw(10)_fbands(30)_win(NaN)ms_spec(gammatone)_freq(0-5k-1-5k)Hz';
+        %fn.load.file = 'data_MUA_(24-Dec-2020)_bw(10)_fbands(30)_win(50)ms_spec(matlab)_HPF(0.75).mat';
+        
+        % ** multitaper **
+        %fn.load.file = 'data_MUA_(10-Nov-2020)_bw(10)_fbands(50)_win(25)ms_spec(multitaper).mat';        
+        %fn.load.file = 'data_MUA_(10-Nov-2020)_bw(10)_fbands(30)_win(25)ms_spec(multitaper).mat';        
+
+        % ** STFT **
+        %fn.load.file = 'data_MUA_(10-Nov-2020)_bw(5)_fbands(50)_win(25)ms_spec(stft).mat';        
+        
+    otherwise
+        error('--> Unrecognized DATA_TYPE!');
+        
+end
+fn.load.fullfile = fullfile( fn.load.path, fn.load.file );
+data    = load(fn.load.fullfile);
+spec_st = data.spec_st;
+
+
+aux.vprint(verbose, '--> [main_loopover_units.m] Loading file:\n\t...<%s>\n', fn.load.file);
+aux.vprint(verbose, '-> data_type: %s\n', data_type);
+
+
+
+%% Get the valid measurements\columns
+duration_sec = 36;  % (sec) stimulus duration to use
+
+% Select all measurement with the desired duration
+neuron_duration_list = tbl_impale.duration_sec == duration_sec;
+
+% Select all measurements with that contains all (5) sessions
+slc.valid_neuron_idx = 5 <= sum( ~isnan( squeeze(sum(data.H,1)) ), 1)';
+slc.valid_neuron_idx = slc.valid_neuron_idx(:);
+
+% Indices of both boolean conditions
+slc.valid_neuron_idx = slc.valid_neuron_idx & neuron_duration_list(data.neuron_list);
+
+switch upper(data_type)
+    case 'SU'
+        % Make sure that all SUs are valid!
+        assert(all(1 == tbl_impale.SPK( data.neuron_list(slc.valid_neuron_idx) )), '--> ERROR: some of these units don''t contain a SU!');        
+        units = [1, 5, 10, 25, 50, nnz(slc.valid_neuron_idx)];
+        
+    case 'MUA'
+        %units = [1, 5, 10, 25, 50, 100, 150, nnz(slc.valid_neuron_idx)];
+        units = 100
+        
+    otherwise
+        error('--> Unrecognized DATA_TYPE!');
+        
+end
+        
+% A list of all "valid" units to use
+slc.valid_neurons = data.neuron_list(slc.valid_neuron_idx);
+% aux.cprintf('r', '--> Use an ORDERED (ascending) neuron list!!!\n');
+
+n_units = length(units);
+
+% Choosing # of units
+H_valid = data.H(:,:,slc.valid_neuron_idx);
+% H_valid = H_valid(:,:,slc.perm_order);
+assert( size(H_valid,3) >= max(units), ...
+    '--> You are asking for more neurons than are available in the dataset!');
+
+
+
+%%
+iscausal       = 0;                    % use reconstructed causal filters? 
+lags_ms        = 30;                   % (ms) maximum lags
+binwidth       = spec_st.binwidth;     % (ms)
+n_bands        = spec_st.n_bands;
+win_size_ms    = spec_st.win_size_ms; 
+jackknife_flag = 1;     
+algo_type      = 'regression';    % {'regression', 'asd', 'svd'}
+
+
+if verbose
+    aux.cprintf('UnterminatedStrings', '\n    Data:\n');
+    aux.cprintf('UnterminatedStrings', '--> data_type   : %s\n', data_type);
+    aux.cprintf('UnterminatedStrings', '--> duration_sec: %g ms\n', duration_sec);
+    aux.cprintf('UnterminatedStrings', '    Reconstruction:\n');
+    aux.cprintf('UnterminatedStrings', '--> causality   : %d\n', iscausal);
+    aux.cprintf('UnterminatedStrings', '--> lags_ms     : %g ms\n', lags_ms);
+    aux.cprintf('UnterminatedStrings', '--> binwidth    : %g ms\n', binwidth);
+    aux.cprintf('UnterminatedStrings', '--> n_bands     : %g\n', n_bands);
+    aux.cprintf('UnterminatedStrings', '--> win_size_ms : %g ms\n', win_size_ms);
+    aux.cprintf('UnterminatedStrings', '--> is_jackknife: %d\n', jackknife_flag);
+end
+
+
+
+%%
+% Option #2: 
+% Splits the overall stimulus into chunks according to the speakers
+[split_time_idx, n_splits, tbl_metadata] = ... 
+    split_spectrogram_into_TIMIT_wav_files(binwidth, 1e-3*spec_st.duration_ms);
+
+% Make sure that the split indices have a valid length
+assert(spec_st.n_time == split_time_idx(end));
+
+% Get the longest time interval
+n_smp_split = max( diff(split_time_idx, [], 2) );
+
+
+if verbose
+    fprintf('\n-> Starting training...\n');
+    fprintf('========================\n');    
+end
+    
+for q = 1 %1:n_drr 
+    % The training (i.e., truth-level) DRR case
+    train_drr = drr.sortby(q); %drr.dry;      
+    
+    %train_drr = [3, 4, 5];  '########## Training for more than one DRR #########'
+    
+    if verbose
+        fprintf('--> TRAIN DRR: %d, %s\n', train_drr, drr.labels{train_drr});
+    end
+    
+    % Get a list of VALID units to reconstruct from
+    valid_units = squeeze( H_valid(:,train_drr(1),:) );  % for VALID units
+    [slc.optimal_sorted, P, sv] = find_best_unit_set(valid_units, 'n_svd', size(valid_units,2));
+    aux.cprintf('string', '--> Using ORTHOGONAL projection to select neurons!\n');
+    slc.sort_algo = 'orthogonal';
+    
+    
+    %% Loop over UNITS
+    for m = 1:n_units
+        % Set the # of neurons for the reconstruction
+        m_units = units(m);
+        if verbose
+            fprintf('---> m_units: %d\n', m_units);
+        end
+
+        % Select M_UNITS to reconstruct
+        best_units_m = slc.optimal_sorted(1:m_units);
+        H_units = H_valid(:, 1:n_drr, best_units_m);
+        slc.unit_used = best_units_m;
+
+        if verbose
+            fprintf('--> m=%d, units: [%s]\n', m, num2str(best_units_m,'%d '));
+        end
+
+        
+        
+        %% >> analyze_units;
+        obj_list      = cell(n_drr, n_splits);
+
+        clear scores
+        scores.CC  = nan(n_drr, n_splits);
+        scores.mse = nan(n_drr, n_splits);
+        scores.nmse = nan(n_drr, n_splits);
+
+        
+        
+        %% Loop over SPLITS
+        for n = 1:n_splits
+            % choose the testing chunk\speaker out of the stimulus
+            test_grp_number = n;    
+            if verbose
+                fprintf('----> splits #: (%d/%d)\n', test_grp_number, n_splits);
+            end
+
+            %% Enable to train on more than 1 DRR            
+            % %{
+            assert(1 == length(train_drr), '--> Use this Option for only ONE train_drr!');
+            
+            % Get valid measurements
+            y1 = squeeze( H_units(:, train_drr, :) );
+
+            % Split the TRAINING set
+            X1 = spec_st.Sft{train_drr};
+            
+            [X_train, X_test0, y_train, y_test0, splits] = train_test_split(X1, y1, ...
+               ...'n_splits', n_splits, ...
+               'split_time_idx', split_time_idx, ...
+               'test_grp', test_grp_number ...
+            );
+            %}
+            
+            % Enable to train on more than 1 DRR -- Don't use this
+            % procedure if 1 == length(train_drr), it's not efficient
+            %{
+            y_train = []; 
+            X_train = [];
+            idx_kk = mod(0:1:n_splits-1, length(train_drr)) + 1;
+            for kk = 1:n_splits
+                if test_grp_number == kk
+                    continue;
+                end
+                
+                I_kk = idx_kk(kk);
+                
+                % Get valid measurements
+                y1 = squeeze( H_units(:, train_drr(I_kk), :) );
+
+                % Split the TRAINING set
+                X1 = spec_st.Sft{train_drr(I_kk)};
+
+                % Get the training set(s) WITHOUT the testing chunk\speaker
+                [~, X_kk, ~, y_kk, splits] = train_test_split(...
+                    X1, y1, ...
+                    'split_time_idx', split_time_idx, ...
+                    'test_grp', kk );
+                
+                % Aggregate all training sequences
+                y_train = [y_train; y_kk];
+                X_train = [X_train, X_kk];                
+            end  
+            %}
+            
+            
+            %% Extract the reconstruction filters
+            % Initialize the reconstruction object
+            obj = reconstruct_c(binwidth,...
+                'f', spec_st.f, ...
+                'iscausal', iscausal, ...   
+                'algo_type', algo_type, ... {'regression', 'asd'}                
+                'lags_ms', lags_ms ); 
+
+            % Fit the model
+            obj.fit(X_train, y_train, ...
+                'jk_flag', jackknife_flag, ...
+                'n_splits', n_splits, ...
+                'fignum', []);
+
+
+            %% Loop over DRRs
+            for k = 1:n_drr    
+                % Choose the DRR case for the testing signals
+                test_drr  = k;
+                if 0 % verbose
+                    fprintf('-----> TEST DRR: %s\t(%d/%d)\n',  drr.labels{test_drr}, test_drr, n_drr);
+                end
+
+                % Split for the TESTING data
+                X2 = spec_st.Sft{test_drr};
+                y2 = squeeze( H_units(:, test_drr, :) );
+                [~, X_test_kn, ~, y_test, ~] = train_test_split(X2, y2, ...
+                 ...'n_splits', n_splits, ...
+                    'split_time_idx', split_time_idx, ...
+                    'test_grp', test_grp_number );
+
+                % RECONSTRUCTION   
+                % Predict the spectrogram
+                obj.predict(y_test);
+                gof = goodness(X_test_kn, obj.X_est);
+
+                % transform and keep as a structure for later analysis
+                warning off
+                obj_list{k,n}           = struct(obj);
+                obj_list{k,n}           = rmfield(obj_list{k,n}, 'X_train');    % save memory
+                obj_list{k,n}           = rmfield(obj_list{k,n}, 'r_train');    % save memory
+                obj_list{k,n}.train_drr = train_drr;    % (1x1) index of the training DRR condition
+                obj_list{k,n}.test_drr  = test_drr;     % (1x1) index of the testing DRR condition
+                obj_list{k,n}.R_test    = [];           % convmtx of y_test
+
+                % The reconstruction filter G is the same for all DRR
+                % conditions, so save space on the HD
+                if k > 1
+                    obj_list{k,n}.G       = [];
+                    obj_list{k,n}.G_sd    = [];
+                    obj_list{k,n}.Crr     = [];
+                    obj_list{k,n}.Crr_inv = [];
+                    obj_list{k,n}.Crs     = [];
+                end
+                warning on
+
+                % Goodness-of-fit
+                scores.CC(k,n)  = gof.CC;
+                scores.mse(k,n) = gof.mse;
+                scores.nmse(k,n)= gof.nmse;
+            end
+
+            if  0 %verbose
+                fprintf('-----> Finished the DRRs...\n');
+                T = array2table( [scores.CC(drr.sortby(1:5),m,n), scores.nmse(drr.sortby(1:5),m,n)],...
+                    'RowNames', drr.labels(drr.sortby(1:5)), ...
+                    'VariableNames', {'CC', 'NMSE'});
+                disp(T);
+                fprintf('\n');
+            end  
+
+        end
+    
+    
+    
+    
+    
+    %% Save the reconstruction results
+    % %{
+        'SAVE the analysis data!'
+        fn.save.path = '../.data/reconstruct/';
+        fn.save.file = sprintf('reconstruct_%s_(%s)_units(%d)_bw(%g)ms_algo(%s)_fbands(%d)_splits(%d)_lags(%g)ms_cau(%d)_trainDRR(%s)',...
+            data_type, date, m_units, binwidth, algo_type, n_bands, n_splits, lags_ms, iscausal, num2str(train_drr, '%d '));
+        fn.save.fullfile = fullfile( fn.save.path, fn.save.file );
+        
+        % Save the results for that 
+        save(fn.save.fullfile, '-v7.3', ...
+            'splits', ...       saves the chunks\intervals\speakers
+            'spec_st', ...      spectrogram's structue with all relevant data
+            'obj_list', ...     cell array of reconstruction objetcs, saved as structures
+            'tbl_impale', ...   a table with all neurons in the data set
+            'fn', ...           filenames, including the data-set filename used here 
+            'slc',...           (struct) a structure of all indices and number of selected neurons
+            'H_units',...
+            'scores'...
+            ); 
+        
+    %}
+    
+    
+    end
+
+end
+
+
+
+
