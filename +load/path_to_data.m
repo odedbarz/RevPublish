@@ -40,59 +40,13 @@ switch lower(data_type)
         p = [one_level_up_path, filesep, '.data', filesep];
 
     case 'project1'
-        p = [rootpath, filesep, 'Stimulus\.database\Project1', filesep];
-        
-    case 'project2'
-        p = [rootpath, filesep, 'Stimulus\.database\Project2', filesep];
-        
-    case 'wav_spch_40sec'
-        p = [rootpath, filesep, 'Stimulus\.database\Project1\Spch_(40)sec', filesep];
-        
-    case 'wav_male_40sec_full_length'
-        p = [rootpath, filesep, 'Stimulus\.database\Project1\Spch_(40)sec\TIMIT_corpus\TIMIT_Males', filesep];
-
-    case 'wav_female_40sec_full_length'
-        p = [rootpath, filesep, 'Stimulus\.database\Project1\Spch_(70)sec\TIMIT_corpus\TIMIT_Females', filesep];
-        
+        p = [rootpath, filesep, '_data', filesep, 'Stimulus', filesep];             
         
     case 'wav_spch_36sec'
-        p = [rootpath, filesep, 'Stimulus\.database\Project1\Spch_(36)sec', filesep];
-        
-    case 'wav_male_36sec_full_length'
-        p = [rootpath, filesep, 'Stimulus\.database\Project1\Spch_(36)sec\TIMIT_Males_Fs(16kHz)_FullLength_AllWav', filesep];
-
-    case 'wav_female_36sec_full_length'
-        p = [rootpath, filesep, 'Stimulus\.database\Project1\Spch_(36)sec\TIMIT_Females_Fs(16kHz)_FullLength_AllWav', filesep];
-
-        
-    case 'wav_nsspch_fc(1000hz)_40sec'
-        p = [rootpath, filesep, 'Stimulus\.database\Project1\ns_Spch_fc(1000Hz)_(40)sec', filesep];
-        
-    case 'wav_nsspch_fc(4000hz)_40sec'
-        p = [rootpath, filesep, 'Stimulus\.database\Project1\ns_Spch_fc(4000Hz)_(40)sec', filesep];
-        
-    case 'timit_females_36sec'
-        p = [rootpath, filesep, 'Stimulus\.database\Project1\Spch_(36)sec\TIMIT_Females_Fs(16kHz)_ShortLength', filesep];
-
-    case 'timit_females_36sec_fs100khz'
-        p = [rootpath, filesep, 'Stimulus\.database\Project1\Spch_(36)sec\TIMIT_Females_Fs(100kHz)', filesep];
-
-    case 'timit_males_36sec'
-        p = [rootpath, filesep, 'Stimulus\.database\Project1\Spch_(36)sec\TIMIT_Males_Fs(16kHz)_ShortLength', filesep];
-
-    case 'timit_males_36sec_fs100khz'
-        p = [rootpath, filesep, 'Stimulus\.database\Project1\Spch_(36)sec\TIMIT_Males_Fs(100kHz)', filesep];
-        
-    case 'timit_females_40sec_fs100khz'
-        p = [rootpath, filesep, 'Stimulus\.database\Project1\Spch_(40)sec\TIMIT corpus\TIMIT_Females_Fs(100kHz)', filesep];
-
-    case 'timit_males_40sec_fs100khz'
-        p = [rootpath, filesep, 'Stimulus\.database\Project1\Spch_(40)sec\TIMIT corpus\TIMIT_Males_Fs(100kHz)', filesep];
-        
-        
+        p = [rootpath, filesep, '_data', filesep, 'Stimulus', filesep, 'Spch_(36)sec', filesep];              
         
     case 'data'
-        p = [rootpath, filesep, '.data', filesep];
+        p = [rootpath, filesep, '_data', filesep];
         
     case 'impale_data'
         [codeOnCloud_path, ~, ~] = fileparts(rootpath);
@@ -102,29 +56,17 @@ switch lower(data_type)
         computer_name = getenv('computername');
         if strcmpi('OdedAlienware', computer_name)
             % OdedAlienware
-            p = 'D:\DataBases\myMeas\Rabbits\!RAW\';
+            p = 'D:/DataBases/myMeas/Rabbits/!RAW/';
 
         elseif strcmpi('ODEDSDELL', computer_name)
             % Oded's external HD
-            p = 'D:\oded_backups\myDataBases\DataBases 03-17-2020\myMeas\Rabbits\!RAW';
+            p = 'D:/oded_backups/myDataBases/DataBases 03-17-2020/myMeas/Rabbits/!RAW/';
         
         else        
             % Apollo drive
             warning('--> Can''t find this COMPUTER! Trying to get the RAW path from APOLLO!');
-            p = '\\apollo\ent_archive\Delgutte_Archive\obz\Rabbits\C74\!RAW\';
+            p = '//apollo/ent_archive/Delgutte_Archive/obz/Rabbits/C74/!RAW/';
         end                
-        %p = [rootpath, filesep, 'Stimulus\.database\Project1'];
-        
-    case 'project2_timit_females'
-        p = [rootpath, filesep, 'Stimulus\.database\Project2\Project2_TIMIT_files\Females', filesep];
- 
-    case 'project2_timit_males'
-        p = [rootpath, filesep, 'Stimulus\.database\Project2\Project2_TIMIT_files\Males', filesep];
-        
-        
-    case 'project1_new'
-        p = [rootpath, filesep, 'Stimulus\.database\Project1\Spch_(36)sec_new', filesep];
-                
         
     otherwise
         error('--> ERROR in [path_to_data.m]: Unrecognized DATA_TYPE option! (data_type = %s)',...

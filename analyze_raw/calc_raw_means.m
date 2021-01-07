@@ -1,4 +1,4 @@
-function [H, SE, Tout, pars] = calc_raw_means(Traw, fs, binwidth, duration_sec, spikechan, fun)
+function [H, SE, tbl_meas, pars] = calc_raw_means(Traw, fs, binwidth, duration_sec, spikechan, fun)
 %
 %   function [avg, SE, Tout, pars] = calc_raw_means(Traw, fs, binwidth, duration_sec, spikechan, fun)
 %
@@ -38,11 +38,11 @@ assert( 0 < nnz(idx.spikechan), ...
 avg = cell(1, len_outer * len_inner);
 SEc = cell(1, len_outer * len_inner);
 
-Dist   = nan(len_outer*len_inner, 1);
-Reverb = nan(len_outer*len_inner, 1);
-Tout = table(Dist, Reverb);
+Dist        = nan(len_outer*len_inner, 1);
+Reverb      = nan(len_outer*len_inner, 1);
+single_meas = cell(len_outer*len_inner, 1);
+tbl_meas    = table(Dist, Reverb, single_meas);
 clear Dist Reverb
-% Tout.Properties.VariableNames = {'Dist', 'Reverb'};
 
 % # of samples for a FULL measurement
 duration_smp = round(duration_sec * fs);
@@ -67,20 +67,21 @@ for n = 1:len_outer
             continue;
         end
         
+        Imn = m + (n-1)*len_inner;
         [X, pars] = feval(fun, [Traw.x{trials_nm}], fs, fs_dwn);    % fun: MUA or SU
-        avg{m + (n-1)*len_inner} = median(X, 2);
-        SEc{m + (n-1)*len_inner} = median( abs(X - avg{m + (n-1)*len_inner}), 2);
+        avg{Imn} = median(X, 2);
+        SEc{Imn} = median( abs(X - avg{Imn}), 2);
         
-        Tout.Dist(m + (n-1)*len_inner)   = unique(Traw.Dist(trials_nm));
-        Tout.Reverb(m + (n-1)*len_inner) = unique(Traw.Reverb(trials_nm));
-        
+        tbl_meas.Dist(Imn)  = unique(Traw.Dist(trials_nm));
+        tbl_meas.Reverb(Imn)= unique(Traw.Reverb(trials_nm));
+        tbl_meas.single_meas{Imn}= X;
     end
     
 end
 
 % Transform into one matrix, and make sure to assign the vectors into the right
 % columns
-midx = Impale_entries_to_indices(Tout);     % measurement's indices
+midx = Impale_entries_to_indices(tbl_meas);     % measurement's indices
 H = nan(length(avg{1}), length(midx));
 H(:,midx)  = [avg{:}];     % mean response   
 

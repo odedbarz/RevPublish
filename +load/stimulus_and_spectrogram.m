@@ -134,7 +134,7 @@ for kk = 1:n_neurons
     clear stim
     suffix       = S.measParam.Suffix;
     duration_sec = S.stimChans{1}.Source.numTokens;
-    fn           = get_stimulus_info(suffix, duration_sec);
+    fn           = load.get_stimulus_info(suffix, duration_sec);
     if isempty(fn.template)
         return;
     end

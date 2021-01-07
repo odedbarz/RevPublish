@@ -14,14 +14,7 @@ clc
 fignum = 11;
 verbose = 1;
 
-% Add the path of the StimViewerGUI GUI
-%addpath(genpath('../../StimViewerGUI'));
-addpath('../');
-
-% Add CochlearModels directory to the path (e.g., Stim2ANF.m).
-addpath(genpath('../CochlearModels'));
-
-FigSetup;
+setup_environment('../');
 
 
 %% Paths
@@ -41,50 +34,38 @@ end
 
 
 %% Load stimuli & measurement data
-if ~exist('stim_list', 'var')
-    fprintf('--> Load stimuli & spectrograms\n');
-    spectrogram_type = 'matlab';      % {['matlab'], 'stft', 'multitaper', 'gammatone'}
-    f_scale     = 'log';	% {['lin'], 'log', 'erb'}
-    n_bands     = 30       % (1x1) # of bins along the frequency domain of the spectrogram
-    binwidth    = 10       % (ms) binwidth of the resulted spectrogram 
-    win_size_ms = 50        % (ms) temporal window size over which to calc the spectrogram; 
-                            %      'gammatone' filterbanks do not use it!
-    lowfreq     = 250;      % (Hz)
-    highfreq    = 8000;     % (Hz) %8800;     
-    nw          = [];       % applies only for SPECTROGRAM_TYPE = 'multitaper'
-    neurons     = 1;        % neuron #1 (#115) is for stimulus of 36 sec (40 sec)
-    spectral_diff= 0;       % (logical) perform derivative (DIFF) along the frequency domain
-    hpf_pole     = 0.75;
-    
-    % STIM_LIST & SPEC_LIST contains all stimuli duration (i.e., the 36 s &
-    % 40 s stimuli)
-    [stim_list, spec_list] = load.stimulus_and_spectrogram(tbl_impale, ...
-        'spectrogram_type', spectrogram_type, ...
-        'neurons', neurons, ...
-        'binwidth', binwidth,...
-        'lowfreq', lowfreq, ...         % (Hz)
-        'highfreq', highfreq, ...       % (Hz)
-        'win_size_ms', win_size_ms, ...
-        'n_bands', n_bands, ...
-        'f_scale', f_scale, ... {'lin', 'log'}
-        'nw', nw, ...          (default: 1.4) only for spectrogram_type == MULTITAPER
-        'spectral_diff', spectral_diff, ...
-        'hpf_pole', hpf_pole, ...
-        'fignum', [] ...
-        );
-    
-    if iscell(spec_list)
-        assert(spec_list{1}.binwidth == spec_list{2}.binwidth);
-        
-        % All available stimulus durations
-        duration_all_sec = cellfun(@(X) X.info.Duration , stim_list, 'UniformOutput', 1);
-        
-        % Plot spectrogram
-        %spec.plot_spectrogram(spec_list{1}.t, spec_list{1}.f, spec_list{1}.Sft{3});
-    end
-        
-end
+fprintf('--> Load stimuli & spectrograms\n');
+spectrogram_type = 'gammatone';      % {['matlab'], 'stft', 'multitaper', 'gammatone'}
+f_scale     = 'log';	% {['lin'], 'log', 'erb'}
+n_bands     = 30        % (1x1) # of bins along the frequency domain of the spectrogram
+binwidth    = 5         % (ms) binwidth of the resulted spectrogram 
+win_size_ms = nan       % (ms) temporal window size over which to calc the spectrogram; 
+                        %      'gammatone' filterbanks do not use it!
+lowfreq     = 250;      % (Hz)
+highfreq    = 8840;     % (Hz) %8800;     
+nw          = [];       % applies only for SPECTROGRAM_TYPE = 'multitaper'
+neurons     = 1;        % neuron #1 (#115) is for stimulus of 36 sec (40 sec)
+spectral_diff= 0;       % (logical) perform derivative (DIFF) along the frequency domain
+hpf_pole    = nan;
 
+% STIM_LIST & SPEC_LIST contains all stimuli duration (i.e., the 36 s &
+% 40 s stimuli)
+[stim_st, spec_st] = load.stimulus_and_spectrogram(tbl_impale, ...
+    'spectrogram_type', spectrogram_type, ...
+    'neurons', neurons, ...
+    'binwidth', binwidth,...
+    'lowfreq', lowfreq, ...         % (Hz)
+    'highfreq', highfreq, ...       % (Hz)
+    'win_size_ms', win_size_ms, ...
+    'n_bands', n_bands, ...
+    'f_scale', f_scale, ... {'lin', 'log'}
+    'nw', nw, ...          (default: 1.4) only for spectrogram_type == MULTITAPER
+    'spectral_diff', spectral_diff, ...
+    'hpf_pole', hpf_pole, ...
+    'fignum', [] ...
+    );
+
+    
 fs = 1/(1e-3*binwidth);         % (Hz)
 
 % ALways load stimuli with the same duration
@@ -92,21 +73,11 @@ fs = 1/(1e-3*binwidth);         % (Hz)
 duration_sec= 36;   % (sec) stimulus duration to use 
 duration_ms = units.sec2ms( duration_sec );
 
-% Pick the right stimulus parameters for the current loaded measurement
-if iscell(spec_list)
-    idx_stimuli = find(duration_all_sec == duration_sec);
-    stim_st     = stim_list{idx_stimuli};
-    spec_st     = spec_list{idx_stimuli};       
-else
-    stim_st     = stim_list;
-    spec_st     = spec_list;       
-end
-
 % Plot spectrogram
 spec.plot_spectrogram(spec_st.t, spec_st.f, spec_st.Sft{3});
+title(sprintf('Spectrogram (DRY)'));
 
-
-%% Selected neurons table
+% 
 if verbose
     aux.cprintf('UnterminatedStrings', '\n    Stimulus Parameters:\n');    
     aux.cprintf('UnterminatedStrings', '--> Sampling rate (fs): %g kHz\n', 1e-3*stim_st.fs);
@@ -123,6 +94,8 @@ if verbose
 end
 
 
+
+
 %% *** Get the MUA data into one big matrix ***
 % A 3D matrix to hold all the MUA responses
 drr     = get_DRR_list_and_indices;
@@ -136,6 +109,10 @@ tbl_slc     = tbl_impale(neuron_list, :);
 n_rows      = height(tbl_slc);
 H           = nan(n_smp, n_drr, n_rows);
 H_labels    = zeros(n_rows, n_drr);
+
+% Add another column for all recorded data
+data = cell(height(tbl_slc), 1);
+tbl_slc = [tbl_slc, table(data)];
 
 
 
@@ -159,8 +136,10 @@ for k = 1:n_rows
     assert(fs_raw == raw_st.sr);
 
     % Calculate MUA 
-    [Hk, ~,  tbl_labels] = calc_raw_means(raw_st.tbl, raw_st.sr, binwidth, duration_sec, tbl_neuron_k.spikechan, 'MUA');    
+    [Hk, ~,  tbl_kth_meas] = calc_raw_means(raw_st.tbl, raw_st.sr, binwidth, duration_sec, tbl_neuron_k.spikechan, 'MUA');    
     assert( size(Hk,1) == duration_sec*1/(1e-3*binwidth), '--> Check out the spectrogram BINWIDTH & the sampling rate of the MUA data!' );
+    
+    tbl_slc.data{k} = tbl_kth_meas;
     
     % Save Hk into the big matrix H
     %   The following code sorts the available measurements and save them in 
@@ -168,9 +147,9 @@ for k = 1:n_rows
     cn = 0;     % counter for Hk (some measurements might skip entries, 
                 % e.g,  q:1 -> 2 -> 3 -> 5 due to missing
                 % measurements).
-    for q = 1:height(tbl_labels)
-        idx_dist = drr.dist == tbl_labels.Dist(q);
-        idx_revb = drr.revb == tbl_labels.Reverb(q);
+    for q = 1:height(tbl_kth_meas)
+        idx_dist = drr.dist == tbl_kth_meas.Dist(q);
+        idx_revb = drr.revb == tbl_kth_meas.Reverb(q);
         idx_q = find( idx_dist & idx_revb );
 
         % If there is no such label, move on
@@ -192,13 +171,19 @@ for k = 1:n_rows
 end
 
 
+
 %% Save the data
 % %{
 'SAVE the analysis!'
-fn.save = sprintf('../_data/data_MUA_(%s)_bw(%g)_fbands(%d)_win(%g)ms_spec(%s)_HPF(%g).mat',...
-    date, binwidth, n_bands, win_size_ms, spectrogram_type, hpf_pole);
-    
-save(fn.save, 'H', 'H_labels', 'tbl_impale', 'neuron_list', 'spec_st', 'stim_st');
+fn.path = load.path_to_data('data');
+fn.file = sprintf('data_MUA_(%s)_bw(%g)_fbands(%d)_win(%g)ms_spec(%s).mat', ...
+    date, binwidth, n_bands, win_size_ms, spectrogram_type);
+fn.save = fullfile(fn.path, fn.file);
+
+fprintf('\nSaving data at:\n');
+disp(fn)
+save(fn.save, 'H', 'H_labels', 'tbl_impale', 'neuron_list',...
+    'spec_st', 'stim_st');
 %}
 
 
