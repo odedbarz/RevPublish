@@ -2,9 +2,10 @@ function y = MD(x, dim)
 %
 %   function y = MD(x, [dim])
 %
+% Modulation depth function.
+%
 % Description:
-% Modulation depth function, which is the sqrt(2) coefficient of variation 
-% of the sifgnal x. 
+% The sqrt(2) coefficient of variation of the signal x. 
 
 if 2 > nargin || isempty(dim)
     dim = 2;

@@ -80,13 +80,13 @@ title(sprintf('Spectrogram (DRY)'));
 
 neuron_idx  = tbl_impale.SPK & (tbl_impale.duration_sec == duration_sec);
 neuron_list = find(neuron_idx);
-tbl_slc     = tbl_impale(neuron_idx, :);
-fprintf('--> NOTE: TBL_SLC contains stimuli of %g sec ONLY!\n', unique(tbl_slc.duration_sec));
+tbl_SU      = tbl_impale(neuron_idx, :);
+fprintf('--> NOTE: tbl_SU contains stimuli of %g sec ONLY!\n', unique(tbl_SU.duration_sec));
 
 
 
 %% Load PSTH responses
-S_list = load.response( tbl_slc, duration_sec );
+S_list = load.response( tbl_SU, duration_sec );
  
 if verbose
     aux.cprintf('UnterminatedStrings', '\n    Stimulus Parameters:\n');    
@@ -125,7 +125,7 @@ fn.save = fullfile(fn.path, fn.file);
 
 fprintf('\nSaving data at:\n');
 disp(fn)
-save(fn.save, 'H', 'tbl_impale', 'neuron_list', 'spec_st', 'S_list');
+save(fn.save, 'H', 'tbl_SU', 'spec_st', 'S_list');
 
 
 

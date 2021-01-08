@@ -99,27 +99,30 @@ end
 %% *** Get the MUA data into one big matrix ***
 % A 3D matrix to hold all the MUA responses
 drr     = get_DRR_list_and_indices;
-n_drr 	= length(drr.sortby);  
+n_drr 	= drr.n_drr;  
 fs_raw  = 10e3;  % (Hz) that's the frequency that I save in the raw table files
 fs_mua  = fs;    % (Hz) that's the new downsampled frequency of the MUA data
 n_smp   = fs_mua * duration_sec;
 
+% Get all rows (measurements) with desired duration
 neuron_list = find(tbl_impale.duration_sec == duration_sec);
-tbl_slc     = tbl_impale(neuron_list, :);
-n_rows      = height(tbl_slc);
+
+tbl_MUA     = tbl_impale(neuron_list, :);
+n_rows      = height(tbl_MUA);
 H           = nan(n_smp, n_drr, n_rows);
 H_labels    = zeros(n_rows, n_drr);
 
 % Add another column for all recorded data
-data = cell(height(tbl_slc), 1);
-tbl_slc = [tbl_slc, table(data)];
+tbl_MUA_all= tbl_MUA;
+all_meas    = cell(height(tbl_MUA_all), 1);
+tbl_MUA_all= [tbl_MUA_all, table(all_meas)];
 
 
 
 %% Prepare the MUA measurements to match the spectrograms
 aux.vprint(verbose, '\n-> Starting main loop...\n');
 for k = 1:n_rows
-    tbl_neuron_k = tbl_slc(k,:);
+    tbl_neuron_k = tbl_MUA_all(k,:);
     S = load.response( tbl_neuron_k, duration_sec );
     if isempty(S)
         aux.vprint(verbose, '--> Skipping measurement (%d/%d)...\n', k, n_rows);
@@ -139,7 +142,8 @@ for k = 1:n_rows
     [Hk, ~,  tbl_kth_meas] = calc_raw_means(raw_st.tbl, raw_st.sr, binwidth, duration_sec, tbl_neuron_k.spikechan, 'MUA');    
     assert( size(Hk,1) == duration_sec*1/(1e-3*binwidth), '--> Check out the spectrogram BINWIDTH & the sampling rate of the MUA data!' );
     
-    tbl_slc.data{k} = tbl_kth_meas;
+    % Save all single measurements
+    tbl_MUA_all.all_meas{k} = tbl_kth_meas;
     
     % Save Hk into the big matrix H
     %   The following code sorts the available measurements and save them in 
@@ -171,19 +175,25 @@ for k = 1:n_rows
 end
 
 
+%% Get all rows (measurements) with that have full session (all DRR conditions)
+valid_neuron_idx = n_drr == sum(H_labels(:,1:n_drr),2);
+tbl_MUA = tbl_MUA(valid_neuron_idx, :);
+H = H(:,:,valid_neuron_idx);
+
 
 %% Save the data
 % %{
-'SAVE the analysis!'
+fprintf('SAVE the analysis!');
+
 fn.path = load.path_to_data('data');
-fn.file = sprintf('data_MUA_(%s)_bw(%g)_fbands(%d)_win(%g)ms_spec(%s).mat', ...
+fn.file = sprintf('data_MUA_(%s)_bw(%g)_fbands(%d)_win(%g)ms_spec(%s)', ...
     date, binwidth, n_bands, win_size_ms, spectrogram_type);
 fn.save = fullfile(fn.path, fn.file);
 
 fprintf('\nSaving data at:\n');
 disp(fn)
-save(fn.save, 'H', 'H_labels', 'tbl_impale', 'neuron_list',...
-    'spec_st', 'stim_st');
+save(fn.save, 'H', 'tbl_MUA', 'spec_st', 'stim_st');
+save([fn.save, '_ALL-MEAS'], 'tbl_MUA_all', 'spec_st', 'stim_st');
 %}
 
 

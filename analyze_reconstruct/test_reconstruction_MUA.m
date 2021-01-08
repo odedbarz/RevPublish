@@ -9,11 +9,7 @@ clc
 fignum = 11;
 verbose = 1;
 
-% Add the path of the StimViewerGUI GUI
-%addpath(genpath('../../StimViewerGUI'));
-addpath('../');
-
-FigSetup
+setup_environment('../');
 
 
 %% Paths
