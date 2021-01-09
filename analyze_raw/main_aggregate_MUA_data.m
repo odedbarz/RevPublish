@@ -29,8 +29,12 @@ path_root_raw = load.path_to_data('raw');
 if ~exist('tbl_main', 'var')
     % Save time, load this table only once 
     tbl_impale = readtable([path_root_mat, 'LabNoteBook_Reverb.xlsx'], 'Sheet', 'Spch');
+    
+    % Row is a duplicate variable name used by MATLAB
+    tbl_impale.Properties.VariableNames{'Row'} = 'neuron';
 end
     
+
 
 
 %% Load stimuli & measurement data
@@ -175,10 +179,11 @@ for k = 1:n_rows
 end
 
 
-%% Get all rows (measurements) with that have full session (all DRR conditions)
+%% Get all rows (measurements) that have full session (all DRR conditions)
 valid_neuron_idx = n_drr == sum(H_labels(:,1:n_drr),2);
 tbl_MUA = tbl_MUA(valid_neuron_idx, :);
 H = H(:,:,valid_neuron_idx);
+
 
 
 %% Save the data

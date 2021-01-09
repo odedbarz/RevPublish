@@ -17,6 +17,9 @@ verbose = 1;
 setup_environment('../');
 
 
+drr     = get_DRR_list_and_indices;
+n_drr 	= drr.n_drr;  
+
 
 %% Paths
 % Path to the Impale's data
@@ -26,10 +29,14 @@ path_root_mat = load.path_to_data('Impale_data');
 path_root_raw = load.path_to_data('raw');
 
 
+
 %% Load the measurement's table
 if ~exist('tbl_main', 'var')
     % Save time, load this table only once 
     tbl_impale = readtable([path_root_mat, 'LabNoteBook_Reverb.xlsx'], 'Sheet', 'Spch');
+    
+    % Row is a duplicate variable name used by MATLAB
+    tbl_impale.Properties.VariableNames{'Row'} = 'neuron';    
 end
     
 
@@ -116,6 +123,22 @@ aux.vprint(verbose, '--> Finished\n');
 
 
 
+%% Get all rows (measurements) that have full session (all DRR conditions)
+H_labels = zeros(size(H,3), size(H,2));
+for unit = 1:size(H,3)     % # of measurement
+    for ndrr = 1:size(H,2)     % DRR case
+        H_labels(unit, ndrr) = any(~isnan( H(:,ndrr,unit) ));
+    end
+end
+
+valid_neuron_idx = n_drr == sum(H_labels(:,1:n_drr),2);
+tbl_SU = tbl_SU(valid_neuron_idx, :);
+H      = H(:,:,valid_neuron_idx);
+S_list = S_list(valid_neuron_idx);
+
+
+
+
 %% Save the data
 'SAVE the analysis!'
 fn.path = load.path_to_data('data');
@@ -125,7 +148,7 @@ fn.save = fullfile(fn.path, fn.file);
 
 fprintf('\nSaving data at:\n');
 disp(fn)
-save(fn.save, 'H', 'tbl_SU', 'spec_st', 'S_list');
+save(fn.save, 'H', 'tbl_SU', 'spec_st', 'stim_st', 'S_list');
 
 
 

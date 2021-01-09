@@ -1,4 +1,4 @@
-% best_envelope_frequency.m
+% create_BF_table.m
 % 
 % Description:
 % This script finds the best frequency (BF) according to CC between measurements 
@@ -12,18 +12,16 @@ verbose = 1;
 setup_environment('../');
 
 
-drr   = get_DRR_list_and_indices;
-n_drr = drr.n_drr;                  % # DRRs of used 
-
-
-
 
 %% Load data
 %   Run [main_aggregate_MUA_data.m] again to update this file if needed
 % 
-data_type    = 'MUA';       % {'SU', MUA'}
+data_type    = 'SU';       % {'SU', MUA'}
 data_type    = upper(data_type);
 fn.load.path = '../_data';
+
+drr   = get_DRR_list_and_indices;
+n_drr = drr.n_drr;                  % # DRRs of used 
 
 switch data_type
     case 'SU'
@@ -33,7 +31,7 @@ switch data_type
         %     neuron_list: [150×1 double]
         %         spec_st: [1×1 struct]
         %      tbl_impale: [437×20 table]
-        fn.load.file = 'data_SU_(07-Jan-2021)_bw(5)_fbands(30)_win(NaN)ms_spec(gammatone).mat';       
+        fn.load.file = 'data_SU_(08-Jan-2021)_bw(5)_fbands(30)_win(NaN)ms_spec(gammatone).mat';       
         
     case 'MUA'
         %Loads a struct with fields:
@@ -43,7 +41,7 @@ switch data_type
         %         spec_st: [1×1 struct]
         %         stim_st: [1×1 struct]
         %      tbl_impale: [437×20 table]        
-        fn.load.file = 'data_MUA_(07-Jan-2021)_bw(5)_fbands(30)_win(NaN)ms_spec(gammatone).mat';        
+        fn.load.file = 'data_MUA_(08-Jan-2021)_bw(5)_fbands(30)_win(NaN)ms_spec(gammatone).mat';        
         
     otherwise
         error('--> Unrecognized DATA_TYPE!');
@@ -63,49 +61,6 @@ aux.vprint(verbose, '-> data_type: %s\n', data_type);
 
 
 
-% %% Get the valid measurements\columns
-% % Desired stimulus duration to use
-% duration_sec = 36;      % (sec) 
-% 
-% % Make sure that the loaded data is of the right duration
-% assert(duration_sec == spec_st.duration_ms * 1e-3, '--> ERROR: You are using the wrong stimulus duration!');
-% 
-% % Select all measurement with the desired duration
-% neuron_duration_list = tbl_impale.duration_sec == duration_sec;
-% 
-% % Select measurements that has all recorded sessions
-% slc.valid_neuron_idx = n_drr <= sum( ~isnan( squeeze(sum(data.H,1)) ), 1)';
-% slc.valid_neuron_idx = slc.valid_neuron_idx(:);
-% 
-% % Indices of both boolean conditions
-% slc.valid_neuron_idx = slc.valid_neuron_idx & neuron_duration_list(data.neuron_list);
-% 
-% switch data_type
-%     case 'SU'
-%         % Make sure that all SUs are valid!
-%         assert(all(1 == tbl_impale.SPK( data.neuron_list(slc.valid_neuron_idx) )),...
-%             '--> ERROR: some of these n_units don''t contain a SU!');        
-%         n_units = nnz(slc.valid_neuron_idx);
-%         
-%     case 'MUA'
-%         n_units = nnz(slc.valid_neuron_idx);
-%         
-%     otherwise
-%         error('--> Unrecognized DATA_TYPE!');
-%         
-% end
-%         
-% % A list of all "valid" n_units to use
-% slc.valid_neurons = data.neuron_list(slc.valid_neuron_idx);
-% 
-% 
-% % Get a valid list of neurons (duration & all-sessions available)
-% H_valid = data.H(:,:,slc.valid_neuron_idx);
-% assert( size(H_valid,3) >= max(n_units), ...
-%     '--> You are asking for more neurons than are available in the dataset!');
-
-
-
 %%
 binwidth       = spec_st.binwidth;     % (ms)
 n_bands        = spec_st.n_bands;
@@ -121,8 +76,6 @@ if verbose
     aux.cprintf('UnterminatedStrings', '--> n_bands     : %g\n', n_bands);
     aux.cprintf('UnterminatedStrings', '--> win_size_ms : %g ms\n', win_size_ms);
 end
-
-
 
     
     
@@ -169,7 +122,8 @@ end
 
 %% Add BF as columns into the measurement table
 % Create a new table with all the information of the measurements and save it
-tbl_BF = [table(tbl_data.Row, 'VariableNames', {'Row'}), table(BF), table(BF_cc), table(BF_pv)];
+neuron = tbl_data.neuron;
+tbl_BF = [table(neuron), table(BF), table(BF_cc), table(BF_pv)];
 
 save([fn.load.fullfile(1:end-4), '_BF'], 'tbl_BF', 'spec_st', 'stim_st');
 %}
