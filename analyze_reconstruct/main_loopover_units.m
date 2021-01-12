@@ -28,7 +28,7 @@ idx_dry = drr.ordered(1);
 %% Load data
 %   Run [main_aggregate_MUA_data.m] again to update this file if needed
 % 
-data_type   = 'SU';       % {'SU', MUA'}
+data_type   = 'MUA';       % {'SU', MUA'}
 fn.load.path= '../_data';
 data_type   = upper(data_type);
 
@@ -62,8 +62,8 @@ data        = load(fn.load.fullfile);
 spec_st     = data.spec_st;
 tbl_data    = data.(sprintf('tbl_%s', data_type));
 n_units     = height(tbl_data);     % total available units
-unit_list = [10, 25, 50, 103, 150, n_units];
-% unit_list   = 10;
+% unit_list = [10, 25, 50, 103, 150, n_units];
+unit_list   = n_units, '### DEBUG ###'
 
 % Don't overflaw number of units in the database
 unit_list = unique(min(height(tbl_data), unit_list));
@@ -116,6 +116,12 @@ end
 % Splits the overall stimulus into chunks according to the speakers
 [split_time_idx, n_splits, tbl_metadata] = ... 
     split_spectrogram_into_TIMIT_wav_files(binwidth, 1e-3*spec_st.duration_ms);
+
+
+% n_splits = 12;
+% x = [1:7200/n_splits:7200-1]';
+% [x, x+7200/n_splits-1]
+
 
 % Make sure that the split indices have a valid length
 assert(spec_st.n_time == split_time_idx(end));
@@ -309,14 +315,16 @@ for q = 1 %1:n_drr
         fn.save.file    = sprintf('reconstruct_%s_(%s)_units(%d)_bw(%g)ms_algo(%s)_fbands(%d)_splits(%d)_lags(%g)ms_cau(%d)_trainDRR(%s)',...
             data_type, date, m_units, binwidth, algo_type, n_bands, n_splits, lags_ms, iscausal, num2str(train_drr, '%d '));
         fn.save.fullfile= fullfile( fn.save.path, fn.save.file );
-        
+                
         % Save the results for that 
         save(fn.save.fullfile, ... '-v7.3', ...
             'splits', ...       saves the chunks\intervals\speakers
             'spec_st', ...      spectrogram's structue with all relevant data
             'obj_list', ...     cell array of reconstruction objetcs, saved as structures
             'tbl_data', ...     a table with all neurons in the data set            
-            'fn' ...            filenames, including the data-set filename used here 
+            'fn', ...            filenames, including the data-set filename used here 
+            ...'H_units',...
+            'sorted_list'...
             ); 
         
     %}

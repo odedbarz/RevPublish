@@ -25,6 +25,7 @@ path_root_mat = load.path_to_data('Impale_data');
 path_root_raw = load.path_to_data('raw');
 
 
+
 %% Load the measurement's table
 if ~exist('tbl_main', 'var')
     % Save time, load this table only once 
