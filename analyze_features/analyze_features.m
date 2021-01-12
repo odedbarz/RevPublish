@@ -48,19 +48,8 @@ n_bands = spec_st.n_bands;
 
 
  %% Define the file information
-finfo.type = 'SU'   	% {'SU', 'MUA'}
+finfo.type = 'MUA'   	% {'SU', 'MUA'}
 aux.cprintf('Keywords', '\n-> Data type: *** %s ***\n', finfo.type);
-
-% trainDRR = [3, 5];
-% train_DRR_labels = [];
-% train_DRR_idx = [];
-% for k = 1:length(trainDRR)
-%     train_DRR_labels = [train_DRR_labels, drr.labels{trainDRR(k)}, ', '];
-%     train_DRR_idx    = [train_DRR_idx, num2str(trainDRR(k)), ', '];
-% end
-% train_DRR_labels = train_DRR_labels(1:end-2);
-% train_DRR_idx = train_DRR_idx(1:end-2);
-% aux.cprintf('Keywords', '-> trainDRR: [%s] (%s)\n\n', train_DRR_labels, train_DRR_idx);
 
 if strcmpi('MUA', finfo.type)    
     % *** DEFAULT ***
@@ -145,6 +134,7 @@ n_features = size(RS, 1);
 fprintf('\nLoading dictionary:\n');
 fprintf('-> filename: %s\n', fn_dic);
 fprintf('-> path    : %s\n', path_2_dict);
+
 
 
 
