@@ -59,11 +59,11 @@ end
 fn.load.fullfile = fullfile( fn.load.path, fn.load.file );
 data        = load(fn.load.fullfile);
 
-spec_st     = data.spec_st;
-tbl_data    = data.(sprintf('tbl_%s', data_type));
-n_units     = height(tbl_data);     % total available units
-% unit_list = [10, 25, 50, 103, 150, n_units];
-unit_list   = n_units, '### DEBUG ###'
+spec_st   = data.spec_st;
+tbl_data  = data.(sprintf('tbl_%s', data_type));
+n_units   = height(tbl_data);     % total available units
+unit_list = [10, 25, 50, 103, 150, n_units];
+
 
 % Don't overflaw number of units in the database
 unit_list = unique(min(height(tbl_data), unit_list));
@@ -117,14 +117,12 @@ end
 [split_time_idx, n_splits, tbl_metadata] = ... 
     split_spectrogram_into_TIMIT_wav_files(binwidth, 1e-3*spec_st.duration_ms);
 
-
-% n_splits = 12;
-% x = [1:7200/n_splits:7200-1]';
-% [x, x+7200/n_splits-1]
-
-
 % Make sure that the split indices have a valid length
 assert(spec_st.n_time == split_time_idx(end));
+
+
+% split_time_idx = [];
+% n_splits = 200
 
 
 
@@ -194,7 +192,7 @@ for q = 1 %1:n_drr
             
             [X_train, X_test0, y_train, y_test0, splits] = train_test_split(X1, y1, ...
                'n_splits', n_splits, ...
-               ...'split_time_idx', split_time_idx, ...
+               'split_time_idx', split_time_idx, ...
                'test_grp', test_grp_number ...
             );
             %}
@@ -258,14 +256,14 @@ for q = 1 %1:n_drr
                 X2 = spec_st.Sft{test_drr};
                 y2 = squeeze( H_units(:, test_drr, :) );
                 [~, X_test_kn, ~, y_test, ~] = train_test_split(X2, y2, ...
-                 ...'n_splits', n_splits, ...
+                    'n_splits', n_splits, ...
                     'split_time_idx', split_time_idx, ...
                     'test_grp', test_grp_number );
 
                 % RECONSTRUCTION   
                 % Predict the spectrogram
                 obj.predict(y_test);
-                gof = goodness(X_test_kn, obj.X_est);
+                %gof = goodness(X_test_kn, obj.X_est);
 
                 % transform and keep as a structure for later analysis
                 warning off

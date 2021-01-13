@@ -152,11 +152,11 @@ idx_test = 4;
 % Stest = Stest(:, 1:700);
 % Xtest = im2col(Stest, [n_bands, n_lags], 'sliding');
 
-n_speaker = 2;
-Xdry  = obj_list{n_speaker, drr.ordered(1)}.X_est;      '### DEBUG ###'
-Xtest = obj_list{n_speaker, drr.ordered(5)}.X_est;      '### DEBUG ###'
+n_speaker = 11;
+Xdry  = obj_list{drr.ordered(1), n_speaker}.X_est;      '### DEBUG ###'
+Xtest = obj_list{drr.ordered(5), n_speaker}.X_est;      '### DEBUG ###'
 
-n_tests = 50;
+n_tests = 100;
 encoding = nan(n_features, n_tests);
 enc_score = nan(size(RS,2), n_tests);
 
@@ -188,14 +188,16 @@ ylabel('Features');
 
 
 
-%%
+L = lasso(D, pk);
+%
 '### DEBUG ###'
 a = reshape(pk, 30, n_lags);
 adry = reshape(pk_dry, 30, n_lags);
 b = reshape(D*encoding(:,end), 30, n_lags);
 imagesc( zca([a, b, adry]) );
 cc = corrcoef(a(:), b(:));
-title( sprintf('CC: %.2f', cc(1,2) ) );
+ccdry = corrcoef(adry(:), b(:));
+title( sprintf('CC: %.2f ---- CCdry: %.2f', cc(1,2), ccdry(1,2) ) );
 
 
 

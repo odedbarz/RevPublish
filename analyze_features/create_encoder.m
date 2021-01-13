@@ -20,7 +20,7 @@ if strcmpi('MUA', finfo.type)
     % BINWIDTH : 5 ms
     % CAUSALITY: true
     % %{
-    finfo.n_neurons  = 50; % [10 25 50 103 150 241];  	% # of units to load from existing files
+    finfo.n_neurons  = 10; % [10 25 50 103 150 241];  	% # of units to load from existing files
     finfo.trainDRR   = '3';
     finfo.date       = '10-Jan-2021';        
     finfo.path       = '../_data/reconstruct/';
@@ -82,30 +82,39 @@ n_drr   = drr.n_drr;                  % # DRRs of used
 idx_dry = drr.ordered(1);
 idx_drr = drr.ordered(5);
 
-lags_ms     = 50;                       % (ms) the time duration of each patch 
+lags_ms     = 30;                       % (ms) the time duration of each patch 
 binwidth    = spec_st.binwidth;         % (ms) 
 n_lags      = fix(lags_ms/binwidth);    % (smp) number of samples of each patch (along the time duration)
 
 Hdry = squeeze( data.H_units(:,idx_dry,:) );
 Hdrr = squeeze( data.H_units(:,idx_drr,:) );
 
+%     Hdry = zca(Hdry);
+%     Hdry = zca(Hdry);
+
 n_units = size(Hdry, 2);
 
-n_splits = 100;
-test_grp = 22;
+n_splits = 20;
+test_grp = 2;
 [Htrn, Htst, ~, ~, split_st] = train_test_split(Hdry', randn(size(Hdry,1),1), ...
     'n_splits', n_splits, 'test_grp', test_grp);
 Mtrn = im2col(Htrn, [n_units, n_lags], 'sliding');
 % Mtst = im2col(Htst, [n_units, n_lags], 'sliding');
-Mtrn = zca(Mtrn);
+    
+    Mtrn = zca(Mtrn);
 
 [~, Htst_] = train_test_split(Hdrr', randn(size(Hdrr,1),1), ...
     'n_splits', n_splits, 'test_grp', test_grp);
 % Mtrn = im2col(Htrn, [n_units, n_lags], 'sliding');
 Mtst_ = im2col(Htst_, [n_units, n_lags], 'sliding');
-Mtst_ = zca(Mtst_);
+
+    Mtst_ = zca(Mtst_);
 
 Sdry = spec_st.Sft{idx_dry};
+
+%     Sdry = Sdry ./mean(Sdry,2);
+    Sdry = zca(Sdry')';
+
 [Strn, Stst, ~, ~, split_st] = train_test_split(Sdry, randn(size(Sdry,2),1), ...
     'n_splits', n_splits, 'test_grp', test_grp);
 Strn = im2col(Strn, [n_bands, n_lags], 'sliding');
@@ -113,6 +122,10 @@ Stst = im2col(Stst, [n_bands, n_lags], 'sliding');
 
 
 Sdrr = spec_st.Sft{idx_drr};
+
+%     Sdrr = Sdrr ./mean(Sdrr,2);
+%     Sdrr = zca(Sdrr')';
+
 [Strn_, Stst_, ~, ~, split_st] = train_test_split(Sdrr, randn(size(Sdrr,2),1), ...
     'n_splits', n_splits, 'test_grp', test_grp);
 Strn_ = im2col(Strn_, [n_bands, n_lags], 'sliding');
@@ -120,11 +133,11 @@ Stst_ = im2col(Stst_, [n_bands, n_lags], 'sliding');
 
 
 
-%%
-k = 41
+%
+k = 15
 x = Mtst_(:, k);
 enc = Mtrn' * x;
-[~, idx_pp] = sort(enc, 'descend');     % posterior peak
+[pp, idx_pp] = sort(enc, 'descend');     % posterior peak
 
 figure(1);
 plot(enc);
@@ -132,9 +145,11 @@ hold on
 plot(idx_pp(1), enc(idx_pp(1)), 'ro');
 hold off
 
+n_decode = 6000
+
 Shat = zeros(n_bands*n_lags, 1);
-for jj = 1:n_units
-    Shat = Shat + Strn(:,idx_pp(jj));   
+for jj = 1:n_decode
+    Shat = Shat + pp(jj)*Strn(:,idx_pp(jj));   
 end
 
 
