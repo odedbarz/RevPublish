@@ -150,13 +150,13 @@ obj_list = cell(n_drr, n_splits);
 
         
 
-%% Loop over SPLITS
+%% Reconstruction
 for n = 4 %1:n_splits
     % choose the testing chunk\speaker out of the stimulus
     test_grp_number = n;    
     fprintf('----> splits #: (%d/%d)\n', test_grp_number, n_splits);
 
-    %% Enable to train on more than 1 DRR            
+    % Enable to train on more than 1 DRR            
     assert(1 == length(train_drr), '--> Use this Option for only ONE train_drr!');
 
     % Get valid measurements
@@ -173,7 +173,7 @@ for n = 4 %1:n_splits
 
 
 
-    %% Extract the reconstruction filters
+    % Extract the reconstruction filters
     % Initialize the reconstruction object
     obj = reconstruct_c(binwidth,...
         'f', spec_st.f, ...
@@ -188,7 +188,7 @@ for n = 4 %1:n_splits
         'fignum', []);
 
 
-    %% Loop over DRRs
+    % Loop over DRRs
     for k = 4  %1:n_drr    
         % Choose the DRR case for the testing signals
         test_drr  = k;

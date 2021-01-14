@@ -1,4 +1,4 @@
-function Xw = zca(X)
+function Xw = zca(X, d)
 %
 % function Xw = zca(X)
 %
@@ -6,4 +6,8 @@ function Xw = zca(X)
 % Whitening (sphering) of each column in X. That means that each column in
 % X has zero mean and a variance of 1.0.
 
-Xw = (X-mean(X))./(eps + std(X));
+if 2 > nargin 
+    d = 1;
+end
+
+Xw = (X-mean(X, d))./(eps + std(X, [], d));
