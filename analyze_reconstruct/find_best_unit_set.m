@@ -22,6 +22,10 @@ addParameter(p, 'fn', '', @(x) isstr(x) || isstring(x));
 addParameter(p, 'Y', [], @isnumeric);            
 addParameter(p, 'n_svd', 1, @isnumeric);         % # of singular values (SVs) to use
 
+% - RND
+addParameter(p, 'N', [], @isnumeric);           % total number of units    
+
+
 % - Verbose
 addParameter(p, 'fignum', [], @isnumeric);           
  
@@ -48,19 +52,30 @@ switch upper(pars.type)
         
     case 'SVD'
         % Orthogonalize the measurements
-        [U, S, ~] = svds(zca(Y), pars.n_svd);
+        %[U, S, ~] = svds(zca(pars.Y), pars.n_svd);
+        [U, S, ~] = svds(pars.Y, pars.n_svd);
         Z = U(:, 1:pars.n_svd); % * S(1:pars.n_svd, 1:pars.n_svd);
 
         % Re-arrange the units; best units to contribute the reconstruction at the
         % beginning
-        P = Y'*Z;      % projections
+        P = pars.Y'*Z;      % projections
         [~, sorted_list] = sort(P, 'descend');
 
         % flatten the 2D matrix
         sorted_list = unique(sorted_list', 'stable')';
 
         % Singular values
-        sv = diag(S(1:pars.n_svd, 1:pars.n_svd));
+        varargout{1} = diag(S(1:pars.n_svd, 1:pars.n_svd));
+        
+        
+    case 'RND' 
+        if isfield(pars, 'Y')
+            N = size(pars.Y,2);                    
+        end
+        
+        sorted_list = randperm(N);
+        varargout{1} = {};
+        
         
 
     otherwise

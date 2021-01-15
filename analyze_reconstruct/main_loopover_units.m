@@ -41,7 +41,8 @@ switch data_type
         %         spec_st: [1×1 struct]
         %      tbl_impale: [437×20 table]
         fn.load.file = 'data_SU_(08-Jan-2021)_bw(5)_fbands(30)_win(NaN)ms_spec(gammatone).mat';       
-        
+        unit_list = [10, 25, 50, 103];
+
     case 'MUA'
         %Loads a struct with fields:
         %               H: [7200×6×356 double]
@@ -51,7 +52,8 @@ switch data_type
         %         stim_st: [1×1 struct]
         %      tbl_impale: [437×20 table]        
         fn.load.file = 'data_MUA_(08-Jan-2021)_bw(5)_fbands(30)_win(NaN)ms_spec(gammatone).mat';        
-        
+        unit_list = [10, 25, 50, 103, 240];
+
     otherwise
         error('--> Unrecognized DATA_TYPE!');
         
@@ -62,18 +64,10 @@ data        = load(fn.load.fullfile);
 spec_st   = data.spec_st;
 tbl_data  = data.(sprintf('tbl_%s', data_type));
 n_units   = height(tbl_data);     % total available units
-unit_list = [10, 25, 50, 103, 150, n_units];
-
-
-% Don't overflaw number of units in the database
-unit_list = unique(min(height(tbl_data), unit_list));
 len_unit_list = length(unit_list);
-
-
 duration_sec = 36;      % (sec) 
 assert(duration_sec == spec_st.duration_ms * 1e-3,...
     '--> ERROR: You are using the wrong stimulus duration!');
-
 
 aux.vprint(verbose, '--> [main_loopover_units.m] Loading file:\n\t...<%s>\n', fn.load.file);
 
@@ -82,7 +76,12 @@ aux.vprint(verbose, '--> [main_loopover_units.m] Loading file:\n\t...<%s>\n', fn
 %% Order the units
 % Get a list of VALID units to reconstruct from
 % valid_units = squeeze( data.H(:,train_drr(1),:) );  % for VALID units
-[sorted_list, tbl_BF] = find_best_unit_set('CC', 'fn', fn.load.fullfile);
+
+% [sorted_list, tbl_BF] = find_best_unit_set('CC', 'fn', fn.load.fullfile);
+
+Hdry = squeeze( data.H(:,drr.ordered(1),:) ); 
+%[sorted_list] = find_best_unit_set('SVD', 'Y', Hdry);
+[sorted_list] = find_best_unit_set('RND', 'Y', Hdry);
 
 
 
@@ -121,6 +120,7 @@ end
 assert(spec_st.n_time == split_time_idx(end));
 
 
+% % Use these 2 lines to override the split by speakers:
 % split_time_idx = [];
 % n_splits = 200
 
@@ -152,23 +152,17 @@ for q = 1 %1:n_drr
         end
 
         % Select M_UNITS to reconstruct        
-        H_units = data.H( :, 1:n_drr, sorted_list(1:m_units) );        
-        if verbose
-            fprintf('--> m_units       : %d\n', m_units);
-            
-            avg_BF = mean( tbl_BF.BF_cc( sorted_list(1:m_units) ) );
-            fprintf('--> mean( CC(BF) ): %.3f\n', avg_BF);
-        end
+        H_sorted = data.H( :, 1:n_drr, sorted_list(1:m_units) );        
 
         
         
         %% >> analyze_units;
         obj_list = cell(n_drr, n_splits);
 
-%         clear scores
-%         scores.CC  = nan(n_drr, n_splits);
-%         scores.mse = nan(n_drr, n_splits);
-%         scores.nmse= nan(n_drr, n_splits);
+        clear scores
+        scores.CC  = nan(n_drr, n_splits);
+        scores.mse = nan(n_drr, n_splits);
+        scores.nmse= nan(n_drr, n_splits);
 
         
         
@@ -185,7 +179,7 @@ for q = 1 %1:n_drr
             assert(1 == length(train_drr), '--> Use this Option for only ONE train_drr!');
             
             % Get valid measurements
-            y1 = squeeze( H_units(:, train_drr, :) );
+            y1 = squeeze( H_sorted(:, train_drr, :) );
 
             % Split the TRAINING set
             X1 = spec_st.Sft{train_drr};
@@ -197,36 +191,6 @@ for q = 1 %1:n_drr
             );
             %}
             
-            % Enable to train on more than 1 DRR -- Don't use this
-            % procedure if 1 == length(train_drr), it's not efficient
-            %{
-            y_train = []; 
-            X_train = [];
-            idx_kk = mod(0:1:n_splits-1, length(train_drr)) + 1;
-            for kk = 1:n_splits
-                if test_grp_number == kk
-                    continue;
-                end
-                
-                I_kk = idx_kk(kk);
-                
-                % Get valid measurements
-                y1 = squeeze( H_units(:, train_drr(I_kk), :) );
-
-                % Split the TRAINING set
-                X1 = spec_st.Sft{train_drr(I_kk)};
-
-                % Get the training set(s) WITHOUT the testing chunk\speaker
-                [~, X_kk, ~, y_kk, splits] = train_test_split(...
-                    X1, y1, ...
-                    'split_time_idx', split_time_idx, ...
-                    'test_grp', kk );
-                
-                % Aggregate all training sequences
-                y_train = [y_train; y_kk];
-                X_train = [X_train, X_kk];                
-            end  
-            %}
             
             
             %% Extract the reconstruction filters
@@ -254,7 +218,7 @@ for q = 1 %1:n_drr
 
                 % Split for the TESTING data
                 X2 = spec_st.Sft{test_drr};
-                y2 = squeeze( H_units(:, test_drr, :) );
+                y2 = squeeze( H_sorted(:, test_drr, :) );
                 [~, X_test_kn, ~, y_test, ~] = train_test_split(X2, y2, ...
                     'n_splits', n_splits, ...
                     'split_time_idx', split_time_idx, ...
@@ -263,7 +227,7 @@ for q = 1 %1:n_drr
                 % RECONSTRUCTION   
                 % Predict the spectrogram
                 obj.predict(y_test);
-                %gof = goodness(X_test_kn, obj.X_est);
+                
 
                 % transform and keep as a structure for later analysis
                 warning off
@@ -286,9 +250,10 @@ for q = 1 %1:n_drr
                 warning on
 
                 % Goodness-of-fit
-                %scores.CC(k,n)  = gof.CC;
-                %scores.mse(k,n) = gof.mse;
-                %scores.nmse(k,n)= gof.nmse;
+                gof = goodness(X_test_kn, obj.X_est);
+                scores.CC(k,n)  = gof.CC;
+                scores.mse(k,n) = gof.mse;
+                scores.nmse(k,n)= gof.nmse;
             end
 
             if  0 %verbose
@@ -314,15 +279,18 @@ for q = 1 %1:n_drr
             data_type, date, m_units, binwidth, algo_type, n_bands, n_splits, lags_ms, iscausal, num2str(train_drr, '%d '));
         fn.save.fullfile= fullfile( fn.save.path, fn.save.file );
                 
+        stim_st = data.stim_st;
+        
         % Save the results for that 
         save(fn.save.fullfile, ... '-v7.3', ...
             'splits', ...       saves the chunks\intervals\speakers
+            'stim_st', ...      stimulus data
             'spec_st', ...      spectrogram's structue with all relevant data
             'obj_list', ...     cell array of reconstruction objetcs, saved as structures
             'tbl_data', ...     a table with all neurons in the data set            
-            'fn', ...            filenames, including the data-set filename used here 
-            ...'H_units',...
-            'sorted_list'...
+            'fn', ...           filenames, including the data-set filename used here 
+            'H_sorted',...      sorted units used for the analysis
+            'sorted_list'...    the list of sorted unit used to create H_sorted from data.H
             ); 
         
     %}

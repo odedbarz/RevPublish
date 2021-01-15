@@ -15,7 +15,12 @@ fignum = 11;
 verbose = 1;
 
 % Add the path of the StimViewerGUI GUI
-setup_environment('../');
+%addpath(genpath('../../StimViewerGUI'));
+addpath('../');
+
+
+FigSetup
+
 
 
 %% Paths
@@ -40,8 +45,8 @@ drr = get_DRR_list_and_indices;
 
 
  
- %% Load reconstructions
-finfo.type = 'SU'   	% {'SU', 'MUA'}
+ %% Define the file information
+finfo.type = 'MUA'   	% {'SU', 'MUA'}
 aux.cprintf('Keywords', '\n-> Data type: *** %s ***\n', finfo.type);
 
 % trainDRR = [3, 5];
@@ -55,28 +60,131 @@ aux.cprintf('Keywords', '\n-> Data type: *** %s ***\n', finfo.type);
 % train_DRR_idx = train_DRR_idx(1:end-2);
 % aux.cprintf('Keywords', '-> trainDRR: [%s] (%s)\n\n', train_DRR_labels, train_DRR_idx);
 
-if strcmpi('MUA', finfo.type)    
+if strcmpi('MUA', finfo.type)
+    % BINWIDTH : 5 ms
+    % CAUSALITY: true
+    %{
+    finfo.n_neurons  = [10 25 50 100 150];  	% # of units to load from existing files
+    finfo.trainDRR   = '3';
+    finfo.date       = '13-Jul-2020';        
+    finfo.path       = '../_data/reconstruct/MUA_(13-Jul-2020)_bw(5)ms_fbands(30)_lags(100)ms_cau(0)/';
+    fn_emplate       = 'reconstruct_%s_(%s)_units(%d)_bw(5)ms_fbands(30)_splits(12)_lags(100)ms_cau(0)_trainDRR(%s).mat';
+    %}
+    
+    % BINWIDTH : 5 ms
+    % CAUSALITY: true
+    %{
+    finfo.n_neurons  = [10 25 50 100 150];  	% # of units to load from existing files
+    finfo.trainDRR   = trainDRR;
+    finfo.date       = '04-Sep-2020';        
+    finfo.path       = '../_data/reconstruct/';
+    fn_emplate       = 'reconstruct_%s_(%s)_units(%d)_bw(5)ms_algo(svd)_fbands(30)_splits(12)_lags(20)ms_cau(0)_trainDRR(%d).mat';
+    %}
+    
     % *** DEFAULT ***
     % BINWIDTH : 5 ms
     % CAUSALITY: true
     % %{
-    finfo.n_neurons  = [10 25 50 103 150 241]; %[1 5 10 25 50 100 150] % 241];  	% # of units to load from existing files
+    finfo.n_neurons  = 100 %[1 5 10 25 50 100 150] % 241];  	% # of units to load from existing files
     finfo.trainDRR   = '3';
-    finfo.date       = '10-Jan-2021';        
-    finfo.path       = '../_data/reconstruct/';
-    fn_template      = 'reconstruct_%s_(%s)_units(%d)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(0)_trainDRR(%s).mat';
+    finfo.date       = '04-Sep-2020';        
+    finfo.path       = '../_data/reconstruct/MUA_(04-Sep-2020)_bw(5)ms_algo(svd)_lags(30)ms_cau(0)/';
+    fn_emplate       = 'reconstruct_%s_(%s)_units(%d)_bw(5)ms_algo(svd)_fbands(30)_splits(12)_lags(30)ms_cau(0)_trainDRR(%s).mat';
     %}
+
+    % BINWIDTH      : 10 ms
+    % CAUSALITY     : false
+    % SPECTROGRAM   : multitaper   
+    %{
+    finfo.n_neurons  = 100; %[10 25 50 100 150];  	% # of units to load from existing files
+    finfo.trainDRR   = '3';
+    finfo.date       = '10-Nov-2020';        
+    finfo.path       = '../_data/reconstruct/MUA_(10-Nov-2020)_bw(10)ms_fb(50)_lags(30)ms_cau(0)_spec(taper)/';
+    %fn_emplate       = 'reconstruct_%s_(%s)_units(%d)_bw(10)ms_fbands(50)_lags(30)ms_cau(0)_trainDRR(%s)_spec(taper_mu5)';
+    fn_emplate       = 'rc_%s_(%s)_units(%d)_bw(10)ms_fb(50)_lags(30)ms_cau(0)_trDRR(%s)_spec(taper_mu5)';
+    %}
+        
+    % BINWIDTH      : 10 ms
+    % CAUSALITY     : false
+    % SPECTROGRAM   : multitaper   
+    %{
+    finfo.n_neurons  = 100; %[10 25 50 100 150];  	% # of units to load from existing files
+    finfo.trainDRR   = '3';
+    finfo.date       = '10-Nov-2020';        
+    finfo.path       = '../_data/reconstruct/MUA_(10-Nov-2020)_bw(10)ms_fb(30)_lags(30)ms_cau(0)_spec(taper)/';
+    %fn_emplate       = 'reconstruct_%s_(%s)_units(%d)_bw(10)ms_fbands(30)_lags(30)ms_cau(0)_trainDRR(%d)_spec(taper_mu2)';
+    fn_emplate       = 'rc_%s_(%s)_units(%d)_bw(10)ms_fb(30)_lags(30)ms_cau(0)_trDRR(%s)_spec(taper_mu2)';
+    %}
+    
+    % BINWIDTH      : 10 ms
+    % CAUSALITY     : false
+    % SPECTROGRAM   : STFT   
+    %{
+    finfo.n_neurons  = 100; %[10 25 50 100 150];  	% # of units to load from existing files
+    finfo.trainDRR   = trainDRR;
+    finfo.date       = '10-Nov-2020';        
+    finfo.path       = '../_data/reconstruct/MUA_(10-Nov-2020)_bw(5)ms_fb(50)_lags(30)ms_cau(0)_spec(stft)/';
+    fn_emplate       = 'reconstruct_%s_(%s)_units(%d)_bw(5)ms_fbands(50)_lags(30)ms_cau(0)_trainDRR(%d)_spec(stft)';
+    %}
+
+    % BINWIDTH      : 25 ms
+    % CAUSALITY     : false
+    % SPECTROGRAM   : gammatone   
+    %{
+    finfo.n_neurons  = 100; %[10 25 50 100 150];  	% # of units to load from existing files
+    finfo.trainDRR   = trainDRR;
+    finfo.date       = '11-Nov-2020';        
+    finfo.path       = '../_data/reconstruct/MUA_(11-Nov-2020)_bw(25)ms_fb(30)_lags(30)ms_cau(0)/';
+    fn_emplate       = 'reconstruct_%s_(%s)_units(%d)_bw(25)ms_fbands(30)_lags(30)ms_cau(0)_trainDRR(%d)';
+    %}
+    
+    % !! TESTING !!
+    % BINWIDTH      : 25 ms
+    % CAUSALITY     : false
+    % SPECTROGRAM   : gammatone   
+    %{
+    finfo.n_neurons  = 100; %[10 25 50 100 150];  	% # of units to load from existing files
+    finfo.trainDRR   = trainDRR;
+    finfo.date       = '11-Nov-2020';        
+    finfo.path       = '../_data/reconstruct/MUA_(11-Nov-2020)_bw(5)ms_fb(30)_lags(30)ms_cau(0)/';
+    fn_emplate       = 'reconstruct_%s_(%s)_units(%d)_bw(5)ms_fbands(30)_lags(30)ms_cau(0)_trainDRR(%d)';
+    %}
+    
+    % !! MORE than one DRR condition !!
+    % BINWIDTH      : 5 ms
+    % CAUSALITY     : false
+    % SPECTROGRAM   : gammatone   
+    %{
+    finfo.n_neurons  = 50; %[10 25 50 100 150];  	% # of units to load from existing files
+    finfo.trainDRR   = '3';
+    finfo.date       = '11-Nov-2020';        
+    finfo.path       = '../_data/reconstruct/MUA_(11-Nov-2020)_bw(5)ms_fb(30)_lags(30)ms_cau(0)_trDRR(2)/';
+    fn_emplate       = 'rct_%s_(%s)_units(%d)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(0)_trainDRR(%s)';
+    %}
+
+    % '*** MANIPULATING THE SPECTROGRAM ***'
+    %{
+    % BINWIDTH      : 5 ms
+    % CAUSALITY     : false
+    % SPECTROGRAM   : gammatone   
+    % %{
+    finfo.n_neurons  = 241;  	% # of units to load from existing files
+    finfo.trainDRR   = '3';
+    finfo.date       = '08-Dec-2020';        
+    finfo.path       = '../_data/reconstruct/';
+    fn_emplate       = 'reconstruct_%s_(%s)_units(%d)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(0)_trainDRR(%s)';
+    %}
+
   
     
 elseif strcmpi('SU', finfo.type)
     % BINWIDTH : 5 ms
     % CAUSALITY: true
-    finfo.n_neurons  = [10 25 50 103];   	% # of units to load from existing files
-    finfo.trainDRR   = '3';
-    finfo.date       = '10-Jan-2021';        
-    finfo.path       = '../_data/reconstruct/';
-    fn_template       = 'reconstruct_%s_(%s)_units(%d)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(0)_trainDRR(%s).mat';
-
+    finfo.n_neurons  = 25 %[10 25 50 103]; % 150];  	% # of units to load from existing files
+    finfo.trainDRR   = trainDRR;
+    finfo.date       = '10-Jul-2020';        
+    finfo.path       = '../_data/reconstruct/SU_(10-Jul-2020)_bw(5)ms_fbands(30)_lags(100)ms_cau(0)/';
+    fn_emplate       = 'reconstruct_%s_(%s)_units(%d)_bw(5)ms_fbands(30)_splits(12)_lags(100)ms_cau(0)_trainDRR(%d).mat';
     
 else
     error('-> Unrecognized measurement type (%s)!!',  finfo.type);
@@ -86,9 +194,9 @@ n_neuron_list = length(finfo.n_neurons);
 
 
 % === Load first batch to get preliminary info
-% finfo.fn = sprintf(fn_template, finfo.type, finfo.date, finfo.n_neurons(1), finfo.binwidth, ...
+% finfo.fn = sprintf(fn_emplate, finfo.type, finfo.date, finfo.n_neurons(1), finfo.binwidth, ...
 %     finfo.n_bands, finfo.win_size_ms, finfo.n_splits, finfo.trainDRR);
-finfo.fn = sprintf(fn_template, finfo.type, finfo.date, finfo.n_neurons(1), finfo.trainDRR);
+finfo.fn = sprintf(fn_emplate, finfo.type, finfo.date, finfo.n_neurons(1), finfo.trainDRR);
 warning off
 dummy    = load(fullfile(finfo.path, finfo.fn), 'obj_list');
 obj_list = dummy.obj_list;
@@ -196,9 +304,9 @@ for n = 1:n_neuron_list
     %   obj_list: {5×20 cell}
     %    spec_st: [1×1 struct]
     % tbl_impale: [437×19 table]
-    %finfo.fn = sprintf(fn_template, finfo.type, finfo.date, finfo.n_neurons(n), finfo.binwidth, ...
+    %finfo.fn = sprintf(fn_emplate, finfo.type, finfo.date, finfo.n_neurons(n), finfo.binwidth, ...
     %    finfo.n_bands, finfo.win_size_ms, finfo.n_splits, finfo.trainDRR);
-    finfo.fn = sprintf(fn_template, finfo.type, finfo.date, finfo.n_neurons(n), finfo.trainDRR);
+    finfo.fn = sprintf(fn_emplate, finfo.type, finfo.date, finfo.n_neurons(n), finfo.trainDRR);
     aux.cprintf('g', '\n-> Loading <%s>...\n', finfo.fn);
     warning off
     data    = load(fullfile(finfo.path, finfo.fn));

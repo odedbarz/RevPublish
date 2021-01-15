@@ -67,7 +67,7 @@ else
     
 end
 
-split_st.n_grps  = pars.n_splits;
+%split_st.n_grps  = pars.n_splits;
 split_st.test    = pars.test_grp;
 split_st.n_splits= pars.n_splits;
 split_st.train   = setdiff(1:split_st.n_splits, split_st.test);
