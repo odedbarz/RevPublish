@@ -12,11 +12,11 @@ function [sorted_list, varargout] = find_best_unit_set(type, varargin)
 p = inputParser;
 
 % Required
-addRequired(p, 'type', @(x) isstr(x) || isstring(x));            
+addRequired(p, 'type', @(x) ischar(x) || isstring(x));            
 
 % Optional:
 % - CC:
-addParameter(p, 'fn', '', @(x) isstr(x) || isstring(x));
+addParameter(p, 'fn', '', @(x) ischar(x) || isstring(x));
 
 % - SVD
 addParameter(p, 'Y', [], @isnumeric);            

@@ -92,7 +92,7 @@ alpha = 0.05;   % significance
 
 for n = 1:n_units    
     % extract only the dry measurements 
-    ydry =  squeeze(data.H(:,dry_idx,n));
+    ydry =  squeeze( data.H(:,dry_idx,n) );
     
     Rbest = -1;         % best correlation
     Pbest = nan;        % best p-value    

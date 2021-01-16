@@ -52,7 +52,7 @@ switch data_type
         %         stim_st: [1×1 struct]
         %      tbl_impale: [437×20 table]        
         fn.load.file = 'data_MUA_(08-Jan-2021)_bw(5)_fbands(30)_win(NaN)ms_spec(gammatone).mat';        
-        unit_list = [10, 25, 50, 103, 240];
+        unit_list = [10, 25, 50, 103, 241];
 
     otherwise
         error('--> Unrecognized DATA_TYPE!');
@@ -74,9 +74,6 @@ aux.vprint(verbose, '--> [main_loopover_units.m] Loading file:\n\t...<%s>\n', fn
 
 
 %% Order the units
-% Get a list of VALID units to reconstruct from
-% valid_units = squeeze( data.H(:,train_drr(1),:) );  % for VALID units
-
 % [sorted_list, tbl_BF] = find_best_unit_set('CC', 'fn', fn.load.fullfile);
 
 Hdry = squeeze( data.H(:,drr.ordered(1),:) ); 
@@ -144,7 +141,7 @@ for q = 1 %1:n_drr
     
     
     
-    %% Loop over UNITS
+    % Loop over UNITS
     for m = 1:len_unit_list
         % Set the # of neurons for the reconstruction
         m_units = unit_list(m);
@@ -156,7 +153,7 @@ for q = 1 %1:n_drr
 
         
         
-        %% >> analyze_units;
+        % >> analyze_units;
         obj_list = cell(n_drr, n_splits);
 
         clear scores
@@ -166,7 +163,7 @@ for q = 1 %1:n_drr
 
         
         
-        %% Loop over SPLITS
+        % Loop over SPLITS
         for n = 1:n_splits
             % choose the testing chunk\speaker out of the stimulus
             test_grp_number = n;    
@@ -174,7 +171,7 @@ for q = 1 %1:n_drr
                 fprintf('----> splits #: (%d/%d)\n', test_grp_number, n_splits);
             end
 
-            %% Enable to train on more than 1 DRR            
+            % Enable to train on more than 1 DRR            
             % %{
             assert(1 == length(train_drr), '--> Use this Option for only ONE train_drr!');
             
@@ -193,7 +190,7 @@ for q = 1 %1:n_drr
             
             
             
-            %% Extract the reconstruction filters
+            % Extract the reconstruction filters
             % Initialize the reconstruction object
             obj = reconstruct_c(binwidth,...
                 'f', spec_st.f, ...
@@ -208,7 +205,7 @@ for q = 1 %1:n_drr
                 'fignum', []);
 
 
-            %% Loop over DRRs
+            % Loop over DRRs
             for k = 1:n_drr    
                 % Choose the DRR case for the testing signals
                 test_drr  = k;
@@ -282,7 +279,8 @@ for q = 1 %1:n_drr
         stim_st = data.stim_st;
         
         % Save the results for that 
-        save(fn.save.fullfile, ... '-v7.3', ...
+        save(fn.save.fullfile, ... 
+            '-v7.3', ...
             'splits', ...       saves the chunks\intervals\speakers
             'stim_st', ...      stimulus data
             'spec_st', ...      spectrogram's structue with all relevant data
