@@ -51,7 +51,7 @@ switch data_type
         
     case 'MUA'
         fn_template = 'reconstruct_MUA_(14-Jan-2021)_units(%d)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(0)_trainDRR(3).mat';        
-        unit_list = 240;    % load max number of available units
+        unit_list = 241;    % load max number of available units
 
     otherwise
         error('--> Unrecognized DATA_TYPE!');
@@ -96,13 +96,6 @@ win_size_ms = spec_st.win_size_ms;  % (ms)
 %% UNSORT order in H_sorted
 % * NOTE: H_sorted is *NOT* arranged by drr.ordered (dim 2) 
 [~, idx_reset_sort] =  sort( sorted_list );
-
-        
-        '#*&$^#^%&*#^%$*$&*#^$&*#^$*&$#$^&*$'
-        warning('=========== REMOVE THIS LINE +++++++++++++++++')
-        idx_reset_sort = idx_reset_sort([1:117, 119:end]);
-        
-
 H = H_sorted(:, drr_idx, idx_reset_sort);
 
 
@@ -242,23 +235,9 @@ title(sprintf('%d %s', n_units, data_type));
 
 
 
+
 %%
 figure(110+fignum);
-clf;
-ax = gca;
-plot_dotbox(scores.kr, 'labels', drr.labels(drr_idx));
-set(ax, 'FontSize', fontsize);
-ylabel('Kurtosis');
-ylim([min(ylim), 15]);
-xlabel('Direct to Reverberation Ratio (dB)');
-ylim([1.5, 10]);
-title(sprintf('%d %s', n_units, data_type));
-
-
-
-
-%%
-figure(115+fignum);
 clf;
 ax = gca;
 plot_dotbox(scores.CCr, 'labels', drr.labels(drr_idx));
@@ -273,8 +252,31 @@ xlabel('Direct to Reverberation Ratio (dB)');
 
 
 
+%%
+figure(120+fignum);
+clf;
+ax = gca;
+plot_dotbox(scores.kr, 'labels', drr.labels(drr_idx));
+set(ax, 'FontSize', fontsize);
+ylabel('Kurtosis');
+ylim([min(ylim), 15]);
+xlabel('Direct to Reverberation Ratio (dB)');
+ylim([1.5, 10]);
+title(sprintf('%d %s', n_units, data_type));
 
 
+
+%%
+figure(125+fignum);
+clf;
+ax = gca;
+plot_dotbox(scores.skew, 'labels', drr.labels(drr_idx));
+set(ax, 'FontSize', fontsize);
+ylabel('Kurtosis');
+ylim([min(ylim), 15]);
+xlabel('Direct to Reverberation Ratio (dB)');
+% ylim([1.5, 10]);
+title(sprintf('%d %s', n_units, data_type));
 
 
 
