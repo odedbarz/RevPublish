@@ -14,33 +14,34 @@ setup_environment('../');
 
 
 
+%% Plot properties
+fontsize = 32;
+fontsize_big = 42;
+fontsize_bigger = 64;
+
+markersize = 24;
 
 
 
-%% Load data
-% 
-%   Name                Size                 Bytes  Class     Attributes
-% 
-%   H_units          7200x5x10             2880000  double              
-%   fn                  1x1                   2206  struct              
-%   obj_list            5x12              13504080  cell                
-%   sorted_list       241x1                   1928  double              
-%   spec_st             1x1               15039029  struct              
-%   splits              1x1                  58552  struct              
-%   tbl_data          241x20                339094  table               
-%
+%% Load the data
+%              CC: [7200×5 double] 	% compares dry vs. est
+%             CC2: [7200×5 double]	% compares drr vs. est
+%             CCt: [7200×5 double]  % compares dry vs. est along the time domain
+%            CCt2: [7200×5 double]  % compares drr vs. est along the time domain
+%             PPt: [7200×5 double]
+%            PPt2: [7200×5 double]
+%     patch_width: 1
+%         spec_st: [1×1 struct]
+%          splits: [1×1 struct]
+%         stim_st: [1×1 struct]
+%        tbl_data: [103×20 table]
 data_type   = 'MUA';       % {'SU', MUA'}
-fn_path   = '../_data/Reconstruct';
-data_type = upper(data_type);
 switch data_type
     case 'SU'
-        fn_template = 'reconstruct_SU_(14-Jan-2021)_units(%d)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(0)_trainDRR(3).mat';       
-        %unit_list = [10, 25, 50, 103];
         n_units = 103;
         
     case 'MUA'
-        fn_template = 'reconstruct_MUA_(14-Jan-2021)_units(%d)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(0)_trainDRR(3).mat';        
-        n_units = 50;   %[10, 25, 50, 103, 150, 240];    
+        n_units = 241;   %[10, 25, 50, 103, 150, 241];    
 
     otherwise
         error('--> Unrecognized DATA_TYPE!');
@@ -49,37 +50,31 @@ end
 
 
 
+patch_width = 1;
 
-%% Initialization
-drr = get_DRR_list_and_indices; 
-n_drr = drr.n_drr;
-drr_idx = drr.sortby(1:n_drr);
-
-
-% Loading first file to get preliminary metadata
-%        H_sorted: [7200Ã—5Ã—10 double]
-%              fn: [1Ã—1 struct]
-%        obj_list: {5Ã—12 cell}
-%     sorted_list: [1Ã—241 double]
-%         spec_st: [1Ã—1 struct]
-%          splits: [1Ã—1 struct]
-%         stim_st: [1Ã—1 struct]
-%        tbl_data: [241Ã—20 table]
-fn_n = sprintf(fn_template, n_units);
-aux.cprintf('String', '\n-> Loading FIRST file to get preliminary data <%s>...\n', fn_n);
+fprintf('Loading the CC arrays...\n');
+fn_path = '../_data/Analysis/';
+fn_name = sprintf('analyzed_cc_%s_units(%d)_patchWidth(%d).mat', data_type, n_units, patch_width);
+fn_fullfile = fullfile( fn_path, fn_name );
 warning off
-dummy = load( fullfile(fn_path, fn_n), 'splits', 'spec_st', 'stim_st', 'tbl_data' );
+data = load(fn_fullfile);
 warning on
 
-splits   = dummy.splits;
-spec_st  = dummy.spec_st;
-stim_st  = dummy.stim_st;
-tbl_data = dummy.tbl_data;
-n_splits = splits.n_splits;
-n_bands  = spec_st.n_bands;
-n_time   = length(splits.idx);
+
+% Extract data: 
+CCt     = data.CCt;         % compares dry vs. est
+CCt2    = data.CCt2;        % compares drr vs. est
+splits  = data.splits;
+spec_st = data.spec_st;
+stim_st = data.stim_st;
+tbl_data= data.tbl_data;
+% n_splits= splits.n_splits;
+n_bands = spec_st.n_bands;
+n_time  = length(splits.idx);
 % n_lags: # of samples along the x-axis (time) for each patch to use for comparison
-n_lags   = 1;    
+patch_width = 1;    
+Sest    = data.est_st.Sest;
+
 
 % Sampling frequency along the time axis
 binwidth    = spec_st.binwidth;     % (ms)
@@ -88,124 +83,149 @@ f           = spec_st.f;            % (Hz)
 win_size_ms = spec_st.win_size_ms;  % (ms)
 t           = spec_st.t;            % (sec)
 
+drr     = get_DRR_list_and_indices; 
+n_drr   = drr.n_drr;
+idx_drr = drr.sortby(1:n_drr);
+drr_labels = drr.labels(drr.ordered);
+
+
+%% What to plot
+sp = 5;
+idx_x = sp == splits.idx;   % samples
+k = idx_drr(5);
+
+% Extract chunks\speakers
+At  = CCt(idx_x, k);
+At2 = CCt2(idx_x, k);
+Sdry = spec_st.Sft{drr.ordered(1)};
+Sdrr = spec_st.Sft{drr.ordered(k)};
+
+
 
 %%
+figh = figure(fignum);
+clf;
+tidx = t(idx_x);    % (sec)
+tidx = tidx-tidx(1);    % (sec)
+plot(tidx, [At, At2]);
+legend('CC$_t$(Dry-Est)', sprintf('CC$_t$(%s-Est)', drr_labels{k}));
+xlabel('Time (sec)');
+ylabel('CC$_t$');
+title(sprintf('%d %ss', n_units, data_type));
+axis tight
+ylim([-0.5, 2.0]);
+xlim([0.55, 1.1]);
 
-% Pearson correlation for average of ALL the split
-CC = nan(n_time, n_drr);        % Sdry-vs-Sest
-CC2 = nan(n_time, n_drr);       % Sdrr-vs-Sest
+face_alpha = 0.5;
 
-% Instant Pearson correlation as a function o DRR
-CCt = nan(n_time, n_drr);
-PPt = nan(n_time, n_drr);
-CCt2 = nan(n_time, n_drr);
-PPt2 = nan(n_time, n_drr);
+% Time intervals for the AREA
+t_scope = [0.825, 0.925];
+t_scope(2,:) = [0.74, 0.82];
+t_scope(3,:) = [0.61, 0.725];
 
+hold on
+area_h = area(t_scope(1,:), [1, 1]);
+area_h(2) = area(t_scope(2,:), [1, 1]);
+area_h(3) = area(t_scope(3,:), [1, 1]);
+hold off
 
+area_h(1).DisplayName = sprintf('$Dry > %s$', drr_labels{k});
+area_h(1).FaceAlpha = face_alpha;
+area_h(1).FaceColor = aux.rpalette('new03');
+area_h(1).EdgeColor = 'k';
 
+area_h(2).DisplayName = sprintf('$Dry < %s$', drr_labels{k});
+area_h(2).FaceAlpha = face_alpha;
+area_h(2).FaceColor = aux.rpalette('new04');
+area_h(2).EdgeColor = 'k';
 
+area_h(3).DisplayName = sprintf('$Dry \\approx %s$', drr_labels{k});
+area_h(3).FaceAlpha = face_alpha;
+area_h(3).FaceColor = aux.rpalette('new05');
+area_h(3).EdgeColor = 'k';
 
-% Load the file
-fn_n = sprintf(fn_template, n_units);
-aux.cprintf('Comments', '\n-> Loading <%s>...\n', fn_n);
-if ~exist('data', 'var')
-    warning off
-    data = load(fullfile(fn_path, fn_n));
-    warning on
-    obj_list = data.obj_list;
-    spec_st  = data.spec_st;
-    splits   = data.splits;
-end
+set(gca, 'FontSize', fontsize);
 
-% # of neurons
-assert( n_units ==  obj_list{1}.n_neurons, 'ERROR: something is wrong!' );
-n_neurons = obj_list{1}.n_neurons;
-
-if verbose
-    fprintf('--> data_type  : %s\n', data_type);
-    fprintf('--> n_neurons  : %d\n', n_neurons);
-    fprintf('--> binwidth   : %d\n', binwidth);
-    fprintf('--> n_bands    : %d\n', n_bands);
-    fprintf('--> win_size_ms: %d\n', win_size_ms);
-    fprintf('--> n_drr      : %d\n', n_drr);
-    fprintf('--> n_splits   : %d\n', n_splits);
-    fprintf('--> n_lags     : %d\n', n_lags);
-end
+% Set same positions for all figures
+% get(gcf, 'Position')
+pos_fig = [113, 92, 1743, 655];
+set(figh, 'Position', pos_fig);
 
 
-debug_flag = 0;
 
-% Loop over the splits (exclusive intervals)
-for sp = 1:n_splits 
-    idx_sp = sp == splits.idx;
+%%
+hz = 1e-3;     % {1.0, 1e-3}   % shows Hz or kHz
+if (hz == 1e-3), hz_units='(kHz)'; else  hz_units='(Hz)'; end
 
-    % Cut out the testing chunk of the spectrogram
-    Sdry = spec_st.Sft{drr.dry}(:, idx_sp);    
-    % Apply ZCA for Pearson correlation coefficient
-    Adry  = zca(im2col(Sdry, [n_bands, n_lags], 'sliding'));
+for k = 1:length(area_h)
+    
+    figh = figure(10+fignum + 2*k);
+    clf;
+    
+    ax = subplot(1,3,1);
+    img = imagesc(tidx, hz*f, Sdry(:,idx_x) );
 
-    for k = 1:n_drr    
-        rv = drr.ordered(k);
+    ax(2) = subplot(1,3,2);
+    img(2) = imagesc(tidx, hz*f, Sest(:,idx_x) );
 
-        % Cut out the testing chunk of the spectrogram
-        Sdrr = spec_st.Sft{rv}(:, idx_sp);           
-        % Apply ZCA for Pearson correlation coefficient
-        Adrr = zca(im2col(Sdrr, [n_bands, n_lags], 'sliding'));     
+    ax(3) = subplot(1,3,3);
+    img(3) = imagesc(tidx, hz*f, Sdrr(:,idx_x) );
 
-        Sest = obj_list{rv,sp}.X_est;
-        % Apply ZCA for Pearson correlation coefficient
-        Aest = zca(im2col(Sest, [n_bands, n_lags], 'sliding'));    
+    linkaxes(ax);
+    set(ax(2:3), 'YTickLabel', '');
+    % set(ax(2:3), 'XTickLabel', '');
+    set(ax, 'YDir', 'normal');
+    set(ax, 'FontSize', fontsize);
+    arrayfun(@(X) colormap(X, 'jet'), ax );
 
-        % AVERAGED Pearson correlation coefficient:
-        % DRY-vs-EST
-        gof = goodness(Sdry(:), Sest(:));  
-        CC(idx_sp,k) = gof.CC;
-        % DRR-vs-EST
-        gof2 = goodness(Sdrr(:), Sest(:));   
-        CC2(idx_sp,k) = gof2.CC;
+    ylabel(ax(1), ['Frequency ', hz_units]);
+    xlabel(ax(2), 'Time (sec)');
 
-        % INSTANTANEOUS Pearson correlation coefficient:
-        CCt(idx_sp,k) = mean(Adry .* Aest)';
-        [CCt(idx_sp,k), PPt(idx_sp,k)] = corrcoef_array(Adry, Aest);
-        CCt2(idx_sp,k) = mean(Adrr .* Aest)';
-        [CCt2(idx_sp,k), PPt2(idx_sp,k)] = corrcoef_array(Adrr, Aest);
+    xlim(t_scope(k,:));
 
-        % DEBUG:
-        if debug_flag
-            figure(99);
-            clf;
-            tidx = t(idx_sp);
-            plot(tidx, [CCt(idx_sp,k), CCt2(idx_sp,k)] );
-            legend('CC(Dry-est)', sprintf('CC(%s-est)', drr.labels{rv}));
-            xlabel('Time (sec)');
-            ylabel('CC');
-            title(sprintf('%s %d', data_type, n_units));
-        end
+    title(ax(1), sprintf('Dry (%d %ss)', n_units, data_type));
+    title(ax(2), 'Reconstructed');
+    title(ax(3), 'DRR');
+
+    % Set same positions for all figures
+    set(figh, 'Position', pos_fig);
+
+    % move all axes left
+    for nn = 1:length(ax)
+        pos = get(ax(nn), 'Position');
+        pos_new = pos;
+        pos_new(1) = pos_new(1) + 0.05;
+        pos_new(2) = pos_new(2) + 0.075;
+        pos_new(4) = pos_new(4) - 0.15;
+        set(ax(nn), 'Position', pos_new);
     end
+
+    % set(fig, 'Color', h1.FaceColor);
+    % rectangle('Position', [20,20,100,100], 'FaceColor', [0 .5 .5])
+    % annotation('rectangle',0.001*[20,20,100,100],'Color','red')
+    label_h = aux.abc(ax(1), 'location', 'northwest outside', ...
+        'outside_xbias', 0.75 ,'outside_ybias', 0.12);
+    label_h.BackgroundColor = area_h(k).FaceColor;
+    label_h.FaceAlpha = face_alpha;
+    label_h.EdgeColor = 'k';
+    label_h.Color = 'none';
+    % label_h.String = '';
+
 end
 
+%%
+% * If patch_width == 1 then there is no need to reshape columns...
+% Rx = @(x) reshape(x, [n_bands, patch_width]);
+% imagesc([Rx(At(:,nn)), Rx(At2(:,nn))]);
+figure(20+fignum);
+clf;
+n_bins = 50;
+area_h = histogram(At(:), n_bins);
+hold on
+h2 = histogram(At2(:), n_bins);
+hold off
 
-    
-    
-%% Save the analysis results
-% %{
-fprintf('Save the analysis results!\n');
-fn_path = '../_data/Analysis/';
-fn_name = sprintf('analyzed_cc_%s_units(%d).mat', data_type, n_units);
-fn.save.fullfile= fullfile( fn_path, fn_name );
 
-% Save the results for that 
-save(fn.save.fullfile, ... 
-    ... '-v7.3', ...
-    'splits', ...       saves the chunks\intervals\speakers
-    'stim_st', ...      stimulus data
-    'spec_st', ...      spectrogram's structue with all relevant data
-    'tbl_data', ...     a table with all neurons in the data set            
-    'n_lags'...         # of samples used to compare (CC) between patches
-    ); 
-
-%}
- 
 
 
 

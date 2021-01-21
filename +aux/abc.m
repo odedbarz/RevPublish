@@ -136,4 +136,10 @@ end
 ax      = reshape(ax, ax_shape);
 label_h = reshape(label_h, ax_shape);
 
+if 1 == n_ax
+    label_h = label_h{1};
+end
+
+
+
 

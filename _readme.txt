@@ -19,7 +19,7 @@ ROOT: the project root directory.
 (3) Run the ANALYZE_RECONSTRUCT/MAIN_LOOPOVER_UNITS.M to perform the reconstruction on various
 	number of units. Each such case is save seperately at _DATA/_RECONSTRUC.  
 
-(4) Analysis: 
+(4) Analysis #1: 
 	Run ARO2021/ANALYZE_RECONSTRUCTION.M. This will analyze the spectrogram 	
 	reconstructions between the DRY and other DRR conditions and will plot all relevant figures.
 
@@ -29,4 +29,8 @@ ROOT: the project root directory.
 		* CCr: correlation coefficient between DRY and other DRR conditions
 
 	
-
+(5) Analysis #2:
+	Run ANALYZE_FEATURES\MAIN_CREATE_CC_DATABASE.M to create a database file @_DATA/Analysis. This 
+	database contains CC between various DRR along the time domain.
+	
+	Use ANALYZE_CC.M to analyze the CC data and produce plots.
