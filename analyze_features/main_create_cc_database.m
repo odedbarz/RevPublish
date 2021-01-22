@@ -43,7 +43,7 @@ switch data_type
         
     case 'MUA'
         fn_template = 'reconstruct_MUA_(14-Jan-2021)_units(%d)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(0)_trainDRR(3).mat';        
-        n_units = 241;   %[10, 25, 50, 103, 150, 241];    
+        n_units = 103;   %[10, 25, 50, 103, 150, 241];    
 
     otherwise
         error('--> Unrecognized DATA_TYPE!');
@@ -95,8 +95,8 @@ t           = spec_st.t;            % (sec)
 
 %%
 % Pearson correlation for average of ALL the split
-CC = nan(n_time, n_drr);        % Sdry-vs-Sest
-CC2 = nan(n_time, n_drr);       % Sdrr-vs-Sest
+CC = nan(n_drr, n_splits);        % Sdry-vs-Sest
+CC2 = nan(n_drr, n_splits);       % Sdrr-vs-Sest
 
 % Instant Pearson correlation as a function o DRR
 CCt = nan(n_time, n_drr);
@@ -126,7 +126,7 @@ assert( n_units ==  obj_list{1}.n_neurons, 'ERROR: something is wrong!' );
 n_neurons = obj_list{1}.n_neurons;
 
 if verbose
-    fprintf('--> data_type  : %s\n', data_type);
+    fprintf('\n--> data_type  : %s\n', data_type);
     fprintf('--> n_neurons  : %d\n', n_neurons);
     fprintf('--> binwidth   : %d\n', binwidth);
     fprintf('--> n_bands    : %d\n', n_bands);
@@ -167,10 +167,10 @@ for sp = 1:n_splits
         % AVERAGED Pearson correlation coefficient:
         % DRY-vs-EST
         gof = goodness(Sdry_(:), Sest_(:));  
-        CC(idx_sp,k) = gof.CC;
+        CC(k,sp) = gof.CC;
         % DRR-vs-EST
         gof2 = goodness(Sdrr_(:), Sest_(:));   
-        CC2(idx_sp,k) = gof2.CC;
+        CC2(k,sp) = gof2.CC;
 
         % INSTANTANEOUS Pearson correlation coefficient:
         %CCt(idx_sp,k) = mean(Adry .* Aest)';
@@ -196,8 +196,10 @@ end
 assert( 0 == sum(isnan(Sest(:))), ...
     '--> There are NaNs in one (or more) of the reconstructed spectrograms!' );
 
-est_st.info = 'Dimensions of Sest: (n_bands, n_time, n_drr); DRR dimnesion are ALREAD SORTED!';
-est_st.Sest = Sest;
+info = sprintf('\n%s;\n%s;\n\n' , ...
+    '- All DRR dimensions are already SORTED!',...
+    '- Sest: (n_bands, n_time, n_drr)');
+
 
     
 %% Save the analysis results
@@ -210,12 +212,13 @@ fn_fullfile = fullfile( fn_path, fn_name );
 % Save the results for that 
 save(fn_fullfile, ... 
     ... '-v7.3', ...
+    'info',...              general info about the data
     'splits', ...           saves the chunks\intervals\speakers
     'stim_st', ...          stimulus data
     'spec_st', ...          spectrogram's structue with all relevant data
     'tbl_data', ...         a table with all neurons in the data set            
     'patch_width',...       # of samples used to compare (CC) between patches
-    'est_st',...            reconstructed\estimated spectrograms for all DRRs             
+    'Sest',...              reconstructed\estimated spectrograms for all DRRs             
     'CC', 'CCt', 'PPt',...
     'CC2', 'CCt2', 'PPt2' ...
     ); 

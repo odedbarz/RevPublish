@@ -19,18 +19,17 @@ ROOT: the project root directory.
 (3) Run the ANALYZE_RECONSTRUCT/MAIN_LOOPOVER_UNITS.M to perform the reconstruction on various
 	number of units. Each such case is save seperately at _DATA/_RECONSTRUC.  
 
-(4) Analysis #1: 
-	Run ARO2021/ANALYZE_RECONSTRUCTION.M. This will analyze the spectrogram 	
+(4) Analysis & plot results: 
+-	Run ANALYZE_RECONSTRUCT/ANALYZE_RECONSTRUCTION.M. This will analyze the spectrogram 	
 	reconstructions between the DRY and other DRR conditions and will plot all relevant figures.
 
-	Run ARO2021/ANALYZE_STATS.M to analyze for:
+-	Run ANALYZE_RAW/ANALYZE_STATS.M to analyze for:
 		* RMD: response modulation depth
 		* MG : modulation gain
 		* CCr: correlation coefficient between DRY and other DRR conditions
 
-	
-(5) Analysis #2:
-	Run ANALYZE_FEATURES\MAIN_CREATE_CC_DATABASE.M to create a database file @_DATA/Analysis. This 
+-	Run ANALYZE_FEATURES\MAIN_CREATE_CC_DATABASE.M to create a database file @_DATA/Analysis. This 
 	database contains CC between various DRR along the time domain.
 	
-	Use ANALYZE_CC.M to analyze the CC data and produce plots.
+-	Use ANALYZE_FEATURES\ANALYZE_CC.M to analyze the CCs and to plot results.
+
