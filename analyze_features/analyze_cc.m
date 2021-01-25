@@ -87,14 +87,18 @@ fs_timeaxis = 1/(1e-3*binwidth);    % (Hz)
 f           = spec_st.f;            % (Hz)
 win_size_ms = spec_st.win_size_ms;  % (ms)
 t           = spec_st.t;            % (sec)
-
 drr         = get_DRR_list_and_indices; 
 n_drr       = drr.n_drr;
 drr_labels  = drr.labels(drr.ordered);
 
 
 
-%% What to plot
+
+
+%% Plot ALL CCt & CCt2 
+figh = figure(fignum);
+clf;
+
 sp = 1;
 idx_sp = sp == splits.idx;      % indices; time indices for speaker SP
 drr_k = 5;      % 1:{'Dry'}, 2:{'9.4 dB'}, 3:{'4.8 dB'}, 4:{'-2.5 dB'}, 5:{'-8.2 dB'}
@@ -108,10 +112,47 @@ Sdrr = spec_st.Sft{drr.ordered(drr_k)};
 Sest = data.Sest;
 
 
+%
+tidx = t(idx_sp);    % (sec)
+tidx = tidx-tidx(1);    % (sec)
+plot(tidx, [CCtk, CCtk2], 'LineWidth', linewidth);
+set(gca, 'FontSize', fontsize);
+xlabel('Time (sec)', 'FontSize', fontsize_big);
+ylabel('CC$_t$', 'FontSize', fontsize_big);
+title(sprintf('%d %ss', n_units, data_type), 'FontSize', fontsize_big);
+axis tight
+
+legend('CC$_t$(Dry-Est)', sprintf('CC$_t$(%s-Est)', drr_labels{drr_k}),...
+    'Location', 'southeast', 'FontSize', fontsize_big);
+
+
+% Set same positions for all figures
+pos_fig = [143         330        1610         453];
+set(figh, 'Position', pos_fig);
+
+
+
+
+
+
+%% Plot a SAMPLE of the CCt & CCt2 with 3 highlight regions
+% sp = 1;
+% idx_sp = sp == splits.idx;      % indices; time indices for speaker SP
+% drr_k = 5;      % 1:{'Dry'}, 2:{'9.4 dB'}, 3:{'4.8 dB'}, 4:{'-2.5 dB'}, 5:{'-8.2 dB'}
+
+% % Extract chunks\speakers
+% CCtk  = CCt(idx_sp, drr_k);
+% CCtk2 = CCt2(idx_sp, drr_k);
+
+% Sdry = spec_st.Sft{drr.ordered(1)};
+% Sdrr = spec_st.Sft{drr.ordered(drr_k)};
+% Sest = data.Sest;
+
 
 %
-figh = figure(fignum);
+figh = figure(2+fignum);
 clf;
+
 tidx = t(idx_sp);    % (sec)
 tidx = tidx-tidx(1);    % (sec)
 plot(tidx, [CCtk, CCtk2], 'LineWidth', linewidth);
@@ -170,21 +211,18 @@ area_h(3).FaceColor = aux.rpalette('new05');
 area_h(3).EdgeColor = 'k';
 
 % Set same positions for all figures
-% ** get(gcf, 'Position')
-% '########## DEBUG ############'
-% pos_fig = [113, 92, 1743, 655];
-pos_fig = [188 353 1458 496];
+pos_fig = [188 241 1479 608];
 set(figh, 'Position', pos_fig);
 
 
-% '########## DEBUG ############'
 ylim(gca, [-2.0, 1.1]);
 xlim(gca, [2.25, 2.98]);
 
 
 
 
-%% Repeat 3 figures for each colored area
+%% IMAGESC of the previous 3 highlight regions to compare the Dry, Est., & DRR
+%
 clear figh ax
 hz = 1e-3;     % {1.0, 1e-3}   % shows Hz or kHz
 if (hz == 1e-3), hz_units='(kHz)'; else  hz_units='(Hz)'; end
@@ -255,26 +293,299 @@ for k = 1:length(area_h)
 
 end
 
-return;
 
 
 
-%%
-% * If patch_width == 1 then there is no need to reshape columns...
-% Rx = @(x) reshape(x, [n_bands, patch_width]);
-% imagesc([Rx(CCtk(:,nn)), Rx(CCtk2(:,nn))]);
-figure(20+fignum);
+
+%% Plot \Delta CC_t
+% This plot shows that the mean CC are in favor of the -8.2 dB-vs.-Est than the 
+% Dry-vs.-Est reconstruction.
+%
+figure(20 + fignum);
 clf;
 n_bins = 50;
-area_h = histogram(CCtk(:), n_bins);
+%  ('count', 'probability', 'countdensity', 'pdf', 'cumcount', or 'cdf')
+area_h = histogram(CCt(:)-CCt2(:), n_bins,...
+    ...'Normalization', 'probability',...
+    'displayName', 'CC$_t$(Dry-Est) - CC$_t$(DRR-Est)');
+set(gca, 'FontSize', fontsize);
+
+% aux.vline(nanmean(CCtk(:)-CCtk2(:)), 'LineStyle', ':' , 'displayName', 'mean()');
+% legend('Location', 'northwest', 'FontSize', fontsize_big);
+title(sprintf('Speaker %d, CC$_t$(Dry-Est) - CC$_t$(DRR-Est)', sp), 'FontSize', fontsize_big);
+ylabel('Count', 'FontSize', fontsize_big);
+xlabel('$\Delta CC_t$', 'FontSize', fontsize_big);
+
+% Fi = 
+%      General model Gauss1:
+%      Fi(x) =  a1*exp(-((x-b1)/c1)^2)
+x = area_h.BinEdges(1:end-1) + diff(area_h.BinEdges);
+y = area_h.Values;
+Fi = fit(x', y', 'gauss1');
+
+m0 = nanmean(CCtk(:)-CCtk2(:));
+
+aux.vline(Fi.b1, 'Color', 'r');
+
+x_ = interp1(1:length(x), x, 1:0.1:length(x));
 hold on
-h2 = histogram(CCtk2(:), n_bins);
+plot(x_, Fi.a1*exp(-((x_-Fi.b1)./Fi.c1).^2), 'r');
+% plot(Fi.b1, 1.3*Fi.a1, 'rv', 'Color', 'r', 'MarkerFaceColor', 'r');
+plot(m0, 0.75*Fi.a1, 'rv', 'Color', aux.rpalette('new01'), 'MarkerFaceColor', aux.rpalette('new01'));
 hold off
 
 
 
 
+%% Plot \Delta CC_t
+% This plot shows that the mean CC are in favor of the -8.2 dB-vs.-Est than the 
+% Dry-vs.-Est reconstruction.
+%
+figure(25 + fignum);
+clf;
+n_bins = 50;
+%  ('count', 'probability', 'countdensity', 'pdf', 'cumcount', or 'cdf')
+area_h = histogram(CCtk(:), n_bins,...
+    ...'Normalization', 'probability',...
+    'displayName', 'CC$_t$(Dry vs. Est)');
+hold on
+area_h(2) = histogram(CCtk2(:), n_bins,...
+    ...'Normalization', 'probability',...
+    'displayName', sprintf('CC$_t$(%s vs. Est)', drr.labels{drr.ordered(drr_k)}));
+hold off
+set(gca, 'FontSize', fontsize);
 
+% aux.vline(nanmean(CCtk(:)-CCtk2(:)), 'LineStyle', ':' , 'displayName', 'mean()');
+% legend('Location', 'northwest', 'FontSize', fontsize_big);
+title(sprintf('Speaker %d, CC$_t$(Dry-Est) vs CC$_t$(DRR-Est)', sp), 'FontSize', fontsize_big);
+ylabel('Count', 'FontSize', fontsize_big);
+xlabel('CC', 'FontSize', fontsize_big);
+
+mx = max([area_h(1).Values, area_h(2).Values]);
+m1 = nanmean(area_h(1).Data);
+m2 = nanmean(area_h(2).Data);
+
+hold on
+plot(m1, mx, 'v',...     
+    'MarkerFaceColor', aux.rpalette('new01'),...
+    'MarkerEdgeColor', 'none');
+plot(m2, mx, 'v',...
+    'MarkerFaceColor', aux.rpalette('new02'),...
+    'MarkerEdgeColor', 'none');
+hold off
+legend(area_h, 'Location', 'northwest');
+
+
+
+
+
+%% Loads the MAT file (LIBROSA)
+% pydata = 
+%   struct with fields:
+% 
+%     stim: [1×1 struct]
+%        p: [1×1 struct]
+%     harm: [1×1 struct]
+%     spec: [1×1 struct]
+mat_fn      = 'analyzed_librosa.mat';
+mat_full_fn = fullfile( load.path_to_data('data'), 'Analysis', mat_fn);
+pydata      = load( mat_full_fn );
+
+% Extract parameters
+spec = pydata.spec;
+p   = pydata.p;
+
+% sr = (pydata.stim.sr);
+% duration_seconds = double(pydata.stim.duration_seconds);
+% fmin = double(pydata.p.fmin);
+% fmax = double(pydata.p.fmax);
+% n_fft = (pydata.spec.n_fft);
+% t = pydata.stim.t;
+% y = double(pydata.stim.y);
+% t_ = pydata.p.t_;
+% F0 = pydata.p.F0;
+% harm = pydata.harm;
+% voiced_flag = pydata.p.voiced_flag;
+% hop_length = double(pydata.p.hop_length);
+
+% interpulate the F0 vector to the stimulus length
+F0 = interp1( linspace(1,p.duration_seconds,p.nt_), p.F0, linspace(1,p.duration_seconds,n_time) )';
+
+
+% PLOT Spectrogram + F0
+figure(50 + fignum);
+clf;
+hz = 1e-3;       % set the units: 1 (Hz) or 1e-3 (kHz)
+
+imagesc(spec.t, hz*spec.f, spec.Sdb);
+set(gca, 'YDir', 'normal');
+colorbar;
+ylim(hz*[0, 0.8e3]);
+% set(gca, 'YScale', 'log')
+set(gca, 'FontSize', fontsize);
+hold on
+plot(t, hz*F0, 'w');
+hold off
+title('Stimulus and its F0s');
+ylabel('Frequency (kHz)', 'FontSize', fontsize_big);
+xlabel('Time (sec)', 'FontSize', fontsize_big);
+
+
+
+%%
+% Indices of GOOD reconstructions
+idx_robust = false(n_time, 1);
+idx_robust( CCt(:, drr_k) + 2*Fi.c1/2 >= CCt2(:, drr_k) ) = true;
+
+% Harmonic indices; get all indices of harmonics without consonants
+idx_F0 = ~isnan(F0) .* F0>0;
+
+% % Remove single elements (non-zeros surrounded by zeros)
+% cond1 = idx_robust(1:end-2) .* idx_robust(3:end) .* ~idx_robust(2:end-1);     
+% cond1 = [0; cond1; 0];
+% plot([CCt(:, drr_k), CCt2(:, drr_k), idx_robust, cond1])
+
+
+figure(52 + fignum);
+clf;
+% hz = 1e-3;       % set the units: 1 (Hz) or 1e-3 (kHz)
+% imagesc(spec.t, hz*spec.f, spec.Sdb);
+% set(gca, 'YDir', 'normal');
+% colorbar;
+% hold on
+% plot(t, hz*F0, 'w');
+% plot(t, max(hz*F0)*idx_robust, 'w');
+% hold off
+plot([CCt(:, drr_k), CCt2(:, drr_k), F0/max(F0), idx_robust]);  '### DEBUG ###'
+
+
+figure(55 + fignum);
+clf;
+hz = 1e-3;       % set the units: 1 (Hz) or 1e-3 (kHz)
+num_F0_robust           = nnz(  idx_F0 .*  idx_robust )/n_time;
+num_F0_not_robust       = nnz(  idx_F0 .* ~idx_robust )/n_time;
+num_not_F0_robust       = nnz( ~idx_F0 .*  idx_robust )/n_time;
+num_not_F0_not_robust   = nnz( ~idx_F0 .* ~idx_robust )/n_time;
+M = [num_F0_robust,     num_F0_not_robust; ...
+    num_not_F0_robust,  num_not_F0_not_robust];
+
+h = heatmap({'Dry + std > -8.2 dB', 'Dry + std < -8.2 dB'}, {'Harmonics', 'Non-Harmonics'}, M);
+h.FontSize = fontsize; 
+
+
+
+nanmean(idx_F0 .* CCt(:, drr_k))
+nanmean(idx_F0 .* CCt2(:, drr_k))
+nanmean(~idx_F0 .* CCt(:, drr_k))
+nanmean(~idx_F0 .* CCt2(:, drr_k))
+
+
+
+
+%%
+%{
+figure(57 + fignum);
+clf;
+hz = 1e-3;       % set the units: 1 (Hz) or 1e-3 (kHz)
+CCthr = 0.70;
+num_F0_CCthr        = nnz(  idx_F0 .* CCt(:, drr_k)  > CCthr )/n_time;
+num_not_F0_CCthr    = nnz( ~idx_F0 .* CCt(:, drr_k)  > CCthr )/n_time;
+num_F0_CC2thr       = nnz(  idx_F0 .* CCt2(:, drr_k) > CCthr )/n_time;
+num_not_F0_CC2thr   = nnz( ~idx_F0 .* CCt2(:, drr_k) > CCthr )/n_time;
+
+bar([num_F0_CCthr, num_not_F0_CCthr; num_F0_CC2thr, num_not_F0_CC2thr]);
+
+
+
+figure(55 + fignum);
+clf;
+hz = 1e-3;       % set the units: 1 (Hz) or 1e-3 (kHz)
+num_F0_robust           = nnz(  idx_F0 .* CCt(:, drr_k)>CCthr   .*  idx_robust )/n_time;
+num_F0_not_robust       = nnz( ~idx_F0 .* CCt(:, drr_k)>CCthr   .* ~idx_robust )/n_time;
+num_not_F0_robust       = nnz(  idx_F0 .* CCt2(:, drr_k)>CCthr  .*  idx_robust )/n_time;
+num_not_F0_not_robust   = nnz( ~idx_F0 .* CCt2(:, drr_k)>CCthr  .* ~idx_robust )/n_time;
+
+M = [num_F0_robust,     num_F0_not_robust; ...
+    num_not_F0_robust,  num_not_F0_not_robust];
+
+
+bar(M);
+
+
+
+%%
+% Indices of GOOD reconstructions
+CCthr = 0.60;
+idx_robust = (CCt(:, drr_k) >= CCthr) .* (CCt2(:, drr_k) >= CCthr);
+
+
+% Harmonic indices; get all indices of harmonics without consonants
+idx_F0 = ~isnan(F0) .* F0>0;
+
+% % Remove single elements (non-zeros surrounded by zeros)
+% cond1 = idx_robust(1:end-2) .* idx_robust(3:end) .* ~idx_robust(2:end-1);     
+% cond1 = [0; cond1; 0];
+% plot([CCt(:, drr_k), CCt2(:, drr_k), idx_robust, cond1])
+
+
+figure(52 + fignum);
+clf;
+% hz = 1e-3;       % set the units: 1 (Hz) or 1e-3 (kHz)
+% imagesc(spec.t, hz*spec.f, spec.Sdb);
+% set(gca, 'YDir', 'normal');
+% colorbar;
+% hold on
+% plot(t, hz*F0, 'w');
+% plot(t, max(hz*F0)*idx_robust, 'w');
+% hold off
+plot([CCt(:, drr_k), CCt2(:, drr_k), F0/max(F0), idx_robust]);  '### DEBUG ###'
+
+
+figure(55 + fignum);
+clf;
+hz = 1e-3;       % set the units: 1 (Hz) or 1e-3 (kHz)
+num_F0_robust           = nnz(  idx_F0 .*  idx_robust )/n_time;
+num_F0_not_robust       = nnz(  idx_F0 .* ~idx_robust )/n_time;
+num_not_F0_robust       = nnz( ~idx_F0 .*  idx_robust )/n_time;
+num_not_F0_not_robust   = nnz( ~idx_F0 .* ~idx_robust )/n_time;
+M = [num_F0_robust,     num_F0_not_robust; ...
+    num_not_F0_robust,  num_not_F0_not_robust];
+
+h = heatmap({'Dry & -8.2 dB > CCthr', 'Dry & -8.2 dB < CCthr'}, {'Harmonics', 'Non-Harmonics'}, M);
+h.FontSize = fontsize; 
+
+
+ 
+ 
+
+%%
+% Indices of GOOD reconstructions
+sf = spectral_flatness(spec.S);
+sf = interp1( linspace(1,p.duration_seconds,p.nt_), sf, linspace(1,p.duration_seconds,n_time) )';
+
+idx_robust = false(n_time, 1);
+idx_robust( CCt(:, drr_k) + Fi.c1/2 >= CCt2(:, drr_k) ) = true;
+
+
+histogram( (CCt(:, drr_k)-CCt2(:, drr_k) ) .* sf)
+hold on
+histogram(CCt2(:, drr_k) .* sf)
+hold off
+ 
+%}
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
 
 
 
