@@ -73,7 +73,7 @@ CC      = data.CC;         % compares dry vs. est
 CC2     = data.CC2;        % compares drr vs. est
 CCt     = data.CCt;         % compares dry vs. est
 CCt2    = data.CCt2;        % compares drr vs. est
-splits  = data.splits;
+% splits  = data.splits;
 spec_st = data.spec_st;
 stim_st = data.stim_st;
 tbl_data= data.tbl_data;
@@ -95,11 +95,12 @@ drr_labels  = drr.labels(drr.ordered);
 
 %% Load the the META-DATA of the stimuli (TIMIT) files
 duration_sec = 1e-3*data.stim_st.duration_ms;
-fn_path_meta = load.path_to_data('Stimulus');
-fn_file_meta = sprintf('metadata_(%d)_wav_(30-Jun-2020)', duration_sec);
-dummy        = load( fullfile( fn_path_meta, fn_file_meta ) );
-tbl_metadata = dummy.tbl_metadata;
-
+% fn_path_meta = load.path_to_data('Stimulus');
+% fn_file_meta = sprintf('metadata_(%d)_wav_(30-Jun-2020)', duration_sec);
+% dummy        = load( fullfile( fn_path_meta, fn_file_meta ) );
+% tbl_metadata = dummy.tbl_metadata;
+[split_times_idx, n_splits, tbl_metadata] = ... 
+    split_spectrogram_into_TIMIT_wav_files(binwidth, duration_sec, 0);
 
 
 
@@ -108,7 +109,8 @@ figh = figure(fignum);
 clf;
 
 sp     = 1;
-idx_sp = sp == splits.idx;      % indices; time indices for speaker SP
+% idx_sp = sp == splits.idx;      % indices; time indices for speaker SP
+idx_sp = split_times_idx(sp,1):split_times_idx(sp,2);      % indices; time indices for speaker SP
 drr_k  = 5;      % 1:{'Dry'}, 2:{'9.4 dB'}, 3:{'4.8 dB'}, 4:{'-2.5 dB'}, 5:{'-8.2 dB'}
 
 % Get the speaker's sex
@@ -128,7 +130,7 @@ Sest = data.Sest;
 
 
 %
-tidx = t(idx_sp);    % (sec)
+tidx = t(idx_sp);       % (sec)
 tidx = tidx-tidx(1);    % (sec)
 plot(tidx, [CCtk, CCtk2], 'LineWidth', linewidth);
 set(gca, 'FontSize', fontsize);
@@ -138,9 +140,8 @@ title(sprintf('%s Speaker (%d %ss)', sp_sex, n_units, data_type), 'FontSize', fo
 
 axis tight
 
-legend( ...
-    sprintf('CC$_t$($S_{dry}$ vs. $\\hat{S}_{%s}$)', drr_labels{drr_k}),...
-    sprintf('CC$_t$($S_{%s}$ vs. $\\hat{S}_{%s}$)', drr_labels{drr_k}, drr_labels{drr_k}),...
+legend( {sprintf('CC$_t$($S_{dry}$ vs. $\\hat{S}_{%s}$)', drr_labels{drr_k}),...
+    sprintf('CC$_t$($S_{%s}$ vs. $\\hat{S}_{%s}$)', drr_labels{drr_k}, drr_labels{drr_k}) },...
     'Location', 'southeast',...
     'FontSize', fontsize_big ...
 );
@@ -184,9 +185,8 @@ axis tight
 
 % legend('CC$_t$(Dry-Reconst.)', sprintf('CC$_t$(%s-Reconst.)', drr_labels{drr_k}),...
 %     'Location', 'southeast', 'FontSize', fontsize_big);
-legend( ...
-    sprintf('CC$_t$($S_{dry}$ vs. $\\hat{S}_{%s}$)', drr_labels{drr_k}),...
-    sprintf('CC$_t$($S_{%s}$ vs. $\\hat{S}_{%s}$)', drr_labels{drr_k}, drr_labels{drr_k}),...
+legend( {sprintf('CC$_t$($S_{dry}$ vs. $\\hat{S}_{%s}$)', drr_labels{drr_k}),...
+    sprintf('CC$_t$($S_{%s}$ vs. $\\hat{S}_{%s}$)', drr_labels{drr_k}, drr_labels{drr_k}) },...
     'Location', 'southeast',...
     'FontSize', fontsize_big ...
 );
@@ -326,7 +326,7 @@ end
 %% Plot \Delta CC_t
 % This plot shows that the mean CC are in favor of the -8.2 dB-vs.-Reconst than the 
 % Dry-vs.-Reconst reconstruction.
-%{
+% %{
 figure(20 + fignum);
 clf;
 n_bins = 50;
@@ -363,7 +363,7 @@ hold off
 %% Plot \Delta CC_t
 % This plot shows that the mean CC are in favor of the -8.2 dB-vs.-Reconst than the 
 % Dry-vs.-Reconst reconstruction.
-%{
+% %{
 figure(25 + fignum);
 clf;
 n_bins = 50;
@@ -434,7 +434,8 @@ p    = pydata.p;
 % interpulate the F0 vector to the stimulus length
 F0 = interp1( linspace(1,p.duration_seconds,p.nt_), p.F0, linspace(1,p.duration_seconds,n_time) )';
 
-
+% Harmonic indices; get all indices of harmonics without consonants
+idx_F0 = ~isnan(F0) .* F0>0;
 
 
 % PLOT Spectrogram + F0
@@ -472,10 +473,9 @@ axis tight
 hold on
 plot(t, F0/max(F0), 'LineWidth', linewidth);
 hold off
-legend( ...
-    sprintf('CC$_t$($S_{dry}$ vs. $\\hat{S}_{%s}$)', drr_labels{drr_k}),...
+legend( {sprintf('CC$_t$($S_{dry}$ vs. $\\hat{S}_{%s}$)', drr_labels{drr_k}),...
     sprintf('CC$_t$($S_{%s}$ vs. $\\hat{S}_{%s}$)', drr_labels{drr_k}, drr_labels{drr_k}),...
-    'F0/$F0_{max}$',...
+    'F0/$F0_{max}$' },...
     'Location', 'southeast',...
     'FontSize', fontsize_big ...
 );
@@ -489,7 +489,6 @@ xlim([3.0, 12.0]);
 
 
 %%
-
 figure(45 + fignum);
 clf;
 
@@ -539,7 +538,7 @@ legend(h, 'Location', 'northwest');
 %%
 % Indices of GOOD reconstructions
 idx_robust = false(n_time, 1);
-idx_robust( CCt(:, drr_k) -` Fi.c1 >= CCt2(:, drr_k) ) = true;
+idx_robust( CCt(:, drr_k) - Fi.c1 >= CCt2(:, drr_k) ) = true;
 
 % Harmonic indices; get all indices of harmonics without consonants
 idx_F0 = ~isnan(F0) .* F0>0;
@@ -567,11 +566,10 @@ xlim(gca, [3.0, 9.0]);
 ylim(gca, [0.0, 1.0]);
 ylabel('CC$_t$', 'FontSize', fontsize_big);
 xlabel('Time (sec)', 'FontSize', fontsize_big);
-legend( ...
-    sprintf('CC$_t$($S_{dry}$ vs. $\\hat{S}_{%s}$)', drr_labels{drr_k}),...
+legend( {sprintf('CC$_t$($S_{dry}$ vs. $\\hat{S}_{%s}$)', drr_labels{drr_k}),...
     sprintf('CC$_t$($S_{%s}$ vs. $\\hat{S}_{%s}$)', drr_labels{drr_k}, drr_labels{drr_k}),...
     'F0/$F0_{max}$', ...
-    sprintf('$S_{dry}$ + std $\\ge$ $S_{%s}$', drr_labels{drr_k}),...
+    sprintf('$S_{dry}$ + std $\\ge$ $S_{%s}$', drr_labels{drr_k}) },...
     'Location', 'southeastoutside',...
     'FontSize', fontsize_big ...
 );
@@ -597,112 +595,79 @@ h.FontSize = fontsize;
 
 
 
-
-
-
-
-
-%%
-%{
-figure(57 + fignum);
+%% CCt + PHONEMES
+figh = figure(70 + fignum);
 clf;
 hz = 1e-3;       % set the units: 1 (Hz) or 1e-3 (kHz)
-CCthr = 0.70;
-num_F0_CCthr        = nnz(  idx_F0 .* CCt(:, drr_k)  > CCthr )/n_time;
-num_not_F0_CCthr    = nnz( ~idx_F0 .* CCt(:, drr_k)  > CCthr )/n_time;
-num_F0_CC2thr       = nnz(  idx_F0 .* CCt2(:, drr_k) > CCthr )/n_time;
-num_not_F0_CC2thr   = nnz( ~idx_F0 .* CCt2(:, drr_k) > CCthr )/n_time;
 
-bar([num_F0_CCthr, num_not_F0_CCthr; num_F0_CC2thr, num_not_F0_CC2thr]);
+linewidth = 3
 
+% AX #1 -- CCt
+idx_sub = 4;
+ax = subplot(20,1,1+idx_sub:20);
+plot(ax, tidx, CCt(idx_sp,:), 'LineWidth', linewidth);
+set(ax, 'FontSize', fontsize);
+xlabel('Time (sec)', 'FontSize', fontsize_big);
+ylabel('CC$_t$', 'FontSize', fontsize_big);
+title(sprintf('%s Speaker (%d %ss)', sp_sex, n_units, data_type), 'FontSize', fontsize_big);
+axis tight
+legend_h = legend( drr.labels{drr.ordered}, 'Location', 'southeast' );
+legend_h.FontSize = fontsize_big;
 
+% AX #2 -- phonemes
+ax(2) = subplot(20,1,1:idx_sub);
+text_h = plot_phonemes(sp, 'ax', ax(2));
 
-figure(55 + fignum);
-clf;
-hz = 1e-3;       % set the units: 1 (Hz) or 1e-3 (kHz)
-num_F0_robust           = nnz(  idx_F0 .* CCt(:, drr_k)>CCthr   .*  idx_robust )/n_time;
-num_F0_not_robust       = nnz( ~idx_F0 .* CCt(:, drr_k)>CCthr   .* ~idx_robust )/n_time;
-num_not_F0_robust       = nnz(  idx_F0 .* CCt2(:, drr_k)>CCthr  .*  idx_robust )/n_time;
-num_not_F0_not_robust   = nnz( ~idx_F0 .* CCt2(:, drr_k)>CCthr  .* ~idx_robust )/n_time;
+linkaxes(ax, 'x');
 
-M = [num_F0_robust,     num_F0_not_robust; ...
-    num_not_F0_robust,  num_not_F0_not_robust];
-
-
-bar(M);
-
-
-
-%%
-% Indices of GOOD reconstructions
-CCthr = 0.60;
-idx_robust = (CCt(:, drr_k) >= CCthr) .* (CCt2(:, drr_k) >= CCthr);
-
-
-% Harmonic indices; get all indices of harmonics without consonants
-idx_F0 = ~isnan(F0) .* F0>0;
-
-% % Remove single elements (non-zeros surrounded by zeros)
-% cond1 = idx_robust(1:end-2) .* idx_robust(3:end) .* ~idx_robust(2:end-1);     
-% cond1 = [0; cond1; 0];
-% plot([CCt(:, drr_k), CCt2(:, drr_k), idx_robust, cond1])
-
-
-figure(52 + fignum);
-clf;
-% hz = 1e-3;       % set the units: 1 (Hz) or 1e-3 (kHz)
-% imagesc(spec.t, hz*spec.f, spec.Sdb);
-% set(gca, 'YDir', 'normal');
-% colorbar;
-% hold on
-% plot(t, hz*F0, 'w');
-% plot(t, max(hz*F0)*idx_robust, 'w');
-% hold off
-plot([CCt(:, drr_k), CCt2(:, drr_k), F0/max(F0), idx_robust]);  '### DEBUG ###'
-
-
-figure(55 + fignum);
-clf;
-hz = 1e-3;       % set the units: 1 (Hz) or 1e-3 (kHz)
-num_F0_robust           = nnz(  idx_F0 .*  idx_robust )/n_time;
-num_F0_not_robust       = nnz(  idx_F0 .* ~idx_robust )/n_time;
-num_not_F0_robust       = nnz( ~idx_F0 .*  idx_robust )/n_time;
-num_not_F0_not_robust   = nnz( ~idx_F0 .* ~idx_robust )/n_time;
-M = [num_F0_robust,     num_F0_not_robust; ...
-    num_not_F0_robust,  num_not_F0_not_robust];
-
-h = heatmap({'Dry & -8.2 dB > CCthr', 'Dry & -8.2 dB < CCthr'}, {'Harmonics', 'Non-Harmonics'}, M);
-h.FontSize = fontsize; 
+% ZOOM-IN
+xlim_0 = 0.8;
+xlim_1 = 2.2;
+xlim([xlim_0, xlim_1]);
+% Set same positions for all figures
+% set(figh, 'Position', pos_fig);
 
 
  
  
+%% SPECTROGRAM + F0 + PHONEMES
+figh = figure(80 + fignum);
+clf;
+hz = 1e-3;
 
-%%
-% Indices of GOOD reconstructions
-sf = spectral_flatness(spec.S);
-sf = interp1( linspace(1,p.duration_seconds,p.nt_), sf, linspace(1,p.duration_seconds,n_time) )';
+% AX #1 -- spectrogram
+idx_sub = 4;
+subplot(20,1,1+idx_sub:20);
+[ax, surf_h] = spec.plot_spectrogram(ti-ti(1), hz*f_, Sdry_,...
+    'fontsize', fontsize, 'precision', 2, 'fignum', fignum);
 
-idx_robust = false(n_time, 1);
-idx_robust( CCt(:, drr_k) + Fi.c1/2 >= CCt2(:, drr_k) ) = true;
-
-
-histogram( (CCt(:, drr_k)-CCt2(:, drr_k) ) .* sf)
+% Add F0s
 hold on
-histogram(CCt2(:, drr_k) .* sf)
+plot(ax, ti-ti(1), log2(hz*F0(idx_sp)), 'k', 'LineWidth', 5);
 hold off
- 
-%}
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
+
+
+% AX #2 -- phonemes
+ax(2) = subplot(20,1,1:idx_sub);
+text_h = plot_phonemes(sp, 'ax', ax(2));
+
+% Add the mean amplitudeto the phoneme's graph
+mean_Si = mean(pyspec.Si(:,idx_sp));
+hold on
+plot(ax(2), ti-ti(1), mean_Si*(0.35/max(mean_Si)),...
+    'Color', aux.rpalette('new01'), 'LineWidth', 5);
+hold off
+
+drawnow;
+pos1 = get(ax(1), 'Position');
+ax(2).Position(3) = pos1(3);
+
+
+% ZOOM-IN
+xlim_0 = 0.8;
+xlim_1 = 2.2;
+xlim([xlim_0, xlim_1]);
+
  
  
  

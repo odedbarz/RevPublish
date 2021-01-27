@@ -24,7 +24,8 @@ fs = 1/(1e-3*binwidth);     % (Hz) time axis of the spectrogram
 n_time = round(fs*duration_sec);   % (samples)
 
 if 3 > nargin || isempty(margin_sec)
-    margin_sec = max(0,floor(0.10 * fs)); % (samples); default margin_sec is 0.5 sec
+    %margin_sec = max(0,floor(0.10 * fs)); % (samples); default margin_sec is 0.5 sec
+    margin_sec = 0.0;
 end
 
 if nargin < 4
@@ -45,6 +46,8 @@ split_time_idx(end) = n_time;   % finish at the end of the stimulus
 % Add a small margin from the silence on both side of the chunk
 split_time_idx(:,1) = max(1, split_time_idx(:,1)-margin_sec);
 split_time_idx(:,2) = min(split_time_idx(:,2)+margin_sec, n_time);
+
+
 
 
 %% DEBUG mode; check that the splitting is OK
