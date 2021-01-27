@@ -32,7 +32,7 @@ if nargin < 4
 end
 
 % Load the the metadata file of the stimulus
-fn.tbl.path     = load.path_to_data('project1');
+fn.tbl.path     = load.path_to_data('Stimulus');
 fn.tbl.file     = sprintf('metadata_(%d)_wav_(30-Jun-2020)', duration_sec);
 dummy           = load( fullfile( fn.tbl.path, fn.tbl.file ) );
 tbl_metadata    = dummy.tbl_metadata;

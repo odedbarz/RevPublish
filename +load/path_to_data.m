@@ -38,12 +38,13 @@ switch lower(data_type)
     case 'meas'
         one_level_up_path = fileparts(rootpath);
         p = [one_level_up_path, filesep, '.data', filesep];
-
-    case 'project1'
+        
+    case 'stimulus'
         p = [rootpath, filesep, '_data', filesep, 'Stimulus', filesep];             
         
     case 'wav_spch_36sec'
-        p = [rootpath, filesep, '_data', filesep, 'Stimulus', filesep, 'Spch_(36)sec', filesep];              
+        p_stimulus = load.path_to_data('stimulus');
+        p = [p_stimulus, 'Spch_(36)sec', filesep];
         
     case 'data'
         p = [rootpath, filesep, '_data', filesep];
