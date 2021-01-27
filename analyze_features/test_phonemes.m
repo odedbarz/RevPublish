@@ -1,6 +1,6 @@
 % test_phonemes.m
 %
-%
+% Testing the plotting of the phonemes procedures. 
 
 
 
@@ -77,7 +77,7 @@ spec_st = data.spec_st;
 stim_st = data.stim_st;
 % tbl_data= data.tbl_data;
 % n_bands = spec_st.n_bands;
-% n_time  = length(splits.idx);
+n_time  = spec_st.n_time;
 
 
 % Sampling frequency along the time axis
@@ -101,11 +101,56 @@ tbl_metadata = dummy.tbl_metadata;
 
 
 
+%% Loads the MAT file (LIBROSA) & plot spectrogram-vs-CCt-vs-F0
+% pydata = 
+%   struct with fields:
+% 
+%     stim: [1×1 struct]
+%        p: [1×1 struct]
+%     harm: [1×1 struct]
+%     spec: [1×1 struct]
+mat_fn      = 'analyzed_librosa.mat';
+mat_full_fn = fullfile( load.path_to_data('data'), 'Analysis', mat_fn);
+pydata      = load( mat_full_fn );
+
+% Extract parameters
+% pyspec = pydata.spec;
+pypitch      = pydata.p;
+
+pyspec      = pydata.spec;
+pyspec.f0_smp = 5;
+pyspec.f    = pyspec.f(pyspec.f0_smp:end);     % Remove low frequencies
+pyspec.Sdb  = pyspec.Sdb(pyspec.f0_smp:end,:);
+pyspec.S    = pyspec.S(pyspec.f0_smp:end,:);
+
+% Interpulate to N_TIME
+F0          = interp1( linspace(1,pypitch.duration_seconds,pypitch.nt_), pypitch.F0,...
+    linspace(1,pypitch.duration_seconds,n_time) )';
+pyspec.Sdbi = interp1( linspace(1,pypitch.duration_seconds,pypitch.nt_), pyspec.Sdb',...
+    linspace(1,pypitch.duration_seconds,n_time) )';
+pyspec.Si   = interp1( linspace(1,pypitch.duration_seconds,pypitch.nt_), pyspec.S',...
+    linspace(1,pypitch.duration_seconds,n_time) )';
+pyspec.ti   = interp1( linspace(1,pypitch.duration_seconds,pypitch.nt_), pyspec.t,...
+    linspace(1,pypitch.duration_seconds,n_time) )';
+
+
+% Plot Spectrogram + F0
+figh = figure(fignum);
+clf;
+hz = 1e-3;
+
+[ax, surf_h] = spec.plot_spectrogram(pyspec.ti, hz*pyspec.f, pyspec.Sdbi,...
+    'fontsize', fontsize, 'precision', 2, 'fignum', fignum);
+
+hold on
+plot(t, log2(hz*F0), 'w', 'LineWidth', 5);
+hold off
+
 
 
 
 %% Extract a selected speaker SP
-sp     = 10;
+sp     = 1;
 % idx_sp = sp == splits.idx;      % indices; time indices for speaker SP
 
 % Choose DRR condition:
@@ -122,7 +167,7 @@ end
 % Replace the SPLITS to concur with the TIMIT timings
 dt_meta = 1/tbl_metadata.fs(sp);
 t0 = tbl_metadata.t0(sp) * dt_meta;     % (sec) starting time of the speaker utterance
-n0 = 1+1 + floor(t0/(1e-3*binwidth));	% (smp) starting time of the speaker utterance
+n0 = 1 + floor(t0/(1e-3*binwidth));	% (smp) starting time of the speaker utterance
 
 t1 = tbl_metadata.t1(sp)/tbl_metadata.fs(sp);   % (sec) ending time of the speaker utterance
 n1 = floor(t1/(1e-3*binwidth));                 % (smp) ending time of the speaker utterance
@@ -130,32 +175,39 @@ n1 = floor(t1/(1e-3*binwidth));                 % (smp) ending time of the speak
 idx_sp = n0:n1;
 ti = idx_sp*(1e-3*binwidth);
 
-f = spec_st.f;  % (Hz) include all frequencies
+% f = spec_st.f;  % (Hz) include all frequencies
 
 % Spectrograms for the SP speaker
-Sdry_ = spec_st.Sft{drr.ordered(1)}(:, idx_sp);
-Sdrr_ = spec_st.Sft{drr.ordered(drr_k)}(:, idx_sp);
-Sest_ = data.Sest(:, idx_sp);
+    % Sdry_ = spec_st.Sft{drr.ordered(1)}(:, idx_sp);
+    % Sdrr_ = spec_st.Sft{drr.ordered(drr_k)}(:, idx_sp);
+    % Sest_ = data.Sest(:, idx_sp);
+    % f_ = f;
+Sdry_ = pyspec.Sdbi(:, idx_sp);
+f_ = pyspec.f;
 
 
 
 
-% Plot Spectrogram + phonemes
+%% Plot Spectrogram + phonemes
 figh = figure(fignum);
 clf;
 hz = 1e-3;
 
 % AX #1
 idx_sub = 4;
-ax = subplot(20,1,1+idx_sub:20);
+subplot(20,1,1+idx_sub:20);
 
-[ax, surf_h] = spec.plot_spectrogram(ti-ti(1), hz*f, Sdry_,...
+[ax, surf_h] = spec.plot_spectrogram(ti-ti(1), hz*f_, Sdry_,...
     'fontsize', fontsize, 'precision', 2, 'fignum', fignum);
 % ax = gca;
 % img = imagesc(t_, hz*f_, Sdry_ );
 % set(ax, 'YDir', 'normal');
 % set(ax, 'FontSize', fontsize);
 % arrayfun(@(X) colormap(X, 'jet'), ax );
+
+hold on
+plot(ax, ti-ti(1), log2(hz*F0(idx_sp)), 'k', 'LineWidth', 5);
+hold off
 
 
 % New table of phonemes of a selected speaker
@@ -169,12 +221,13 @@ tbl_phonemes = [tbl_phonemes, ...
     table(tbl_phonemes.phn_end * 1/tbl_metadata.fs(sp), 'VariableNames', {'t1'})...
 ];
 
-duration_sp_sec = (tbl_metadata.t1(sp) - tbl_metadata.t0(sp))/tbl_metadata.fs(sp);
+% duration_sp_sec = (tbl_metadata.t1(sp) - tbl_metadata.t0(sp))/tbl_metadata.fs(sp);
 
 % AX #2
 ax(2) = subplot(20,1,1:idx_sub);
 set(ax(2), 'XTickLabels', '');
 set(ax(2), 'YTickLabels', '');
+ylim([0, 1]);
 
 aux.vline(tbl_phonemes.t0(1), 'ax', ax(2), 'Color', 'k');
 aux.vline(tbl_phonemes.t1, 'ax', ax(2), 'Color', 'k');
@@ -183,10 +236,14 @@ linkaxes(ax, 'x');
 d_times = tbl_phonemes.t1 - tbl_phonemes.t0;
 t_phn = tbl_phonemes.t0 + 0.5*d_times;
 phn_for_text = aux.mName2latex(tbl_phonemes.phn);
-text(ax(2), t_phn, mean(ylim)*ones(length(t_phn),1), phn_for_text,...
+text_h = text(ax(2), t_phn, mean(ylim)*ones(length(t_phn),1), phn_for_text,...
     'HorizontalAlignment', 'center', 'FontSize', fontsize);
 
-% xlim([0.5, 2.5]);
+mean_Si = mean(pyspec.Si(:,idx_sp));
+hold on
+plot(ax(2), ti-ti(1), mean_Si*(0.35/max(mean_Si)),...
+    'Color', aux.rpalette('new01'), 'LineWidth', 5);
+hold off
 
 drawnow;
 pos1 = get(ax(1), 'Position');
@@ -194,15 +251,56 @@ ax(2).Position(3) = pos1(3);
 
 
 
+% ZOOM-IN
+xlim_0 = 0.9;
+xlim_1 = 2.2;
+xlim([xlim_0, xlim_1]);
+
+% Delete TEXT that are outside the XLIM
+aux.cprintf('UnterminatedStrings', '--> NOTE: deleting TEXT that are outside the XLIM!\n');
 
 
 
 
 
+%% Checking the PLOT_PHONEMES.m function
+figh = figure(fignum);
+clf;
+hz = 1e-3;
+
+% AX #1
+idx_sub = 4;
+subplot(20,1,1+idx_sub:20);
+
+[ax, surf_h] = spec.plot_spectrogram(ti-ti(1), hz*f_, Sdry_,...
+    'fontsize', fontsize, 'precision', 2, 'fignum', fignum);
+
+% Add F0s
+hold on
+plot(ax, ti-ti(1), log2(hz*F0(idx_sp)), 'k', 'LineWidth', 5);
+hold off
 
 
+% AX #2
+ax(2) = subplot(20,1,1:idx_sub);
+text_h = plot_phonemes(sp, 'ax', ax(2));
+
+% Add the mean amplitudeto the phoneme's graph
+mean_Si = mean(pyspec.Si(:,idx_sp));
+hold on
+plot(ax(2), ti-ti(1), mean_Si*(0.35/max(mean_Si)),...
+    'Color', aux.rpalette('new01'), 'LineWidth', 5);
+hold off
+
+drawnow;
+pos1 = get(ax(1), 'Position');
+ax(2).Position(3) = pos1(3);
 
 
+% ZOOM-IN
+xlim_0 = 0.9;
+xlim_1 = 2.2;
+xlim([xlim_0, xlim_1]);
 
 
 

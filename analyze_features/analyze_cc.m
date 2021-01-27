@@ -78,7 +78,7 @@ spec_st = data.spec_st;
 stim_st = data.stim_st;
 tbl_data= data.tbl_data;
 n_bands = spec_st.n_bands;
-n_time  = length(splits.idx);
+n_time  = spec_st.n_time;
 
 
 % Sampling frequency along the time axis
@@ -416,7 +416,7 @@ pydata      = load( mat_full_fn );
 
 % Extract parameters
 spec = pydata.spec;
-p   = pydata.p;
+p    = pydata.p;
 
 % sr = (pydata.stim.sr);
 % duration_seconds = double(pydata.stim.duration_seconds);
