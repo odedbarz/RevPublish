@@ -2,7 +2,10 @@ function RGB = rpalette(name)
 % RPALETTE -- get color from Rajiv's palette.
 % Usage: RGB = rpalette(name)
 
-if isscalar(name)
+if isscalar(name) || ~isnan(str2double(name))
+    if isstr(name)
+        name = str2double(name);
+    end
     name = sprintf('new%02d', name);
 end
 

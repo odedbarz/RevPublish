@@ -6,23 +6,6 @@
 %
 %
 
-clc
-fignum = 10;
-verbose = 1;
-
-setup_environment('../');
-
-
-
-%% Plot properties
-fontsize = 32;	%32;
-fontsize_big = fix(1.5*fontsize);  %42;
-fontsize_bigger = fix(2*fontsize); %64;
-
-markersize = 36;
-linewidth = 5;
-
-
 
 %% Load the data
 %              CC: [7200×5 double] 	% compares dry vs. est
@@ -36,7 +19,7 @@ linewidth = 5;
 %          splits: [1×1 struct]
 %         stim_st: [1×1 struct]
 %        tbl_data: [103×20 table]
-data_type   = 'MUA';       % {'SU', MUA'}
+data_type   = 'SU';       % {'SU', MUA'}
 switch data_type
     case 'SU'
         n_units = 103;
@@ -63,16 +46,24 @@ data = load(fn_fullfile);
 warning on
 
 % Print this to get more information about the data
-if verbose
+if exist('verbose','var') && verbose
     aux.cprintf('Comments', 'Data Info:\n');
     aux.cprintf('Comments', data.info);
 end
 
 % Extract data: 
-CC      = data.CC;         % compares dry vs. est
-CC2     = data.CC2;        % compares drr vs. est
-CCt     = data.CCt;         % compares dry vs. est
+CC      = data.CC;         % Sdry vs. Sest, averaged over time
+CC2     = data.CC2;        % Sdrr vs. Sest
+CC3     = data.CC3;        % Sdry vs. Sdrr
+
+CCt     = data.CCt;         % compares dry vs. est, as a function of time
 CCt2    = data.CCt2;        % compares drr vs. est
+CCt3    = data.CCt3;        % compares drr vs. est
+
+% non-nans indices
+idx_nn = ~isnan(CCt(:,5)) & ~isnan( CCt3(:,5) );
+
+
 % splits  = data.splits;
 spec_st = data.spec_st;
 stim_st = data.stim_st;
@@ -109,12 +100,26 @@ idx_fun = @(SP) split_times_idx(SP,1):split_times_idx(SP,2);
 %% Loads PYDATA's MAT file (LIBROSA)
 [pyspec, pypitch, pydata] = load_pydata(n_time);
 F0i = pypitch.F0i;
+voiced_probs_i = pypitch.voiced_probs_i;
+voiced_flag_i  = pypitch.voiced_flag_i;
 
 % Get all voiced intervals
 idx_F0i = ~isnan(F0i) .* F0i>0;
 
+% make it a boolean vector
+idx_vc = 1  == voiced_flag_i;  
+
+% Convenient for plotting
+vc_nans = double(idx_vc); 
+vc_nans(1 ~= vc_nans) = nan;
 
 
+%{
+sp     = 1;
+% idx_sp = sp == splits.idx;      % indices; time indices for speaker SP
+idx_sp = idx_fun(sp);      % indices; time indices for speaker SP
+drr_k  = 5;      % 1:{'Dry'}, 2:{'9.4 dB'}, 3:{'4.8 dB'}, 4:{'-2.5 dB'}, 5:{'-8.2 dB'}
+%}
 
  
 

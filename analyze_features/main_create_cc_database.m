@@ -6,9 +6,10 @@
 %
 %
 
-clear all;
 close all;
 clc;
+clear all;
+
 
 fignum = 10;
 verbose = 1;
@@ -43,7 +44,7 @@ switch data_type
         
     case 'MUA'
         fn_template = 'reconstruct_MUA_(14-Jan-2021)_units(%d)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(0)_trainDRR(3).mat';        
-        n_units = 103;   %[10, 25, 50, 103, 150, 241];    
+        n_units = 241;   %[10, 25, 50, 103, 150, 241];    
 
     otherwise
         error('--> Unrecognized DATA_TYPE!');
@@ -95,14 +96,21 @@ t           = spec_st.t;            % (sec)
 
 %%
 % Pearson correlation for average of ALL the split
-CC = nan(n_drr, n_splits);        % Sdry-vs-Sest
-CC2 = nan(n_drr, n_splits);       % Sdrr-vs-Sest
+CC = nan(n_drr, n_splits);          % Sdry-vs-Sest
+CC2 = nan(n_drr, n_splits);         % Sdrr-vs-Sest
+CC3 = nan(n_drr, n_splits);         % Sdry-vs-Sdrr
 
 % Instant Pearson correlation as a function o DRR
-CCt = nan(n_time, n_drr);
+CCt = nan(n_time, n_drr);    	% Sdry vs Sest
 PPt = nan(n_time, n_drr);
-CCt2 = nan(n_time, n_drr);
+
+CCt2 = nan(n_time, n_drr);     	% Sdrr vs Sest
 PPt2 = nan(n_time, n_drr);
+
+CCt3 = nan(n_time, n_drr);   	% Sdry vs Sdrr ;only STIMULI
+PPt3 = nan(n_time, n_drr);
+
+
 
 % Concatenate all the estimations into one big matrix 
 Sest = nan(n_bands, n_time, n_drr);
@@ -168,15 +176,20 @@ for sp = 1:n_splits
         % DRY-vs-EST
         gof = goodness(Sdry_(:), Sest_(:));  
         CC(k,sp) = gof.CC;
+        
         % DRR-vs-EST
         gof2 = goodness(Sdrr_(:), Sest_(:));   
         CC2(k,sp) = gof2.CC;
+        
+        % DRR-vs-EST
+        gof2 = goodness(Sdry_(:), Sdrr_(:));   
+        CC3(k,sp) = gof2.CC;
 
         % INSTANTANEOUS Pearson correlation coefficient:
         %CCt(idx_sp,k) = mean(Adry .* Aest)';
-        [CCt(idx_sp,k), PPt(idx_sp,k)] = corrcoef_array(Sdry_, Sest_);
-        %CCt2(idx_sp,k) = mean(Adrr .* Aest)';
+        [CCt(idx_sp,k),  PPt(idx_sp,k)]  = corrcoef_array(Sdry_, Sest_);
         [CCt2(idx_sp,k), PPt2(idx_sp,k)] = corrcoef_array(Sdrr_, Sest_);
+        [CCt3(idx_sp,k), PPt3(idx_sp,k)] = corrcoef_array(Sdry_, Sdrr_);
 
         % DEBUG:
         if debug_flag
@@ -196,9 +209,18 @@ end
 assert( 0 == sum(isnan(Sest(:))), ...
     '--> There are NaNs in one (or more) of the reconstructed spectrograms!' );
 
-info = sprintf('\n%s;\n%s;\n\n' , ...
-    '- All DRR dimensions are already SORTED!',...
-    '- Sest: (n_bands, n_time, n_drr)');
+info = ['- All DRR dimensions are already SORTED!\n',...
+    '- Sest: (n_bands, n_time, n_drr)\n',...
+    '\n',...
+    '- CC : Sdry-vs-Sest, averaged over time\n',...
+    '- CC2: Sdrr-vs-Sest, averaged over time\n',...
+    '- CC3: Sdry-vs-Sdrr, averaged over time\n',...
+    '- CCt : Sdry-vs-Sest, as a function of time\n',...
+    '- CCt2: Sdrr-vs-Sest, as a function of time\n',...
+    '- CCt3: Sdry-vs-Sdrr, as a function of time\n'...
+];
+
+
 
 
     
@@ -220,8 +242,9 @@ save(fn_fullfile, ...
     'patch_width',...       # of samples used to compare (CC) between patches
     'Sest',...              reconstructed\estimated spectrograms for all DRRs             
     'CC', 'CCt', 'PPt',...
-    'CC2', 'CCt2', 'PPt2' ...
-    ); 
+    'CC2', 'CCt2', 'PPt2', ...
+    'CC3', 'CCt3', 'PPt3' ...
+); 
 
 fprintf('--> File <%s> SAVED!\n', fn_fullfile);
 %}
