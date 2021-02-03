@@ -16,7 +16,7 @@ verbose = 1;
 %addpath(genpath('../../StimViewerGUI'));
 addpath('../');
 
-FigSetup;
+% FigSetup;
 
 
 %% Load analyzed data
@@ -41,7 +41,7 @@ load([analyze.path, analyze.filename]);
 % MUA
 % %{
 data_type = 'MUA';
-analyze.path = '../.data/Analyze/';
+analyze.path = '../_data/Analyze/';
 analyze.filename = 'Analysis_MUA_(02-Sep-2020)_units(100)_bw(5)_fbands(30).mat';
 load([analyze.path, analyze.filename]);
 %}

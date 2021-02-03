@@ -33,14 +33,13 @@ setup_environment('../');
 %   splits              1x1                  58552  struct              
 %   tbl_data          241x20                339094  table               
 %
-data_type   = 'MUA';       % {'SU', MUA'}
+data_type   = 'SU';       % {'SU', MUA'}
 fn_path   = '../_data/Reconstruct';
 data_type = upper(data_type);
 switch data_type
     case 'SU'
         fn_template = 'reconstruct_SU_(14-Jan-2021)_units(%d)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(0)_trainDRR(3).mat';       
-        %unit_list = [10, 25, 50, 103];
-        n_units = 103;
+        n_units = 50;  	% [10, 25, 50, 103]
         
     case 'MUA'
         fn_template = 'reconstruct_MUA_(14-Jan-2021)_units(%d)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(0)_trainDRR(3).mat';        
@@ -84,7 +83,6 @@ n_splits = splits.n_splits;
 n_bands  = spec_st.n_bands;
 n_time   = length(splits.idx);
 % n_lags: # of samples along the x-axis (time) for each patch to use for comparison
-patch_width = 1;    
 
 % Sampling frequency along the time axis
 binwidth    = spec_st.binwidth;     % (ms)
@@ -141,7 +139,6 @@ if verbose
     fprintf('--> win_size_ms: %d\n', win_size_ms);
     fprintf('--> n_drr      : %d\n', n_drr);
     fprintf('--> n_splits   : %d\n', n_splits);
-    fprintf('--> n_lags     : %d\n', patch_width);
 end
 
 
@@ -153,29 +150,23 @@ for sp = 1:n_splits
 
     % Cut out the testing chunk of the spectrogram
     Sdry_ = spec_st.Sft{drr.dry}(:, idx_sp);    
-    % Apply ZCA for Pearson correlation coefficient
-    %Adry  = zca(im2col(Sdry_, [n_bands, patch_width], 'sliding'));
 
     for k = 1:n_drr    
         rv = drr.ordered(k);
 
         % Cut out the testing chunk of the spectrogram
         Sdrr_ = spec_st.Sft{rv}(:, idx_sp);           
-        % Apply ZCA for Pearson correlation coefficient
-        %Adrr = zca(im2col(Sdrr, [n_bands, patch_width], 'sliding'));     
 
         Sest_ = obj_list{rv,sp}.X_est;
-        % Apply ZCA for Pearson correlation coefficient
-        %Aest = zca(im2col(Sest, [n_bands, patch_width], 'sliding'));    
 
         % Concatenate all reconstructions\estimations into one big 3D
-        % matrix (n_bands, n_time, n_drr) 
         Sest(:, idx_sp, k) = Sest_;
         
         % AVERAGED Pearson correlation coefficient:
         % DRY-vs-EST
         gof = goodness(Sdry_(:), Sest_(:));  
         CC(k,sp) = gof.CC;
+        CCf(k,sp) = gof.CC;
         
         % DRR-vs-EST
         gof2 = goodness(Sdrr_(:), Sest_(:));   
@@ -228,7 +219,7 @@ info = ['- All DRR dimensions are already SORTED!\n',...
 % %{
 fprintf('\n- About to save the analysis results...\n');
 fn_path = '../_data/Analysis/';
-fn_name = sprintf('analyzed_cc_%s_units(%d)_patchWidth(%d).mat', data_type, n_units, patch_width);
+fn_name = sprintf('analyzed_cc_%s_units(%d).mat', data_type, n_units);
 fn_fullfile = fullfile( fn_path, fn_name );
 
 % Save the results for that 
@@ -239,7 +230,6 @@ save(fn_fullfile, ...
     'stim_st', ...          stimulus data
     'spec_st', ...          spectrogram's structue with all relevant data
     'tbl_data', ...         a table with all neurons in the data set            
-    'patch_width',...       # of samples used to compare (CC) between patches
     'Sest',...              reconstructed\estimated spectrograms for all DRRs             
     'CC', 'CCt', 'PPt',...
     'CC2', 'CCt2', 'PPt2', ...

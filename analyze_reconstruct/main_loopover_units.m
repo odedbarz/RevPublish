@@ -28,7 +28,7 @@ idx_dry = drr.ordered(1);
 %% Load data
 %   Run [main_aggregate_MUA_data.m] again to update this file if needed
 % 
-data_type   = 'MUA';       % {'SU', MUA'}
+data_type   = 'SU';       % {'SU', MUA'}
 fn.load.path= '../_data';
 data_type   = upper(data_type);
 

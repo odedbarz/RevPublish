@@ -12,3 +12,9 @@ addpath(path_root);
 addpath(genpath(fullfile(path_root, 'CochlearModels')));
 
 aux.figure_setup;
+
+
+interpreter = 'latex';    % {'tex', 'latex'}
+set(groot,'DefaultTextInterpreter', interpreter);  
+set(groot, 'DefaultAxesTickLabelInterpreter', interpreter);  
+set(groot, 'DefaultLegendInterpreter', interpreter); 
