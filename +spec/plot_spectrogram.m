@@ -23,7 +23,7 @@ addOptional(p, 'fignum', [], @(x) isnumeric(x) || ishandle(x));
 addOptional(p, 'nolabels', 0, @(x) isnumeric(x) || islogical(x)); 
 addOptional(p, 'fontsize', 14, @isnumeric); 
 addOptional(p, 'log_scale', 1, @isnumeric); 
-addOptional(p, 'precision', 3, @isnumeric);     % 10^precision
+addOptional(p, 'precision', 4, @isnumeric);     % 10^precision
 
 parse(p, t, f, Sft, varargin{:});
 pars = p.Results;

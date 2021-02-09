@@ -11,12 +11,12 @@ setup_environment('../');
 
 
 %% Plot properties
-fontsize = 32;	%32;
+fontsize = 36/3;	%32;
 fontsize_big = fix(1.5*fontsize);  %42;
 fontsize_bigger = fix(2*fontsize); %64;
 
-markersize = 36;
-linewidth = 5;
+markersize = 36/3;
+linewidth = 6/2;
 
 
 
@@ -56,6 +56,12 @@ tbl_se3 = tbl_mu;
 % Start loading...
 fprintf('Loading the CC arrays...\n');
 
+% dev_fun = @(x) std(x);
+dev_fun = @(x) mad(x, 0, 2);
+% dev_fun = @(x) 1.253 * mad(x, 0);   % mean absolute deviation for normally distrinuted data
+% dev_fun = @(x) 1.4826 * mad(x, 0);  % median absolute deviation for normally distrinuted data
+
+
 for nn = 1:len_units
     
     fn_path = '../_data/Analysis/';
@@ -81,25 +87,33 @@ for nn = 1:len_units
     warning on
 
     % Extract data: 
-    CC      = data.CC;         % Sdry vs. Sest, averaged over time
-    CC2     = data.CC2;        % Sdrr vs. Sest
-    CC3     = data.CC3;        % Sdry vs. Sdrr
-
-    CCt     = data.CCt;         % compares dry vs. est, as a function of time
-    CCt2    = data.CCt2;        % compares drr vs. est
-    CCt3    = data.CCt3;        % compares drr vs. est
-
+    CC      = data.tbl.CC.Variables;         % Sdry vs. Sest, averaged over time
+    CC2     = data.tbl.CC2.Variables;        % Sdrr vs. Sest
+    CC3     = data.tbl.CC3.Variables;        % Sdry vs. Sdrr
+    
+    % CC over frequencie
+    CCf     = data.tbl.CCf.Variables;
+    CCf2    = data.tbl.CCf2.Variables;
+    CCf3    = data.tbl.CCf3.Variables;
+    
     % Sdry-vs-Sest
     tbl_mu{:,nn} = squeeze( median(CC, 2) );
-    tbl_se{:,nn} = squeeze( median(CC, 2) );
+    tbl_se{:,nn} = squeeze( dev_fun(CC) );
     
     % Sdrr-vs-Sest    
     tbl_mu2{:,nn} = squeeze( median(CC2, 2) );
-    tbl_se2{:,nn} = squeeze( median(CC2, 2) );
+    tbl_se2{:,nn} = squeeze( dev_fun(CC2) );
 
     % Sdry-vs-Sdrr
     tbl_mu3{:,nn} = squeeze( median(CC3, 2) );
-    tbl_se3{:,nn} = squeeze( median(CC3, 2) );
+    tbl_se3{:,nn} = squeeze( dev_fun(CC3) );
+    
+    
+    % Extract data: 
+    CC      = data.tbl.CC.Variables;         % Sdry vs. Sest, averaged over time
+    CC2     = data.tbl.CC2.Variables;        % Sdrr vs. Sest
+    CC3     = data.tbl.CC3.Variables;        % Sdry vs. Sdrr
+    
     
 end
 fprintf('Finished loading\n');
@@ -116,7 +130,10 @@ clf;
 
 % CC
 ax = gca;
-plth = plot(tbl_mu.Variables, 's:', 'MarkerSize', markersize, 'linewidth', linewidth);
+plth = plot(tbl_mu.Variables, 's-', 'MarkerSize', markersize, 'linewidth', linewidth);
+hold on
+errorbar( tbl_mu.Variables, tbl_se.Variables, '.');
+hold off
 set(gca, 'FontSize', fontsize);
 
 if strcmpi('MUA', data_type)
@@ -126,8 +143,7 @@ ax.XTick = 1:height(tbl_mu);
 ax.XTickLabel = tbl_mu.Row;
 xlabel('DRR', 'FontSize', fontsize_big);
 ylabel('CC', 'FontSize', fontsize_big);
-aux.ctitle('Dry Stimulus vs. Reconstruction',...
-    sprintf('(%d %s)', n_units(nn), data_type));
+title('Dry Stimulus vs. Reconstruction');
 
 legend_str = arrayfun(@(N) sprintf('%d %s', N, data_type), n_units, 'uni', 0);
 legend( legend_str, 'Location', 'southwest', 'FontSize', fontsize_bigger);
@@ -158,6 +174,7 @@ title('Dry Stimulus vs. Reconstruction', 'FontSize', fontsize_big);
 
 ylim([0.5, 1.0]);
 legend( tbl_mu.Row, 'Location', 'northeastoutside', 'FontSize', fontsize_bigger);
+
 
 
 

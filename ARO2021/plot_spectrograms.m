@@ -96,11 +96,6 @@ for rv = 1:n_drr
         'fontsize', fontsize, 'precision', 2, 'fignum', figh, 'nolabels', 1);
 
     ylabel(ax(rv,1), drr.labels{rvi}, 'FontSize', fontsize_big);
-    %if rv == 3
-    %    ylabel_str = aux.ctitle('Frequency (kHz)', drr.labels{rv});
-    %    ylabel(ax(rv,1), ylabel_str, 'FontSize', fontsize_big);
-    %end
-
     
 end
            
@@ -113,11 +108,9 @@ set(ax(1:4,:), 'XTickLabel', '');
 set(ax(:,2), 'YTickLabel', '');
 xlabel(ax(end,1), 'Time (sec)', 'FontSize', fontsize_big);
 xlabel(ax(end,2), 'Time (sec)', 'FontSize', fontsize_big);
-title(ax(1,1), 'Stimulus', 'FontSize', fontsize_big);
-% ylabel(ax(3,1), 'Frequency (kHz)', 'FontSize', fontsize_big);
 
-% title(ax(1,2), sprintf('Reconstruction (%d %ss, dry filters)', n_units, data_type), ...
-%     'FontSize', fontsize_bigger );
+% Add the titles
+title(ax(1,1), 'Stimulus', 'FontSize', fontsize_big);
 title(ax(1,2), 'Reconstruction', 'FontSize', fontsize_big );
 
 aux.abc(ax(1,:), 'fontsize', fontsize_bigger, 'location', 'northwestoutside');
@@ -139,7 +132,51 @@ end
      
 
 
-   
+
+
+
+%%   
+figh2 = figure(2+fignum);
+clf;
+
+ax2 = [];
+ylabelh = [];
+colors = colormap('jet');
+
+for k = 1:n_drr
+    ax2(k) = subplot(n_drr,1,k);
+    set(ax2(k), 'XTickLabel', '');
+    set(ax2(k), 'YTickLabel', '');
+    set(ax2(k), 'Visible', 'Off');
+    %set(ax2(k), 'Color', colors(fix(length(colors)/n_drr), :) );
+    
+    xlim([0, 1]);
+    ylim([0, 1]);
+    
+    ylabelh = ylabel(ax2(k), data.tbl.CC.Row{n_drr-k+1});
+    ylabelh.FontSize = round(0.8*fontsize_big);
+    ylabelh.Visible = 'On';
+    
+    
+    txt = sprintf('%.2f', data.tbl.CC{n_drr-k+1,sp});
+    txth = text(0.5, 0.5, txt);
+    txth.FontSize = fix(1.5*fontsize_big);
+    txth.HorizontalAlignment = 'center';
+    %txth.FontWeight = 'bold';
+    %txth.Color = colors(fix(length(colors)/n_drr*k), :);
+    
+end
+
+% titleh = title(ax2(1), '$CC(S_{dry}$ vs. $\hat{S}_{drr})$', 'FontSize', round(1.2*fontsize_big));
+% titleh.Visible = 'On';
+figh2.Position(2:4) = [1, 250, figh.Position(4)];
+
+
+
+
+
+
+
 
 
 

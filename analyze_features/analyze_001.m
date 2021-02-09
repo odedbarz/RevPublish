@@ -29,7 +29,7 @@ linewidth = 2;
 
 
 %% Analyze parameters
-sp      = 4;             % speaker number to show
+sp      = 10;             % speaker number to show
 
 % Get the speaker's sex
 if contains(tbl_metadata.fn(sp), '_M')

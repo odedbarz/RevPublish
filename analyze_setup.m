@@ -1,8 +1,9 @@
 %
-% analyze_cc.m
+% analyze_setup.m
 %
 % Description:
-% Compares spectrogram reconstructions (estimations) with other DRR conditions.
+% Loads analyzed data to the workspace. These data are used by various scripts
+% for further analysis and plotting.
 %
 %
 
@@ -22,7 +23,7 @@
 data_type   = 'MUA';       % {'SU', MUA'}
 switch data_type
     case 'SU'
-        n_units = 103;
+        n_units = 103;  %[10, 25, 50, 103,]; 
         
     case 'MUA'
         n_units = 241;   %[10, 25, 50, 103, 150, 241];    
@@ -34,7 +35,7 @@ end
 
 
 fprintf('Loading the CC arrays...\n');
-fn_path = '../_data/Analysis/';
+fn_path = load.path_to_data('Analysis');
 fn_name = sprintf('analyzed_cc_%s_units(%d).mat', data_type, n_units);
 fn_fullfile = fullfile( fn_path, fn_name );
 warning off
@@ -48,9 +49,9 @@ if exist('verbose','var') && verbose
 end
 
 % Extract data: 
-CC      = data.CC;         % Sdry vs. Sest, averaged over time
-CC2     = data.CC2;        % Sdrr vs. Sest
-CC3     = data.CC3;        % Sdry vs. Sdrr
+CC      = data.tbl.CC.Variables;         % Sdry vs. Sest, averaged over time
+CC2     = data.tbl.CC2.Variables;        % Sdrr vs. Sest
+CC3     = data.tbl.CC3.Variables;        % Sdry vs. Sdrr
 
 CCt     = data.CCt;         % compares dry vs. est, as a function of time
 CCt2    = data.CCt2;        % compares drr vs. est
@@ -119,18 +120,7 @@ drr_k  = 5;      % 1:{'Dry'}, 2:{'9.4 dB'}, 3:{'4.8 dB'}, 4:{'-2.5 dB'}, 5:{'-8.
 
  
 %% Correlation Coefficients between STIMULI
-Sdry = spec_st.Sft{drr.dry};
-CCs = nan(1, n_drr);    % CCs of responses
-for k = 1:n_drr
-    rvi = drr.ordered(k);
-    Sk = spec_st.Sft{rvi};
-    
-    % CCs: correlation between SRY & DRR stimuli    
-    gof = goodness(Sdry, Sk);
-    CCs(k) = gof.CC;
-end
-
-
+CCs = CC_stimuli( spec_st );
 
 
 

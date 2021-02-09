@@ -33,17 +33,17 @@ setup_environment('../');
 %   splits              1x1                  58552  struct              
 %   tbl_data          241x20                339094  table               
 %
-data_type   = 'SU';       % {'SU', MUA'}
+data_type   = 'MUA';       % {'SU', MUA'}
 fn_path   = '../_data/Reconstruct';
 data_type = upper(data_type);
 switch data_type
     case 'SU'
         fn_template = 'reconstruct_SU_(14-Jan-2021)_units(%d)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(0)_trainDRR(3).mat';       
-        n_units = 50;  	% [10, 25, 50, 103]
+        n_units = 103;  	% [10, 25, 50, 103]
         
     case 'MUA'
         fn_template = 'reconstruct_MUA_(14-Jan-2021)_units(%d)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(0)_trainDRR(3).mat';        
-        n_units = 241;   %[10, 25, 50, 103, 150, 241];    
+        n_units = 10;      %[10, 25, 50, 103, 150, 241];    
 
     otherwise
         error('--> Unrecognized DATA_TYPE!');
@@ -93,10 +93,31 @@ t           = spec_st.t;            % (sec)
 
 
 %%
-% Pearson correlation for average of ALL the split
-CC = nan(n_drr, n_splits);          % Sdry-vs-Sest
-CC2 = nan(n_drr, n_splits);         % Sdrr-vs-Sest
-CC3 = nan(n_drr, n_splits);         % Sdry-vs-Sdrr
+dummy = nan(n_drr, n_splits);
+tbl.CC = array2table( dummy );
+tbl.CC.Properties.VariableNames = arrayfun(@(N) sprintf('sp%d', N), 1:n_splits, 'uni', 0);
+tbl.CC.Properties.RowNames = drr.labels(drr.ordered);
+
+% Fast duplicate, MATLAB style
+tbl.CC2 = tbl.CC;
+tbl.CC3 = tbl.CC;
+
+%% CC vs frequencies
+dummy = cell(n_drr, n_splits);
+tbl.CCf = array2table( dummy );
+tbl.CCf.Properties.VariableNames = arrayfun(@(N) sprintf('sp%d', N), 1:n_splits, 'uni', 0);
+tbl.CCf.Properties.RowNames = drr.labels(drr.ordered);
+
+% Fast duplicate, MATLAB style
+tbl.CCf2 = tbl.CCf;
+tbl.CCf3 = tbl.CCf;
+
+
+
+% % Pearson correlation for average of ALL the split
+% CC = nan(n_drr, n_splits);          % Sdry-vs-Sest
+% CC2 = nan(n_drr, n_splits);         % Sdrr-vs-Sest
+% CC3 = nan(n_drr, n_splits);         % Sdry-vs-Sdrr
 
 % Instant Pearson correlation as a function o DRR
 CCt = nan(n_time, n_drr);    	% Sdry vs Sest
@@ -164,17 +185,19 @@ for sp = 1:n_splits
         
         % AVERAGED Pearson correlation coefficient:
         % DRY-vs-EST
-        gof = goodness(Sdry_(:), Sest_(:));  
-        CC(k,sp) = gof.CC;
-        CCf(k,sp) = gof.CC;
+        gof = goodness(Sdry_, Sest_);  
+        tbl.CC{k,sp} = gof.CC;
+        tbl.CCf{k,sp} = {gof.CCf};
         
         % DRR-vs-EST
-        gof2 = goodness(Sdrr_(:), Sest_(:));   
-        CC2(k,sp) = gof2.CC;
+        gof2 = goodness(Sdrr_, Sest_);   
+        tbl.CC2{k,sp} = gof2.CC;
+        tbl.CCf2{k,sp} = {gof2.CCf};
         
         % DRR-vs-EST
-        gof2 = goodness(Sdry_(:), Sdrr_(:));   
-        CC3(k,sp) = gof2.CC;
+        gof3 = goodness(Sdry_, Sdrr_);   
+        tbl.CC3{k,sp} = gof3.CC;
+        tbl.CCf3{k,sp} = {gof3.CCf};
 
         % INSTANTANEOUS Pearson correlation coefficient:
         %CCt(idx_sp,k) = mean(Adry .* Aest)';
@@ -231,9 +254,10 @@ save(fn_fullfile, ...
     'spec_st', ...          spectrogram's structue with all relevant data
     'tbl_data', ...         a table with all neurons in the data set            
     'Sest',...              reconstructed\estimated spectrograms for all DRRs             
-    'CC', 'CCt', 'PPt',...
-    'CC2', 'CCt2', 'PPt2', ...
-    'CC3', 'CCt3', 'PPt3' ...
+    'tbl', ...'CC', 'CCt', 'PPt',...
+    ...'CC2', 'CCt2', 'PPt2', ...
+    ...'CC3', 'CCt3', 'PPt3' ...
+    'CCt', 'PPt', 'CCt2', 'PPt2', 'CCt3', 'PPt3' ...
 ); 
 
 fprintf('--> File <%s> SAVED!\n', fn_fullfile);

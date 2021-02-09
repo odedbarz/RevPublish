@@ -1,0 +1,65 @@
+(8/27/14)
+Generate the time-varying ITD by interpolating the original noise signal by X-times the sampling rate, and taking samples from that at each sampling point in the original signal in order to produce an instantaneously-delayed signal. 
+	-- This method will allow me to produce finer resolution of ITD steps, particularly for fast modulations where an ITD steps is close to the sampling period.
+	-- Since the ITD will be specified at each sampling point, the ITD motion will be as continuous as possible
+The lowest modulation frequency I'm examining is 2 Hz, for which half a period is 250 ms.  At a sampling rate of 100 kHz, and a range of 600 us, the ITD change per sampling point is 600 us / 25000 samples = 0.024 us.  This means that, in order to properly capture the delay at each sampling point, the interpolated signal has to have a sampling rate 500x larger than I'm currently using.
+
+Stimulus generation will:
+- Take a segment the original sound.  Use 1/2 overlapping segments
+- Interpolate the segment by X times, such that the new sampling rate is 1/(ITD range/(Fs/(2*lowest mod freq)))
+- For half of the segment, go through each sampling point in the original signal, and find the corresponding sampling point in the interpolated signal to produce the correct delay, based on the ITD at that time in the ITD trajectory.
+- Go to the next segment, which starts halfway through the previous segment.
+
+Test-set:
+- Use iac_shorttime to measure the interaural correlation at each time point
+- Listen to the stimuli.  Is a moving ITD audible?
+- Play each channel into both ears separately, in order to make sure that there aren't any obvious artifacts caused by the stimulus creation.
+- Measure the total time it takes to create 1 stimulus at each modulation frequency (2, 4, 8, 16, 32, 64, 128, 256).
+
+
+** Essentially, the algorithm is upsample, determine delay, downsample.  This seems like something than can be obtained by filtering the "stepped" signal that I'm using.
+Try upsampling by 500 on a short random array.
+--> The upsampling operation by 500 won't work on large arrays due to memory limits, limited by array construction and ifft operations.
+
+** Completed function for creating a dynamic ITD source from interpolated noise.  The current algorithm takes way too long (took about a minute or so for 2 Hz, 1 s long, possibly more, not measured)
+** For sinusoidal motion, the minimum change in ITD is way too low to use the upsampling method
+	"Maximum variable size allowed by the program is exceeded." for the zero padding
+--> Might want to use a filtering method instead to emulate this algorithm, would probably be faster
+
+
+(9/11/14)
+Reset upsample times to 10x, akin to what's in the thesis proposal.
+
+Timed the amount of time it takes to upsample a 500 sample noise signal by 10x, and then retrieve each of the needed sample points from it --> approximately 0.25 s.  Would need to do that 400 times for a 1 s-long stimulus.
+For 1000 samples at 10 x --> 0.46 s (only tried this one once).
+
+The current algorithm is set up to segment the sound into 500 sample-long 1/2 overlapping segments, and then going through each half of the upsampled versions, grabbing sample points for the delays in the ITD trajectory.  The reason for segmenting the sound is to reduce the memory necessary for the upsampling computation.  However, I wasn't sure if these would actually produce continuous sections of noise.
+I tested this by creating a 20-sample long Gaussian noise, and comparing the full upsampled version (10x) to the upsampled signals for the 1st 10 points and then the last 10 points (See: DynITDInterp_segmentinganalysis.fig). They are quite different -- particularly, the peaks seem to occur sooner for some of the later points in the shorter segments than they do for the full upsampled version.
+	--> This suggests that the algorithm could be introducing delays artificially...
+	--> Although the artificial delay can't be any greater than 10 us, since for all signals are equal every 10 sampling points, equivalent to the sample points in the original signal.
+** I would prefer that the shape remain the same, but the amplitude between them can be variable
+
+(9/12/14)
+Retested with a 400-sample long Gaussian noise, and comparing to the full upsampled version (10x) to the upsampled versions for the 1st 200 points and the last 200 points.  They are much closer together, probably because each segment contains a lot more sample points (See: DynITDInterp_segmentinganalysis_longerstim.fig).
+Looked at shorter sections.  The middle indexes are pretty close to the interpolation from the larger segment.  The ends less so (See: DynITDInterp_segmentinganalysis_shortersects.fig).
+
+Finished code, made some 5 second long stimuli with different modulation rates.
+The spectrum of the ipsilateral channel is suppressed at high frequencies and enhanced at low frequencies.  This is especially prominent at 1028 Hz (See: DynITDInterp_1028Hz_triangmod_spectra.fig), but is somewhat apparent at 256 Hz (See: DynITDInterp_26Hz_triangmod_spectra.fig).  The change in spectrum could have something to do with the change in shape of segments of the ipsilateral signal, which become smoother during portions of increasing delay (See: DynITDInterp_1028Hz_triangmod.fig).
+When listening to the stimuli, it's clear that the 1028 Hz has a different spectrum, and stands out even though the signals themselves have the same amplitude.  For the 256 Hz and 128 Hz sounds, there is a slight buzz perceived in the ipsilateral ear, but not necessarily a difference in amplitude.  
+	--> The buzziness though could come from the alternation between signal spectra for increasing delay and decreasing delay portions of the sound.  This may also be the reason for the overall spectrum change at high modulation rates.
+
+TODO:
+- Why does this happen?  Can this be explained with signal processing theory?
+	-- Can the percept of "pulsation" and detectability be simply explained by this effect?
+	-- What test can I do to ensure that it is not a spectral effect?
+- Is this effect (spectrum changing) present for Oscor and Phasewarp?
+	--> Grantham didn't measure at very high modulation frequencies because of a "spectral effect".
+	--> I need to review what that is.
+
+(9/29/14)
+Tried creating the dynamic ITD stimuli using an original noise that is 10x sampled relative to the sampling rate, and then retrieving the points for the contra and ipsi channels from that noise (ipsi has a moving delay).
+Sounds like uncorrelated noise.  The time-varying crosscorrelation shows (maybe) a moving delay over time, but it's very weak. 
+Since we're retrieving samples from a highly sampled random noise, which should have an autocorrelation of 0 for all delays except 0, any delays less than the sampling period will be composed of uncorrelated points, and the correlation between signals within a particular bin of time will be fairly weak (encompassing a series of points that are uncorrelated).
+
+(10/22/14)
+Realized that the DynITD interpolation stimuli made with MotSource_interp end 5 ms earlier than the specified stimulus duration (t_end).  The stimulus is created by interpolating 1/2 overlapping segments of the broadband noise, and the last 1/2 segment (equal to 5 ms duration) was not included.  The edit including this last segment was made today in the code MotSource_interp.

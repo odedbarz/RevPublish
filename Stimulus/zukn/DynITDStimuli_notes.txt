@@ -1,0 +1,29 @@
+8/5/2014:
+All stimuli allow the specification of the number of tokens and some starting token.  The tokens are used to set the random number generator creating the broadband noise (this is true for all stimuli except phasewarp, where the token sets the random phase signal instead).  IC neurons respond consistently (with very similar temporal pattern of firing) for a particular noise token, and by varying the token, variability due to this temporal locking is introduced.  This variability is more akin to natural sounds, for which broadband noise sounds do not consistently present the signal.  Thus it would be best to capture the coding irrespective of the variability in the signal, but still allowing for this variability to be controlled across stimuli.
+--> Use the same set of broadband noise tokens for each stimulus parameter.
+
+8/15/2014:
+I'm a bit concerned that the temporal limits to which neurons can keep up with the dynamic ITD stimuli may be an affect of the limits of containing a moving delay in my stimulus.  I'm currently creating a moving ITD by delaying the sound in one ear (whichever ear has a decreasing delay) and shifting the delay in that ear to match the ITD.  However, for fast modulations, the bin size will only be a few sample points for a 100 kHz sampling rate.  Because of this, delay information would likely be lost.
+	Theoretically, auditory system has a temporal window over which it averages interaural delays.  If the ITD changes too much within this window, then an ITD can no longer be identified.
+	--> I want to make sure that the smallest window of time over which a delay can be determined in the stimulus is smaller than the possible window of time over which a delay is determined by the auditory system.
+
+In a cross-correlation, the maximal delay that can be determined is a function of the size of the time window used to compute it.  
+
+9/29/14:
+Examined the spectrum of the Phasewarp stimulus.  The magnitude spectrum is cut off a particular value (above 200 for 128 Hz, below 200 for 4 Hz).  In contrast, the spectrum of uncorrelated noise is very noisy, and has magnitudes above 2000 in its components.  Strange...should look into this later.
+
+9/30/14:
+Examining the spectra of the Dynamic ITD stimuli created using different methods.
+V:\ITD\DynITD\fast_stim --> original method, time-varying the delay of the ipsilateral ear every 10 us step in the ITD trajectory, triangular motion
+V:\ITD\DynITD\mod_examine_alwaysdecrdelay --> time-vary the channel with the decreasing delay, in order to avoid resampling the same point at successive times, which typically occurs with an increasing delay in that channel.  ITD trajectory is rounded to the nearest 10 us, in order to produce 10 us steps in ITD minimum without restricting to a triangular trajectory.
+--> Both the 'ipsilateral time-varying' and 'both time-varying' methods produce similar shapes in the magnitude FFTs (computed across the entire stimulus).  The magnitude for the lower frequency components are higher than the high frequency components, producing a slanting shape in the magnitude plot.  When both are time-varying, the magnitude plots for both channels exhibit this effect.  For the ipsi time-varying, only the ipsi channel shows this.  The effect is more prominent for higher modulation frequencies (128, 256 Hz), and not as obvious for lower modulation frequencies (including 64 Hz).
+--> The spectral difference may be audible --> particuarly for the stimuli with ipsi varying only, the sound seems to be slightly off-center, which may be due to the increased energy in the low-frequency range relative to the original noise.
+	--> When both channels have varying delays, the source still sounds like it's centered.
+
+** Noticed that the "both decreasing delay" is actually picking the stimulus with the increasing delay rather than the decreasing delay...This might explain why both have similar sloping spectra rather than flat spectra
+
+Changed MotSource_ITDnAM to time-vary the channel with the decreasing delay.
+-- The magnitude plots for the functions are a bit wavy in the low frequency range (below 40 kHz).  Waviness gets stronger with increasing modulation frequency
+-- The stimulus only sounds uncorrelated above 1028 Hz.  Below that it sounds disperse but not uncorrelated.  Possibly hear "flicker" at 256 Hz, but pretty faint
+
+** Skimmed through the rate curves for the units I recorded in August and September, before and after I changed the dynamic ITD generation method (8/30/14).  There isn't an obvious difference in rate tuning before and after this change.  In fact, there are units with high rates for high modulation frequencies both before and after the change (091014-U2 after; 082714-U5 before)

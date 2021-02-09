@@ -40,7 +40,11 @@ switch lower(data_type)
         p = [one_level_up_path, filesep, '.data', filesep];
         
     case 'stimulus'
-        p = [rootpath, filesep, '_data', filesep, 'Stimulus', filesep];             
+        p = [rootpath, filesep, '_data', filesep, 'Stimulus', filesep];     
+        
+    case 'analysis'
+        p = [rootpath, filesep, '_data', filesep, 'Analysis', filesep];             
+
         
     case 'wav_spch_36sec'
         p_stimulus = load.path_to_data('stimulus');
