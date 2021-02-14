@@ -40,7 +40,14 @@ assert( (isempty(labels)) || n_cases == length(labels));
 
 
 
-%% Outliers
+%% Stats
+pars.median.fun = @(x) nanmedian(x);
+pars.median.M = nan(1,n_cases);
+
+pars.se.fun = @(x) mad(x);
+pars.se.M = nan(1,n_cases);
+
+% Outliers
 if ~isempty(pars.std_outliers_factor)
     % Remove outliers
     I = (X - median(X,1)) <= pars.std_outliers_factor*mad(X(:),1);
@@ -87,10 +94,11 @@ for k = 1:n_cases
         'MarkerFaceColor', color_k );
     set(pars.points_h(k), 'MarkerSize', pars.marker_size);            
     
-    % Add the k'th median
-    med = nanmedian(X(:,k));
+    % Add the k'th median  
+    pars.median.M(k) = pars.median.fun( X(:,k) );
+    pars.se.M(k) = pars.se.fun( X(:,k) );
     hold on
-    pars.median_h(k) = plot(k+pars.median_line_length*[-1, 1], med*[1, 1], 'Color', color_k);
+    pars.median_h(k) = plot(k+pars.median_line_length*[-1, 1], pars.median.M(k)*[1, 1], 'Color', color_k);
     set(pars.median_h(k), 'LineWidth', pars.median_line_width);
     
     % Add the outliers (samples that do not contribut to the median
@@ -109,8 +117,7 @@ axis tight
 
 
 % Set the labels (if provided)
-if ~isempty(labels)
-    
+if ~isempty(labels)   
     if isnumeric(labels)
         % In this case convert the labels to a cell array
         labels = arrayfun(@(x) sprintf('%g',x), labels, 'uni', 0);
