@@ -22,7 +22,7 @@ idx_dry = drr.ordered(1);
 %% Load data
 %   Run [main_aggregate_MUA_data.m] again to update this file if needed
 % 
-data_type   = 'SU';       % {'SU', MUA'}
+data_type   = 'MUA';       % {'SU', MUA'}
 fn.load.path= '../_data';
 data_type   = upper(data_type);
 
@@ -149,7 +149,7 @@ for q = 1 %1:drr.n_drr
     %% Loop over UNITS
     for m = 1:n_units
         if verbose && 0 == rem(m,2)
-            fprintf('\n--> unit #%d (%d)\n', m, n_units);
+            fprintf('\n--> unit #%d (out of %d)\n', m, n_units);
         end
 
         BF_speaker = nan(1, n_splits);   % Best frequency for each split
@@ -229,19 +229,18 @@ for q = 1 %1:drr.n_drr
             'jk_flag', jk_flag ); 
         strf_st = struct(obj);
     
-        'SAVE the analysis data!'
-        fn.save.path = '../.data/STRFs/';
-        fn.save.file = sprintf('STRF_%s_(%s)_units(%d)_bw(%g)ms_algo(%s)_fbands(%d)_lags(%g)ms_cau(%d)_trainDRR(%d)',...
-            data_type, date, height(tbl_strf), binwidth, algo_type, n_bands, lags_ms, iscausal, train_drr);
-        fn.save.fullfile = fullfile( fn.save.path, fn.save.file );
-        
+        fprintf('SAVE the STRF''s analyzed data!\n');
+        fn.save.path    = '../_data/Analysis/';
+        fn.save.file    = sprintf('STRF_%s_(%s)_units(%d)_bw(%g)ms_algo(%s)_fbands(%d)_splits(%d)_lags(%g)ms_cau(%d)_trainDRR(%s)',...
+            data_type, date, n_units, binwidth, algo_type, n_bands, n_splits, lags_ms, iscausal, num2str(train_drr, '%d '));
+        fn.save.fullfile= fullfile( fn.save.path, fn.save.file );
+                
         % Save the results for that 
         save(fn.save.fullfile, '-v7.3', ...
             'splits', ...       saves the chunks\intervals\speakers
             'spec_st', ...      spectrogram's structue with all relevant data
-            'tbl_impale', ...   a table with all neurons in the data set
             'fn', ...           filenames, including the data-set filename used here 
-            'strf_st',...           STRF_C object
+            'strf_st',...       STRF_C object
             'tbl_strf'  ...     (table) all STRFs and other data (e.g., BFs)
             ); 
         
