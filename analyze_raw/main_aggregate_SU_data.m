@@ -91,7 +91,7 @@ tbl_SU      = tbl_impale(neuron_idx, :);
 fprintf('--> NOTE: tbl_SU contains stimuli of %g sec ONLY!\n', unique(tbl_SU.duration_sec));
 
 
-
+ 
 %% Load PSTH responses
 S_list = load.response( tbl_SU, duration_sec );
  

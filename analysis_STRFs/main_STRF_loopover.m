@@ -126,8 +126,8 @@ for q = 1 %1:drr.n_drr
 
 
     % Save all STRFs stuff in one table 
-    tbl_strf = array2table(cell(n_units,2), ...
-        'VariableNames', {'strf', 'strf_std'} );    
+    tbl_strf = array2table(cell(n_units,3), ...
+        'VariableNames', {'strf', 'strf_std', 'strf_speaker'} );    
     
     % Add best frequency
     bf = zeros(n_units,1);
@@ -214,6 +214,7 @@ for q = 1 %1:drr.n_drr
         tbl_strf.bf(m)      = mean(BF_speaker);          % (Hz)
         tbl_strf.bf_std(m)  = std(BF_speaker);           % (Hz)
         tbl_strf.strf{m}    = mean(strf_speaker, 3);
+        tbl_strf.strf_speaker{m}= strf_speaker;
         tbl_strf.strf_std{m}= std(strf_speaker, [], 3);
         
     end

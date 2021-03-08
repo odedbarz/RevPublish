@@ -3,7 +3,8 @@ function CCs = CC_stimuli( spec_st )
 % function CCs = CC_stimuli( spec_st )
 %
 % Description:
-% Computes correlation coefficients (CCs) between STIMULI.
+%   Correlation coefficients between stimuli as benchmarks. The output CCs is
+%   already ordered by increase in reverberation cconditions.
 %
 %
 

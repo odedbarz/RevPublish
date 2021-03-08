@@ -185,7 +185,7 @@ for q = 1:n_rep
         % Loop over DRRs
         for k = 1:n_drr    
             % Choose the DRR case for the testing signals
-            test_drr  = k;
+            test_drr  = drr.ordered(k);
             if 0 % verbose
                 fprintf('-----> TEST DRR: %s\t(%d/%d)\n',  drr.labels{test_drr}, test_drr, n_drr);
             end
@@ -213,6 +213,8 @@ for q = 1:n_rep
 
 end
 
+% DRRs in CCstats are ** ORDERED **
+drr_labels = drr.labels(drr.ordered);
 
 
 %% Save the reconstruction results
@@ -227,6 +229,7 @@ end
 
     % Save the results for that 
     save(fn.save.fullfile, ... 
+        'drr_labels', ...   info: DRRs in CCstats are ** ORDERED **
         'CCstats', ...      saves the chunks\intervals\speakers
         'CCunits',...       the list of sorted unit used to create H_sorted from data.H
         'stim_st', ...      stimulus data
