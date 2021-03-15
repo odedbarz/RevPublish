@@ -28,7 +28,7 @@ idx_dry = drr.ordered(1);
 %% Load data
 %   Run [main_aggregate_MUA_data.m] again to update this file if needed
 % 
-data_type   = 'SU';       % {'SU', MUA'}
+data_type   = 'MUA';       % {'SU', MUA'}
 fn.load.path= '../_data';
 data_type   = upper(data_type);
 
@@ -51,7 +51,7 @@ switch data_type
         %         spec_st: [1×1 struct]
         %         stim_st: [1×1 struct]
         %      tbl_impale: [437×20 table]        
-        fn.load.file = 'data_MUA_(08-Jan-2021)_bw(5)_fbands(30)_win(NaN)ms_spec(gammatone).mat';        
+        fn.load.file = 'data_MUA_(08-Jan-2021)_bw(5)_fbands(30)_win(NaN)ms_spec(gammatone).mat';  
         unit_list = [10, 25, 50, 103, 241];
 
     otherwise
@@ -209,6 +209,7 @@ for q = 1 %1:n_drr
             for k = 1:n_drr    
                 % Choose the DRR case for the testing signals
                 test_drr  = k;
+                %test_drr  = drr.ordered(k);            
                 if 0 % verbose
                     fprintf('-----> TEST DRR: %s\t(%d/%d)\n',  drr.labels{test_drr}, test_drr, n_drr);
                 end
