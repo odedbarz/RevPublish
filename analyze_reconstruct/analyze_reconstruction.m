@@ -39,7 +39,8 @@ markersize = 24;
 %   tbl_data          241x20                339094  table               
 %
 data_type   = 'MUA';       % {'SU', MUA'}
-fn_path= '../_data/Reconstruct';
+fn_path = load.path_to_data('Reconstruct');
+
 data_type   = upper(data_type);
 switch data_type
     case 'SU'
@@ -48,7 +49,7 @@ switch data_type
         
     case 'MUA'
         fn_template = 'reconstruct_MUA_(14-Jan-2021)_units(%d)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(0)_trainDRR(3).mat';        
-        unit_list = [10, 25, 50, 103, 150, 240];
+        unit_list = [10, 25, 50, 103, 150, 241];
 
     otherwise
         error('--> Unrecognized DATA_TYPE!');

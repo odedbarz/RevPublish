@@ -110,7 +110,6 @@ idx_vc = 1  == voiced_flag_i;
 vc_nans = double(idx_vc); 
 vc_nans(1 ~= vc_nans) = nan;
 
-
 %{
 sp     = 1;
 % idx_sp = sp == splits.idx;      % indices; time indices for speaker SP

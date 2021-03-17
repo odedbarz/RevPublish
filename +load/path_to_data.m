@@ -15,7 +15,7 @@ function [p, dir_p] = path_to_data(data_type, verbose)
 
 
 if 1 > nargin || isempty(data_type)
-    data_type = 'meas';
+    data_type = 'data';
 end
 
 if 2 > nargin
@@ -31,31 +31,32 @@ end
 
 
 
-switch lower(data_type)
-    case 'reverberation'
-        p = [rootpath, filesep];
+switch lower(data_type)        
+    case {'data', '_data'}     % case 'meas'/'impale_data'
+        p = fullfile(rootpath, '_data', filesep);
         
-    case 'meas'
-        one_level_up_path = fileparts(rootpath);
-        p = [one_level_up_path, filesep, '.data', filesep];
-        
+                
     case 'stimulus'
-        p = [rootpath, filesep, '_data', filesep, 'Stimulus', filesep];     
+        path_data = load.path_to_data('_data');
+        p = fullfile(path_data, 'Stimulus', filesep);
         
     case 'analysis'
-        p = [rootpath, filesep, '_data', filesep, 'Analysis', filesep];             
+        path_data = load.path_to_data('_data');
+        p = fullfile(path_data, 'Analysis', filesep);
 
+    case {'reconstruct'}
+        path_data = load.path_to_data('_data');
+        p = fullfile(path_data, 'Reconstruct', filesep);
+        
+    case {'impale_data', 'meas'}
+        [before_root, ~, ~] = fileparts(rootpath);
+        p = fullfile(before_root, '.data', filesep);
+       
         
     case 'wav_spch_36sec'
         p_stimulus = load.path_to_data('stimulus');
-        p = [p_stimulus, 'Spch_(36)sec', filesep];
+        p = fullfile(p_stimulus, 'Spch_(36)sec');
         
-    case 'data'
-        p = [rootpath, filesep, '_data', filesep];
-        
-    case 'impale_data'
-        [codeOnCloud_path, ~, ~] = fileparts(rootpath);
-        p = [codeOnCloud_path, filesep, '.data', filesep];
         
     case 'raw'  % not on the HD, so it's "Hard-coded"
         computer_name = getenv('computername');

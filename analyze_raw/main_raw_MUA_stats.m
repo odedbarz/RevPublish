@@ -1,5 +1,5 @@
 %
-% main_raw_MUA_stats.m.m
+% main_raw_MUA_stats.m
 %
 % Description:
 % Check for statistics within raw measurements
@@ -11,7 +11,7 @@ clc
 fignum = 11;
 verbose = 1;
 
-setup_environment('../');
+setup_environment;
 
 
 %% Paths
