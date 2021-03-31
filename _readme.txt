@@ -25,7 +25,7 @@ DATA_MUA_XXX_BF.MAT file.
 	(3) Run ANALYZE_RAW/MAIN_RAW_MUA_STATS.M to get statistics on RAW
 	(measurements, before averaging. This will creates the CCSTATS_(MUA)_XXX.MAT files.
 
-	(4) 
+
 
 
 (C) Analysis & plot results for the paper:  -	Run
@@ -42,4 +42,6 @@ other DRR conditions
 domain.
 	
 -	Use ANALYZE_FEATURES\ANALYZE_CC.M to analyze the CCs and to plot results.
+
+
 

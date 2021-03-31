@@ -15,7 +15,7 @@ function [p, dir_p] = path_to_data(data_type, verbose)
 
 
 if 1 > nargin || isempty(data_type)
-    data_type = 'data';
+    data_type = 'meas';
 end
 
 if 2 > nargin

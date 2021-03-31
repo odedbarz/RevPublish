@@ -76,9 +76,13 @@ aux.vprint(verbose, '--> [main_loopover_units.m] Loading file:\n\t...<%s>\n', fn
 %% Order the units
 % [sorted_list, tbl_BF] = find_best_unit_set('CC', 'fn', fn.load.fullfile);
 
+sort_type = 'SPK';  % {'RND', 'SVD', 'CC', SPK}
 Hdry = squeeze( data.H(:,drr.ordered(1),:) ); 
-%[sorted_list] = find_best_unit_set('SVD', 'Y', Hdry);
-[sorted_list] = find_best_unit_set('RND', 'Y', Hdry);
+% sorted_list = find_best_unit_set(sort_type, 'Y', Hdry);
+% [sorted_list] = find_best_unit_set('RND', 'Y', Hdry);
+% sorted_list = find_best_unit_set(sort_type, 'fn', fn.load.fullfile);
+sorted_list = find_best_unit_set('SPK', 'tbl_data', tbl_data);
+
 
 
 
@@ -208,8 +212,8 @@ for q = 1 %1:n_drr
             % Loop over DRRs
             for k = 1:n_drr    
                 % Choose the DRR case for the testing signals
-                test_drr  = k;
-                %test_drr  = drr.ordered(k);            
+                %test_drr  = k;
+                test_drr  = drr.ordered(k);            
                 if 0 % verbose
                     fprintf('-----> TEST DRR: %s\t(%d/%d)\n',  drr.labels{test_drr}, test_drr, n_drr);
                 end
@@ -248,7 +252,7 @@ for q = 1 %1:n_drr
                 warning on
 
                 % Goodness-of-fit
-                gof = goodness(X_test_kn, obj.X_est);
+                gof = goodness(X_test0, obj.X_est);
                 scores.CC(k,n)  = gof.CC;
                 scores.mse(k,n) = gof.mse;
                 scores.nmse(k,n)= gof.nmse;
@@ -289,7 +293,8 @@ for q = 1 %1:n_drr
             'tbl_data', ...     a table with all neurons in the data set            
             'fn', ...           filenames, including the data-set filename used here 
             'H_sorted',...      sorted units used for the analysis
-            'sorted_list'...    the list of sorted unit used to create H_sorted from data.H
+            'sorted_list',...    the list of sorted unit used to create H_sorted from data.H
+            'sort_type' ...
             ); 
         
     %}

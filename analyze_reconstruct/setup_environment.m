@@ -3,7 +3,7 @@ function setup_environment(path_root)
 %
 
 if 0 == nargin
-    path_root = pwd;
+    path_root = '../';
 end
 
 % Add the path of the StimViewerGUI GUI

@@ -38,18 +38,20 @@ markersize = 24;
 %   splits              1x1                  58552  struct              
 %   tbl_data          241x20                339094  table               
 %
-data_type   = 'MUA';       % {'SU', MUA'}
+data_type   = 'SU';       % {'SU', MUA'}
 fn_path = load.path_to_data('Reconstruct');
 
 data_type   = upper(data_type);
 switch data_type
     case 'SU'
-        fn_template = 'reconstruct_SU_(14-Jan-2021)_units(%d)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(0)_trainDRR(3).mat';       
-        unit_list = [10, 25, 50, 103];
+        %fn_template = 'reconstruct_SU_(14-Jan-2021)_units(%d)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(0)_trainDRR(3).mat';       
+        fn_template = 'reconstruct_SU_(19-Mar-2021)_units(100)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(0)_trainDRR(3).mat';
+        unit_list = 100; % [10, 25, 50, 103];
         
     case 'MUA'
-        fn_template = 'reconstruct_MUA_(14-Jan-2021)_units(%d)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(0)_trainDRR(3).mat';        
-        unit_list = [10, 25, 50, 103, 150, 241];
+        %fn_template = 'reconstruct_MUA_(14-Jan-2021)_units(%d)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(0)_trainDRR(3).mat';        
+        fn_template = 'reconstruct_MUA_(19-Mar-2021)_units(100)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(0)_trainDRR(3).mat';
+        unit_list = 100; % [10, 25, 50, 103, 150, 241];
 
     otherwise
         error('--> Unrecognized DATA_TYPE!');
@@ -152,7 +154,7 @@ for n = 1:len_unit_list
             rv = drr.ordered(k);
             
             % Cut out the testing chunk of the spectrogram
-            X_est                = obj_list{rv,sp}.X_est;
+            X_est                = obj_list{k,sp}.X_est;
             gof                  = goodness(X_dry, X_est);    
             scores.CC(k,sp,n)    = gof.CC;
             scores.mse(k,sp,n)   = gof.mse;
@@ -174,7 +176,7 @@ for n = 1:len_unit_list
 end
  
 
-% Statistics
+%% Statistics
 %
 % Dims: [drr x # splits x # units]
 %
@@ -304,7 +306,7 @@ clf;
 
 ax = gca;
 
-plth = errorbar(1e-3*f, scores.mu.CCf, scores.SE.CCf, 's-', 'MarkerSize', markersize);
+plth = errorbar(1e-3*repmat(f, 1, 5), scores.mu.CCf', scores.SE.CCf', 's-', 'MarkerSize', markersize);
 if strcmpi('MUA', data_type)
     arrayfun(@(I) set(plth(I), 'MarkerFaceColor', plth(I).Color), 1:length(plth));
 end

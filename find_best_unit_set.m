@@ -25,6 +25,9 @@ addParameter(p, 'n_svd', 1, @isnumeric);         % # of singular values (SVs) to
 % - RND
 addParameter(p, 'N', [], @isnumeric);           % total number of units    
 
+% - SPK
+addParameter(p, 'tbl_data', [], @istable);           % total number of units    
+
 
 % - Verbose
 addParameter(p, 'fignum', [], @isnumeric);           
@@ -77,7 +80,14 @@ switch upper(pars.type)
         varargout{1} = {};
         
         
+    case 'SPK' 
+        N = nnz(pars.tbl_data.SPK);
+        
+        sorted_list = 1:N;
+        varargout{1} = {};
 
+        
+        
     otherwise
         error('ERROR: type <%s> is unrecognized!', pars.type);
         

@@ -14,7 +14,7 @@ clc
 fignum = 11;
 verbose = 1;
 
-setup_environment('../');
+setup_environment;
 
 
 %% Paths
