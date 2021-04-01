@@ -130,8 +130,8 @@ for q = 1:n_rep
     H_sorted = data.H( :, 1:n_drr, CCunits(:,q) );        
 
     % The training (i.e., truth-level) DRR case
-    %train_drr = drr.dry;         
-    train_drr = drr.ordered(end)
+    train_drr = drr.dry;         
+    %train_drr = drr.ordered(end);
 
     if verbose
         fprintf('--> TRAIN DRR: %d, %s\n', train_drr, drr.labels{train_drr});

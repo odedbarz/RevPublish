@@ -20,13 +20,13 @@
 %          splits: [1×1 struct]
 %         stim_st: [1×1 struct]
 %        tbl_data: [103×20 table]
-data_type   = 'MUA';       % {'SU', MUA'}
+data_type   = 'SU';       % {'SU', MUA'}
 switch data_type
     case 'SU'
-        n_units = 103;  %[10, 25, 50, 103,]; 
+        n_units = 103;  %[10, 25, 50, 103]; 
         
     case 'MUA'
-        n_units = 241;   %[10, 25, 50, 103, 150, 241];    
+        n_units = 103;   %[10, 25, 50, 103, 150, 241];    
 
     otherwise
         error('--> Unrecognized DATA_TYPE!');
@@ -34,13 +34,21 @@ switch data_type
 end
 
 
-fprintf('Loading the CC arrays...\n');
 fn_path = load.path_to_data('Analysis');
 fn_name = sprintf('analyzed_cc_%s_units(%d).mat', data_type, n_units);
 fn_fullfile = fullfile( fn_path, fn_name );
 warning off
 data = load(fn_fullfile);
 warning on
+
+aux.cprintf('String', '\nLoading analyzed data...\n');
+aux.cprintf('String', 'data_type: %s\n', data_type);
+aux.cprintf('String', 'n_units  : %d\n', n_units);
+aux.cprintf('String', 'filename : %s\n', fn_name);
+aux.cprintf('String', 'path     : %s\n\n', fn_path);
+
+fprintf('Loading the CC arrays...\n');
+
 
 % Print this to get more information about the data
 if exist('verbose','var') && verbose

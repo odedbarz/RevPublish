@@ -22,10 +22,10 @@ addParameter(p, 'fn', '', @(x) ischar(x) || isstring(x));
 addParameter(p, 'Y', [], @isnumeric);            
 addParameter(p, 'n_svd', 1, @isnumeric);         % # of singular values (SVs) to use
 
-% - RND
+% - RND & SPK & NOSPK
 addParameter(p, 'N', [], @isnumeric);           % total number of units    
 
-% - SPK
+% - SPK & NOSPK
 addParameter(p, 'tbl_data', [], @istable);           % total number of units    
 
 
@@ -72,18 +72,30 @@ switch upper(pars.type)
         
         
     case 'RND' 
-        if isfield(pars, 'Y')
-            N = size(pars.Y,2);                    
+        if isfield(pars, 'N') && ~isempty(pars.N)
+            N = pars.N;             
+        elseif isfield(pars, 'Y')
+            N = size(pars.Y,2); 
+        else
+            error('Pleae enter number of units (N)!');
         end
         
         sorted_list = randperm(N);
         varargout{1} = {};
         
         
-    case 'SPK' 
-        N = nnz(pars.tbl_data.SPK);
+    case {'SPK', 'NOSPK'} 
+        if isfield(pars, 'Y')
+            N = nnz(pars.tbl_data.SPK);                  
+        end
         
-        sorted_list = 1:N;
+        if strcmpi(pars.type, 'SPK')
+            plausible_units = find(pars.tbl_data.SPK);
+        else
+            plausible_units = find(~pars.tbl_data.SPK);
+        end
+        ind_units = randi( length(plausible_units), N, 1 );
+        sorted_list = plausible_units(ind_units);
         varargout{1} = {};
 
         

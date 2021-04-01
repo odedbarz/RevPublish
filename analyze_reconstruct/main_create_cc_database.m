@@ -2,7 +2,9 @@
 % main_create_cc_database.m
 %
 % Description:
-% Compares spectrogram reconstructions (estimations) with other DRR conditions.
+% Compares spectrogram reconstructions (estimations) with other DRR conditions
+% and saves the database into ANALYZED_CC_XX mat file.
+% 
 %
 %
 
@@ -43,7 +45,7 @@ switch data_type
         
     case 'MUA'
         fn_template = 'reconstruct_MUA_(14-Jan-2021)_units(%d)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(0)_trainDRR(3).mat';        
-        n_units = 10;      %[10, 25, 50, 103, 150, 241];    
+        n_units = 103;      %[10, 25, 50, 103, 150, 241];    
 
     otherwise
         error('--> Unrecognized DATA_TYPE!');
@@ -102,6 +104,7 @@ tbl.CC.Properties.RowNames = drr.labels(drr.ordered);
 tbl.CC2 = tbl.CC;
 tbl.CC3 = tbl.CC;
 
+
 %% CC vs frequencies
 dummy = cell(n_drr, n_splits);
 tbl.CCf = array2table( dummy );
@@ -111,7 +114,6 @@ tbl.CCf.Properties.RowNames = drr.labels(drr.ordered);
 % Fast duplicate, MATLAB style
 tbl.CCf2 = tbl.CCf;
 tbl.CCf3 = tbl.CCf;
-
 
 
 % % Pearson correlation for average of ALL the split

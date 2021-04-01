@@ -6,16 +6,18 @@ function pars = plot_dotbox(X, varargin)
 p = inputParser;
 addRequired(p, 'X', @isnumeric);	% (n_neurons x n_cases)       
 
-addOptional(p, 'x_axis_jitter_std', 0.05, @isnumeric);      % (1x1) jitter along the x-axis      
-addOptional(p, 'labels', {}, @(x) iscell(x) || isnumeric(x));                      % (1 x n_cases)           
-addOptional(p, 'median_line_length',  0.30, @isnumeric);    % (1x1)           
-addOptional(p, 'median_line_width', 3, @isnumeric);         % (1x1)      
-addOptional(p, 'marker_size',  6, @isnumeric);             % (1x1)      
-addOptional(p, 'std_outliers_factor',  [], @isnumeric);   	% (1x1)      
-addOptional(p, 'color', [], @(x) isnumeric(x) || isstr(x));   	% (1x1) adds a boxplot
+addParameter(p, 'x_axis_jitter_std', 0.05, @isnumeric);      % (1x1) jitter along the x-axis      
+addParameter(p, 'labels', {}, @(x) iscell(x) || isnumeric(x));                      % (1 x n_cases)           
+addParameter(p, 'median_line_length',  0.30, @isnumeric);    % (1x1)           
+addParameter(p, 'median_line_width', 3, @isnumeric);         % (1x1)      
+addParameter(p, 'marker_size',  6, @isnumeric);             % (1x1)      
+addParameter(p, 'std_outliers_factor',  [], @isnumeric);   	% (1x1)      
+addParameter(p, 'color', [], @(x) isnumeric(x) || isstr(x));   	% (1x1) adds a boxplot
+addParameter(p, 'x_bias', 0.0, @isnumeric);	% (1x1) add constant bias to all valus along the x-axis      
+addParameter(p, 'grp_width', 1.0, @isnumeric);	% (1x1) width between the groups along the x-axis      
 
-% addOptional(p, 'verbose', 0, @isnumeric);           
-addOptional(p, 'fignum', [], @isnumeric);     
+% addParameter(p, 'verbose', 0, @isnumeric);           
+addParameter(p, 'fignum', [], @isnumeric);     
 parse(p, X, varargin{:});
 pars = p.Results;
 
@@ -85,10 +87,11 @@ for k = 1:n_cases
     
     
     % Add a bit of a jitter
-    x_k = k + x_axis_jutter_k;    
+    x_k = pars.x_bias + k * pars.grp_width;    
+    x_k_jitter = x_k + x_axis_jutter_k; 
     
     % Plot the dots
-    pars.points_h(k) = plot(x_k(I(:,k)), X(I(:,k),k),...
+    pars.points_h(k) = plot(x_k_jitter(I(:,k)), X(I(:,k),k),...
         'o',...
         'MarkerEdgeColor', color_k,...
         'MarkerFaceColor', color_k );
@@ -98,12 +101,12 @@ for k = 1:n_cases
     pars.median.M(k) = pars.median.fun( X(:,k) );
     pars.se.M(k) = pars.se.fun( X(:,k) );
     hold on
-    pars.median_h(k) = plot(k+pars.median_line_length*[-1, 1], pars.median.M(k)*[1, 1], 'Color', color_k);
+    pars.median_h(k) = plot(x_k+pars.median_line_length*[-1, 1], pars.median.M(k)*[1, 1], 'Color', color_k);
     set(pars.median_h(k), 'LineWidth', pars.median_line_width);
     
     % Add the outliers (samples that do not contribut to the median
     if 0 < nnz(~I(:,k))
-        pars.outliers_h(k) = scatter(x_k(~I(:,k)), X(~I(:,k),k), ...
+        pars.outliers_h(k) = scatter(x_k_jitter(~I(:,k)), X(~I(:,k),k), ...
             pars.outliers_markersize, ...
             'Marker', 'x',...    
             'MarkerEdgeColor', get(pars.points_h(k), 'Color'),...

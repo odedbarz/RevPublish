@@ -76,12 +76,12 @@ aux.vprint(verbose, '--> [main_loopover_units.m] Loading file:\n\t...<%s>\n', fn
 %% Order the units
 % [sorted_list, tbl_BF] = find_best_unit_set('CC', 'fn', fn.load.fullfile);
 
-sort_type = 'SPK';  % {'RND', 'SVD', 'CC', SPK}
+sort_type = 'RND';  % {'RND', 'SVD', 'CC', 'SPK', 'NOSPK'}
 Hdry = squeeze( data.H(:,drr.ordered(1),:) ); 
-% sorted_list = find_best_unit_set(sort_type, 'Y', Hdry);
-% [sorted_list] = find_best_unit_set('RND', 'Y', Hdry);
-% sorted_list = find_best_unit_set(sort_type, 'fn', fn.load.fullfile);
-sorted_list = find_best_unit_set('SPK', 'tbl_data', tbl_data);
+sorted_list = find_best_unit_set(sort_type, 'Y', Hdry);                 % {'RND'}
+% sorted_list = find_best_unit_set(sort_type, 'Y', Hdry, 'n_svd', 10);    % {'RND'}
+% sorted_list = find_best_unit_set(sort_type, 'fn', fn.load.fullfile);  % {'CC'}
+% sorted_list = find_best_unit_set(sort_type, 'tbl_data', tbl_data);    % {'SPK', 'NOSPK'}
 
 
 
@@ -214,9 +214,6 @@ for q = 1 %1:n_drr
                 % Choose the DRR case for the testing signals
                 %test_drr  = k;
                 test_drr  = drr.ordered(k);            
-                if 0 % verbose
-                    fprintf('-----> TEST DRR: %s\t(%d/%d)\n',  drr.labels{test_drr}, test_drr, n_drr);
-                end
 
                 % Split for the TESTING data
                 X2 = spec_st.Sft{test_drr};
@@ -258,14 +255,6 @@ for q = 1 %1:n_drr
                 scores.nmse(k,n)= gof.nmse;
             end
 
-            if  0 %verbose
-                fprintf('-----> Finished the DRRs...\n');
-                T = array2table( [scores.CC(drr.sortby(1:5),m,n), scores.nmse(drr.sortby(1:5),m,n)],...
-                    'RowNames', drr.labels(drr.sortby(1:5)), ...
-                    'VariableNames', {'CC', 'NMSE'});
-                disp(T);
-                fprintf('\n');
-            end  
 
         end
     
