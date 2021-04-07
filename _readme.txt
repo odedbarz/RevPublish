@@ -32,7 +32,18 @@ ROOT: the project root directory.
 
 
 
-(C) Analysis & plot results for the paper:  -	Run
+(C) Plots:
+	(1) _FIGS4PAPES/RESULTS_CC_ERRORBAR_ANALYSIS.M: plots 2 bar plots with erro bars, one for SU and another for MUA. In each figure the bars compare spectrogram reconstructions of Sdry-to-Sest (blue bars) and Sdrr-to-Sest (red bars). 
+	
+	(2) _FIGS4PAPES/RESULTS_CC_ANALYSIS.M: 
+		(a) Two plots of SU & MUA reconstructions. Each plot shows CC as a function of DRRs for various number of units used for the reconstructions.
+		(b) Boxplot of SU & MUA side by side on the same figure.
+		(c) Two-ways ANOVA plot (data-type vs DRRs).
+
+
+
+
+(*?*) Analysis & plot results for the paper:  -	Run
 ANALYZE_RECONSTRUCT/ANALYZE_RECONSTRUCTION.M: this will analyze -	the
 spectrogram 	 reconstructions between the DRY and other DRR conditions and
 will plot all relevant figures.

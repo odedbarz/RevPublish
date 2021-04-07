@@ -41,7 +41,7 @@ switch data_type
         %         spec_st: [1×1 struct]
         %      tbl_impale: [437×20 table]
         fn.load.file = 'data_SU_(08-Jan-2021)_bw(5)_fbands(30)_win(NaN)ms_spec(gammatone).mat';       
-        unit_list = [10, 25, 50, 103];
+        unit_list = 25; %[10, 25, 50, 103];
 
     case 'MUA'
         %Loads a struct with fields:
@@ -52,14 +52,14 @@ switch data_type
         %         stim_st: [1×1 struct]
         %      tbl_impale: [437×20 table]        
         fn.load.file = 'data_MUA_(08-Jan-2021)_bw(5)_fbands(30)_win(NaN)ms_spec(gammatone).mat';  
-        unit_list = [10, 25, 50, 103, 241];
+        unit_list = 25; %[10, 25, 50, 103, 241];
 
     otherwise
         error('--> Unrecognized DATA_TYPE!');
         
 end
 fn.load.fullfile = fullfile( fn.load.path, fn.load.file );
-data        = load(fn.load.fullfile);
+data      = load(fn.load.fullfile);
 
 spec_st   = data.spec_st;
 tbl_data  = data.(sprintf('tbl_%s', data_type));
@@ -76,14 +76,21 @@ aux.vprint(verbose, '--> [main_loopover_units.m] Loading file:\n\t...<%s>\n', fn
 %% Order the units
 % [sorted_list, tbl_BF] = find_best_unit_set('CC', 'fn', fn.load.fullfile);
 
-sort_type = 'RND';  % {'RND', 'SVD', 'CC', 'SPK', 'NOSPK'}
+sort_type = 'SPK';  % {'RND', 'SVD', 'FILE', 'SPK', 'NOSPK'}
 Hdry = squeeze( data.H(:,drr.ordered(1),:) ); 
-sorted_list = find_best_unit_set(sort_type, 'Y', Hdry);                 % {'RND'}
+% sorted_list = find_best_unit_set(sort_type, 'Y', Hdry);                 % {'RND'}
 % sorted_list = find_best_unit_set(sort_type, 'Y', Hdry, 'n_svd', 10);    % {'RND'}
 % sorted_list = find_best_unit_set(sort_type, 'fn', fn.load.fullfile);  % {'CC'}
-% sorted_list = find_best_unit_set(sort_type, 'tbl_data', tbl_data);    % {'SPK', 'NOSPK'}
+% sorted_list = find_best_unit_set(sort_type, 'fn', 'unit_list_MUA_drr(5).mat');  % {'FILE'}
+sorted_list = find_best_unit_set(sort_type, 'tbl_data', tbl_data);    % {'SPK', 'NOSPK'}
 
+%     % ONLY FOR THE SU -- get the right spikes
+%     sorted_list = arrayfun(@(N) find(N == tbl_data.neuron) ,intersect(tbl_data.neuron', sorted_list) )
 
+%         H_ = squeeze( data.H(:,drr.ordered(5),:) ); 
+%         D = corrcoef(H_);
+%         [~, ii] = sort( abs(sum(D)), 'descend' );
+%         sorted_list = sorted_list(ii);
 
 
 %% Reconstruction parameters
@@ -191,8 +198,7 @@ for q = 1 %1:n_drr
                'test_grp', test_grp_number ...
             );
             %}
-            
-            
+                        
             
             % Extract the reconstruction filters
             % Initialize the reconstruction object
@@ -213,11 +219,12 @@ for q = 1 %1:n_drr
             for k = 1:n_drr    
                 % Choose the DRR case for the testing signals
                 %test_drr  = k;
-                test_drr  = drr.ordered(k);            
-
+                test_drr  = drr.ordered(k);                                               
+                
                 % Split for the TESTING data
                 X2 = spec_st.Sft{test_drr};
                 y2 = squeeze( H_sorted(:, test_drr, :) );
+                
                 [~, X_test_kn, ~, y_test, ~] = train_test_split(X2, y2, ...
                     'n_splits', n_splits, ...
                     'split_time_idx', split_time_idx, ...
@@ -254,8 +261,7 @@ for q = 1 %1:n_drr
                 scores.mse(k,n) = gof.mse;
                 scores.nmse(k,n)= gof.nmse;
             end
-
-
+                
         end
     
     

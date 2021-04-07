@@ -53,6 +53,16 @@ switch upper(pars.type)
         varargout{1} = tbl_BF;
         
         
+    case 'FILE'
+        fpath = load.path_to_data('Analysis');
+        [~, fname, ~] = fileparts(pars.fn); 
+        fn    = fullfile(fpath, [fname, '.mat']);
+        assert(~isempty(dir( fn )), '--> ERROR: can''t find the DATA file!');
+        dummy = load( fn );
+        sorted_list = dummy.unit_list;
+
+        
+        
     case 'SVD'
         % Orthogonalize the measurements
         %[U, S, ~] = svds(zca(pars.Y), pars.n_svd);

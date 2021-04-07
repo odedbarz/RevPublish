@@ -40,7 +40,7 @@ end
 duration_sec= 36;   % (sec) stimulus duration to use 
 duration_ms = units.sec2ms( duration_sec );
 binwidth    = 5         % (ms) binwidth of the resulted spectrogram 
-fs      = 1/(1e-3*binwidth);         % (Hz)
+fs          = 1/(1e-3*binwidth);         % (Hz)
 
 if verbose
     aux.cprintf('UnterminatedStrings', '\n    Stimulus Parameters:\n');    
@@ -129,7 +129,7 @@ for k = 1:n_rows
     assert( all(drr.revb(1:n_drr) == tbl_kth_meas.Reverb(1:n_drr)'),...
         '!ERROR: Wrong order of measurements!' )    
     
-    % Calculate pairwise-distance between all vectors. Note that the
+    % Calculate pairwise-distance between all vectors. 
     for dr = 1:n_drr
         drr_idx = drr.ordered(dr);        
         Mcc = corr(tbl_kth_meas.single_meas{drr_idx}, 'Type', 'Pearson');

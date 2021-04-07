@@ -20,9 +20,6 @@ setup_environment('../');
 
 
 
-
-
-
 %% Load data
 % 
 %   Name                Size                 Bytes  Class     Attributes

@@ -56,7 +56,7 @@ switch data_type
         
 end
 fn.load.fullfile = fullfile( fn.load.path, fn.load.file );
-data        = load(fn.load.fullfile);
+data = load(fn.load.fullfile);
 
 spec_st         = data.spec_st;
 tbl_data        = data.(sprintf('tbl_%s', data_type));

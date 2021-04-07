@@ -1,5 +1,5 @@
 function H=demo_shadedErrorBar
-% demo function for shadedErrorBar
+% demo function for aux.shadedErrorBar
 %
 % function demo_shadedErrorBar
 %
@@ -22,7 +22,7 @@ y=randn(30,80)*5;
 x=(1:size(y,2))-40;
 yP = sin( linspace(-2*pi,2*pi,length(x)) )*20;
 y = bsxfun(@plus,y,yP)+60;
-shadedErrorBar(x,y,{@mean,@std}); 
+aux.shadedErrorBar(x,y,{@mean,@std}); 
 
 hold on
 plot(x,y,'.','color',[0.5,0.5,0.95])
@@ -40,8 +40,8 @@ hold on
 
 y=ones(30,1)*x; 
 y=y+0.06*y.^2+randn(size(y))*10;
-shadedErrorBar(x,y,{@mean,@std},'lineprops','-b','patchSaturation',0.33)
-shadedErrorBar(x,2*y+20,{@mean,@std},'lineprops',{'-go','MarkerFaceColor','g'});
+aux.shadedErrorBar(x,y,{@mean,@std},'lineprops','-b','patchSaturation',0.33)
+aux.shadedErrorBar(x,2*y+20,{@mean,@std},'lineprops',{'-go','MarkerFaceColor','g'});
 
 y=randn(30,80)*5; 
 x=(1:size(y,2))-40;
@@ -49,7 +49,7 @@ yP = sin( linspace(-2*pi,2*pi,length(x)) )*20;
 y = bsxfun(@plus,y,yP)+60;
 
 %Make red line non-transparent
-shadedErrorBar(x, y, {@mean,@std}, 'lineprops', '-r','transparent',false,'patchSaturation',0.075)
+aux.shadedErrorBar(x, y, {@mean,@std}, 'lineprops', '-r','transparent',false,'patchSaturation',0.075)
 hold off
 
 grid on
@@ -67,7 +67,7 @@ yP = sin( linspace(-2*pi,2*pi,length(x)) )*20;
 y = bsxfun(@plus,y,yP);
 
 
-s = shadedErrorBar(x, y, {@mean,@std}, 'lineprops', '-r');
+s = aux.shadedErrorBar(x, y, {@mean,@std}, 'lineprops', '-r');
 
 %Set face and edge properties
 set(s.edge,'LineWidth',2,'LineStyle',':')
@@ -96,12 +96,12 @@ yP = cos( linspace(-2*pi,2*pi,length(x)) )*10;
 y = bsxfun(@plus,y,yP);
 
 
-shadedErrorBar(x, y, {@mean,@std}, 'lineprops', '-r')
+aux.shadedErrorBar(x, y, {@mean,@std}, 'lineprops', '-r')
 
 hold on
 
 y=mean(y)+16;
 errbar = [2*ones(1,length(x)) ; 4*ones(1,length(x))];
 
-shadedErrorBar(x, y, errbar, 'lineprops', '-g')
+aux.shadedErrorBar(x, y, errbar, 'lineprops', '-g')
 
