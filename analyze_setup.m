@@ -66,7 +66,8 @@ CCt2    = data.CCt2;        % compares drr vs. est
 CCt3    = data.CCt3;        % compares drr vs. est
 
 % non-nans indices
-idx_nn = ~isnan(CCt(:,5)) & ~isnan( CCt3(:,5) );
+%idx_nn = ~isnan(CCt(:,5)) & ~isnan( CCt3(:,5) );
+idx_nnan = ~isnan(CCt(:,5)) & ~isnan( CCt3(:,5) );
 
 
 % splits  = data.splits;

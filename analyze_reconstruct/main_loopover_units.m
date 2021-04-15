@@ -106,7 +106,7 @@ if verbose
     aux.cprintf('UnterminatedStrings', '\n    Data:\n');
     aux.cprintf('UnterminatedStrings', '--> data_type   : %s\n', data_type);
     aux.cprintf('UnterminatedStrings', '--> unit_list   : [%s]\n', num2str(unit_list));
-    aux.cprintf('UnterminatedStrings', '--> n_units     : %g\n', n_units);
+    aux.cprintf('UnterminatedStrings', '--> n_units     : %g (all available units)\n', n_units);
     aux.cprintf('UnterminatedStrings', '--> duration_sec: %g ms\n', duration_sec);
     aux.cprintf('UnterminatedStrings', '    Reconstruction:\n');
     aux.cprintf('UnterminatedStrings', '--> causality   : %d\n', iscausal);
@@ -141,6 +141,7 @@ if verbose
     fprintf('========================\n');    
 end
 
+    
 
 for q = 1 %1:n_drr 
     % The training (i.e., truth-level) DRR case
@@ -148,9 +149,7 @@ for q = 1 %1:n_drr
     %train_drr = [3, 4, 5];  '########## Training for more than one DRR #########'
     if verbose
         fprintf('--> TRAIN DRR: %d, %s\n', train_drr, drr.labels{train_drr});
-    end
-    
-    
+    end    
     
     % Loop over UNITS
     for m = 1:len_unit_list
@@ -161,8 +160,6 @@ for q = 1 %1:n_drr
 
         % Select M_UNITS to reconstruct        
         H_sorted = data.H( :, 1:n_drr, sorted_list(1:m_units) );        
-
-        
         
         % >> analyze_units;
         obj_list = cell(n_drr, n_splits);
@@ -171,7 +168,7 @@ for q = 1 %1:n_drr
         scores.CC  = nan(n_drr, n_splits);
         scores.mse = nan(n_drr, n_splits);
         scores.nmse= nan(n_drr, n_splits);
-
+        scores2 = scores;
         
         
         % Loop over SPLITS
@@ -224,7 +221,6 @@ for q = 1 %1:n_drr
                 % Split for the TESTING data
                 X2 = spec_st.Sft{test_drr};
                 y2 = squeeze( H_sorted(:, test_drr, :) );
-                
                 [~, X_test_kn, ~, y_test, ~] = train_test_split(X2, y2, ...
                     'n_splits', n_splits, ...
                     'split_time_idx', split_time_idx, ...
@@ -255,11 +251,23 @@ for q = 1 %1:n_drr
                 end
                 warning on
 
+                % ### DEBUG ###
+                % %{
                 % Goodness-of-fit
                 gof = goodness(X_test0, obj.X_est);
                 scores.CC(k,n)  = gof.CC;
                 scores.mse(k,n) = gof.mse;
                 scores.nmse(k,n)= gof.nmse;
+                
+                % Goodness-of-fit
+                gof2 = goodness(X_test_kn, obj.X_est);
+                scores2.CC(k,n)  = gof2.CC;
+                scores2.mse(k,n) = gof2.mse;
+                scores2.nmse(k,n)= gof2.nmse;
+                               
+                %plot(1:5, scores.CC, 'o', 1:5, scores2.CC, 'x');
+                %bar([mean(scores.CC,2), mean(scores2.CC,2)]);
+                %}
             end
                 
         end
