@@ -17,6 +17,12 @@ class Struct():
             str += '- {0}: {1}\n'.format(key, value)
         return str
 
+def whitening(x):
+    x = x.squeeze()
+    return (x-x.mean())/x.std()
+
+
+# %%
 if __name__ == '__main__':
     st = Struct()
     st.a = 67
