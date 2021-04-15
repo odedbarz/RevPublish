@@ -18,7 +18,7 @@ from torch.utils.data import TensorDataset, DataLoader
 
 from mydataset import dataset
 
-device = torch.device('cude' if torch.cuda.is_available() else 'cpu')
+device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 print(f'device: {device}')
 
 
@@ -38,17 +38,30 @@ print(Hdrr)
 
 
 # %%
-train_window = 20   # binwidth * train_window => duration in msec
-inout_seq = []      # in/out sequence
+# train_window = 12   # binwidth * train_window => duration in msec
+# inout_seq = []      # in/out sequence
+# for ii in range(Hdry.n_time-train_window):
+#     seq_ii = Hdrr[ii:ii+train_window]
+#     label_ii = Hdry[ii+train_window]
+#     inout_seq.append((seq_ii, label_ii))
+
+# test_size = int(0.2*len(inout_seq))
+# train_seq = inout_seq[:-test_size]
+# test_seq = inout_seq[-test_size:]       # ! USE JACK-KNIFE !
+
+train_window = 12   # binwidth * train_window => duration in msec
+in_seq = []      # in/out sequence
+out_seq = []      # in/out sequence
 for ii in range(Hdry.n_time-train_window):
     seq_ii = Hdrr[ii:ii+train_window]
     label_ii = Hdry[ii+train_window]
-    inout_seq.append((seq_ii, label_ii))
+    in_seq.append(seq_ii.numpy())
+    out_seq.append(label_ii.numpy())
 
-test_size = int(0.2*len(inout_seq))
-train_seq = inout_seq[:-test_size]
-test_seq = inout_seq[-test_size:]       # ! USE JACK-KNIFE !
+test_size = int(0.2*len(in_seq))
 
+trainset = TensorDataset( in_seq[:-test_size], out_seq[:-test_size] )
+# testset = TensorDataset( inout_seq[-test_size:] )
 
 # # %% Pack data into DATASETs
 # test_size = int(0.2 * len(Hdrr))
