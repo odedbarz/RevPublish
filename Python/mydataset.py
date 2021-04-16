@@ -15,7 +15,7 @@ import pandas as pd
 # %%
 
 class dataset(Dataset):
-    def __init__(self, drr_idx, unit_number, fn, path='.') -> None:
+    def __init__(self, seq_len, drr_idx, unit_number, fn, path='.', normalize=True) -> None:
         self.fn = fn        
         self.path = path
 
@@ -34,8 +34,23 @@ class dataset(Dataset):
         M = torch.squeeze( torch.Tensor( dummy['mua'] )[:,self.drr_idx,:] )
 
         self.n_time, _ = M.shape                # length of measurement
-        self.v = M[:,self.unit_number]
+        self.response = M[:,self.unit_number]          # vector of MUA/SU response
         self.binwidth = dummy['binwidth']       # (ms) binwidth
+
+        # * NORMALIZE
+        self.normalize = normalize
+        if normalize:
+            mu = self.response.mean()
+            std = self.response.std()
+            self.response = (self.response - mu)/std
+
+        self.seq_len = seq_len
+        self.data_len = int(self.n_time-seq_len)
+        self.X = torch.zeros(self.data_len, seq_len)      # a window of SEQ_LEN samples
+        self.y = torch.zeros(self.data_len)               # next sample ("labels")
+        for k in range(self.data_len):
+            self.X[k,:] = self.response[k:k+seq_len]
+            self.y[k] = self.response[k+seq_len] 
 
     def __repr__(self):
         '''
@@ -63,20 +78,17 @@ class dataset(Dataset):
         return (self.n_time)
 
     def __getitem__(self, idx):
-        return self.v[idx]
+        return self.X[idx,:], self.y[idx]
 
 
 # # %%
 if __name__ == '__main__':
     print('Testing madataset.py...')
 
-    data = dataset( drr_idx = 0, unit_number = 1, 
+    data = dataset( seq_len = 20, drr_idx = 0, unit_number = 1, 
         fn = 'data_MUA-ONLY_(08-Jan-2021)_bw(5)_fbands(30)_spec(gammatone).mat',
         path = './')
     
     print(data)
 
-    print('data[:5]')
-    print( torch.stack((data[:5], data.v[:5]), dim=1) )
- 
-# %%
+

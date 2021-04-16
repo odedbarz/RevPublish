@@ -27,37 +27,42 @@ device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 print(f'device: {device}')
 
 
+
 # %% Load from MAT file
 fn = 'data_MUA-ONLY_(08-Jan-2021)_bw(5)_fbands(30)_spec(gammatone).mat'
 path = './'
 
 unit_number = 1
-Hdry = dataset( drr_idx = 0, unit_number = unit_number, fn = fn, path = path)
-Hdrr = dataset( drr_idx = 4, unit_number = unit_number, fn = fn, path = path)
+dry_data = dataset( 
+    seq_len = 20,    # binwidth * seq_len => duration in msec    # * hyper-parameter 
+    drr_idx = 0, 
+    unit_number = unit_number, 
+    fn = fn, 
+    path = path)
 
-# * NORMALIZE
-mu = Hdry[:].mean()
-std = Hdry[:].std()
-Hdry.v = (Hdry.v - mu)/std
-Hdrr.v = (Hdrr.v - mu)/std
+drr_data = dataset(
+    seq_len = 20,    # binwidth * seq_len => duration in msec    # * hyper-parameter 
+    drr_idx = 4, 
+    unit_number = unit_number, 
+    fn = fn, 
+    path = path)
 
-print(Hdrr)
+print(drr_data)
 
-# Pack sequences and labels (next-sequence) into one list
-seq_len = 20    # binwidth * seq_len => duration in msec    # * hyper-parameter 
-data_length = int(Hdry.n_time-seq_len)
-in_seq = torch.zeros(data_length, seq_len)      # in sequence
-labels = torch.zeros(data_length)               # out sequence
-labels_drr = torch.zeros(data_length)               # out sequence
-for ii in range(data_length):
-    in_seq[ii,:] = Hdrr[ii:ii+seq_len]
-    labels[ii] = Hdry[ii+seq_len]
-    labels_drr[ii] = Hdrr[ii+seq_len]
+
  
+# %%
 # Split the data into train/test sets
 test_size = 0.2
-X_train, X_test, y_train, y_test = train_test_split(in_seq, labels, test_size=test_size) #, random_state=42)
-_, _, _, y_test0 = train_test_split(in_seq, labels_drr, test_size=test_size) #, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(
+    dry_data.X, 
+    dry_data.y, 
+    test_size=test_size ) #, random_state=42)
+
+_, _, _, y_test0 = train_test_split(
+    np.empty_like(drr_data.X), 
+    dry_data.y, 
+    test_size=test_size ) #, random_state=42)
 
 trainset = TensorDataset( X_train, y_train )
 testset = TensorDataset( X_test, y_test )
