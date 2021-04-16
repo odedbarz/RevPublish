@@ -30,8 +30,10 @@ print(f'device: {device}')
 # %% Load from MAT file
 fn = 'data_MUA-ONLY_(08-Jan-2021)_bw(5)_fbands(30)_spec(gammatone).mat'
 path = './'
-Hdry = dataset( drr_idx = 0, unit_number = 1, fn = fn, path = path)
-Hdrr = dataset( drr_idx = 4, unit_number = 1, fn = fn, path = path)
+
+unit_number = 1
+Hdry = dataset( drr_idx = 0, unit_number = unit_number, fn = fn, path = path)
+Hdrr = dataset( drr_idx = 4, unit_number = unit_number, fn = fn, path = path)
 
 # * NORMALIZE
 mu = Hdry[:].mean()
@@ -42,7 +44,7 @@ Hdrr.v = (Hdrr.v - mu)/std
 print(Hdrr)
 
 # Pack sequences and labels (next-sequence) into one list
-seq_len = 20   # binwidth * seq_len => duration in msec
+seq_len = 20    # binwidth * seq_len => duration in msec    # * hyper-parameter 
 data_length = int(Hdry.n_time-seq_len)
 in_seq = torch.zeros(data_length, seq_len)      # in sequence
 labels = torch.zeros(data_length)               # out sequence
@@ -54,8 +56,8 @@ for ii in range(data_length):
  
 # Split the data into train/test sets
 test_size = 0.2
-X_train, X_test, y_train, y_test = train_test_split(in_seq, labels, test_size=test_size, random_state=42)
-_, _, _, y_test0 = train_test_split(in_seq, labels_drr, test_size=test_size, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(in_seq, labels, test_size=test_size) #, random_state=42)
+_, _, _, y_test0 = train_test_split(in_seq, labels_drr, test_size=test_size) #, random_state=42)
 
 trainset = TensorDataset( X_train, y_train )
 testset = TensorDataset( X_test, y_test )
@@ -79,8 +81,13 @@ class RNN(nn.Module):
         self.batch_first  = batch_first     # input and output tensors are provided as (batch, seq, feature)
         self.dropout      = dropout 
 
+        # RNN   # * hyper-parameter 
         self.rnn = nn.RNN(input_size=n_input, hidden_size=n_hidden, num_layers=n_layers,
             nonlinearity=nonlinearity, batch_first=batch_first, dropout=dropout)
+
+        # GRU   # * hyper-parameter 
+        # self.rnn = nn.GRU(input_size=n_input, hidden_size=n_hidden, num_layers=n_layers,
+        #    batch_first=batch_first, dropout=dropout)
 
         self.fc = nn.Linear(n_hidden, n_output)
 
@@ -98,8 +105,8 @@ class RNN(nn.Module):
 
 # %% Create a model
 n_input = 1
-n_hidden = 100
-n_layers = 1
+n_hidden = 100                                  # * hyper-parameter 
+n_layers = 1                                    # * hyper-parameter 
 n_output = 1
 nonlinearity = 'relu' # {'relu', 'tanh'}
 batch_first = True
@@ -122,8 +129,8 @@ print(model)
 
 # %% 
 # *** Training ***
-epochs = 100
-lr = 1e-4       # learning rate
+epochs = 400
+lr = 1e-3       # learning rate
 
 loss_function = nn.MSELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=lr)
@@ -162,9 +169,6 @@ for k, (seq, yk) in enumerate(test_loader):
         yk_pred = model( seq.to(device) )
         y_est.append(yk_pred.numpy())
         y_dry.append(yk.numpy())
-
-# y_pred = np.array(y_pred)
-# y_test = np.array(y_test)
 
 idx = -1
 y_est = whitening(y_est[idx])
