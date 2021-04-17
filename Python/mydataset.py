@@ -1,11 +1,10 @@
 # %%
 # %reload_ext autoreload
 # %autoreload 2
-
 import matplotlib.pyplot as plt
 import os
 from scipy.io import loadmat
-import numpy
+import numpy as np
 
 import torch
 from torch.utils.data import Dataset
@@ -13,9 +12,8 @@ import pandas as pd
 
 
 # %%
-
 class dataset(Dataset):
-    def __init__(self, seq_len, drr_idx, unit_number, fn, path='.', normalize=True) -> None:
+    def __init__(self, seq_len, drr_idx, unit_numbers, fn, path='.', normalize=True) -> None:
         self.fn = fn        
         self.path = path
 
@@ -28,29 +26,43 @@ class dataset(Dataset):
 
         self.drr_idx = drr_idx                                  # drr case to use
         self.drr_label = dummy['drr_labels'][self.drr_idx]      # drr label        
-        self.unit_number = unit_number                          # unit number
+        self.unit_numbers = unit_numbers                          # unit number
+        self.binwidth = dummy['binwidth']                       # (ms) binwidth
 
         # Get the DRR case and transform to torch tensor array
         M = torch.squeeze( torch.Tensor( dummy['mua'] )[:,self.drr_idx,:] )
 
-        self.n_time, _ = M.shape                # length of measurement
-        self.response = M[:,self.unit_number]          # vector of MUA/SU response
-        self.binwidth = dummy['binwidth']       # (ms) binwidth
-
+        # Extract desired units
+        self.n_time, max_units = M.shape     # (time x number of units)    
+        if np.isscalar(self.unit_numbers) and 0 <= self.unit_numbers:
+            # Create a COLUMN vector of MUA/SU response
+            self.response = M[:,self.unit_numbers][:,None]   
+        elif 0==len(self.unit_numbers):            
+            # Get all responses
+            self.response = M   
+            self.unit_numbers = (0, M.shape[-1])
+        elif 2 == len(self.unit_numbers):
+            self.response = M[:,self.unit_numbers[0]:self.unit_numbers[1]]
+        else:
+            raise Exception('unit_number must be of size 1 or 2 (scalar or matrix)!')
+        
+        self.n_units = self.response.shape[-1]          
+ 
         # * NORMALIZE
         self.normalize = normalize
         if normalize:
-            mu = self.response.mean()
-            std = self.response.std()
+            mu = self.response.mean(dim=0)
+            std = self.response.std(dim=0)
             self.response = (self.response - mu)/std
 
+        # * input of shape for RNNs, (seq_len, batch, input_size)
         self.seq_len = seq_len
         self.data_len = int(self.n_time-seq_len)
-        self.X = torch.zeros(self.data_len, seq_len)      # a window of SEQ_LEN samples
-        self.y = torch.zeros(self.data_len)               # next sample ("labels")
+        self.X = torch.zeros(self.data_len, seq_len, self.n_units)      # a window of SEQ_LEN samples
+        self.y = torch.zeros(self.data_len, self.n_units)               # next sample ("labels")
         for k in range(self.data_len):
-            self.X[k,:] = self.response[k:k+seq_len]
-            self.y[k] = self.response[k+seq_len] 
+            self.X[k,:] = self.response[k:k+seq_len,:]
+            self.y[k] = self.response[k+seq_len,:] 
 
     def __repr__(self):
         '''
@@ -58,7 +70,7 @@ class dataset(Dataset):
         '''
         str = 'Struct fields:\n'
         for key, value in self.__dict__.items():
-            if isinstance(value, numpy.ndarray) or isinstance(value, torch.Tensor):
+            if isinstance(value, np.ndarray) or isinstance(value, torch.Tensor):
                 new_var = value.shape
                 value = ['shape: ', new_var]
 
@@ -67,7 +79,7 @@ class dataset(Dataset):
         
         # D = pd.DataFrame();
         # for key, value in self.__dict__.items():
-        #     if isinstance(value, numpy.ndarray) or isinstance(value, torch.Tensor):
+        #     if isinstance(value, np.ndarray) or isinstance(value, torch.Tensor):
         #         value = value.shape
         #     print(key, value)
         #     D.append( pd.DataFrame([value], index=[key]) )
@@ -75,7 +87,7 @@ class dataset(Dataset):
         # return D.to_string()
 
     def __len__(self):
-        return (self.n_time)
+        return self.X.shape[0]
 
     def __getitem__(self, idx):
         return self.X[idx,:], self.y[idx]
@@ -85,10 +97,21 @@ class dataset(Dataset):
 if __name__ == '__main__':
     print('Testing madataset.py...')
 
-    data = dataset( seq_len = 20, drr_idx = 0, unit_number = 1, 
+    # Example of loading only one unit response
+    data_oneunit = dataset( seq_len = 20, drr_idx = 0, unit_numbers = 1, 
         fn = 'data_MUA-ONLY_(08-Jan-2021)_bw(5)_fbands(30)_spec(gammatone).mat',
         path = './')
     
-    print(data)
+    print(data_oneunit)
 
+
+    # Example of loading all available unit responses
+    data_allunits = dataset( seq_len = 20, drr_idx = 0, unit_numbers = [], 
+        fn = 'data_MUA-ONLY_(08-Jan-2021)_bw(5)_fbands(30)_spec(gammatone).mat',
+        path = './')
+    
+    print(data_allunits)
+ 
+
+# %%
 

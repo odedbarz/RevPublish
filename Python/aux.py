@@ -1,4 +1,5 @@
 # %%
+from matplotlib.pyplot import axis
 import numpy
 
 class Struct():
@@ -17,9 +18,9 @@ class Struct():
             str += '- {0}: {1}\n'.format(key, value)
         return str
 
-def whitening(x):
-    x = x.squeeze()
-    return (x-x.mean())/x.std()
+def whitening(x, dim=0):    
+    eps = 1e-15     # avoid division by zero
+    return (x-x.mean(axis=0))/(eps + x.std(axis=0))
 
 
 # %%
