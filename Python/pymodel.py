@@ -1,7 +1,17 @@
 # %%
-%reload_ext autoreload
-%autoreload 2
+# %reload_ext autoreload
+# %autoreload 2
+# %reset -f 
+from IPython import get_ipython
+ipython = get_ipython()
 
+if '__IPYTHON__' in globals():
+    ipython.magic('load_ext autoreload')
+    ipython.magic('autoreload 2')
+    ipython.magic('reset -f')
+
+
+# %%    
 from aux import whitening
 import matplotlib.pyplot as plt
 import matplotlib
@@ -32,16 +42,18 @@ print(f'device: {device}')
 fn = 'data_MUA-ONLY_(08-Jan-2021)_bw(5)_fbands(30)_spec(gammatone).mat'
 path = './'
 
-unit_numbers = 0
+seq_len = 20                # samples   #* hyper-parameter 
+unit_numbers = (0,1)                    #* NUMBER of UNITS for analysis 
+
 dry_data = dataset( 
-    seq_len = 20,    # binwidth * seq_len => duration in msec    # * hyper-parameter 
+    seq_len = seq_len,      # binwidth * seq_len => duration in msec    
     drr_idx = 0, 
     unit_numbers = unit_numbers, 
     fn = fn, 
     path = path)
 
 drr_data = dataset(
-    seq_len = 20,    # binwidth * seq_len => duration in msec    # * hyper-parameter 
+    seq_len = seq_len,      # binwidth * seq_len => duration in msec    
     drr_idx = 4, 
     unit_numbers = unit_numbers, 
     fn = fn, 
@@ -54,7 +66,7 @@ print(drr_data)
 # %% Split the data into train/test sets
 test_size = 0.2
 batch_size = 64
-shuffle = False
+shuffle = True
 
 train_idx, test_idx = train_test_split(range(len(dry_data)), test_size=test_size, 
     shuffle=shuffle )  #, random_state=42)
@@ -85,12 +97,16 @@ test_loader = DataLoader(testset, batch_size=batch_size, shuffle=False)
 # ! DEBUG
 print('*** DEBUGING! ***')
 X, y = next(iter(train_loader))
+print('- X_train :', X_train.shape)
+print('- y_train :', y_train.shape)
+print('- X_test  :', X_test.shape)
+print('- y_test  :', y_test.shape)
 
 
 
-# %% # * Create RNN model
+# %% #* Create RNN model
 class RNN(nn.Module):
-    def __init__(self, n_input, n_hidden, n_layers, n_output,
+    def __init__(self, n_input, n_hidden, n_layers,
         nonlinearity='relu', batch_first=True, dropout=0) -> None:
         super(RNN, self).__init__()
         self.n_input      = n_input         # dimensions of the input tensor
@@ -99,7 +115,7 @@ class RNN(nn.Module):
         self.nonlinearity = nonlinearity    # {'tanh', 'relu'}
         self.batch_first  = batch_first     # input and output tensors are provided as (batch, seq, feature)
         self.dropout      = dropout 
-        self.n_output     = n_output 
+        self.n_output     = n_input 
 
         # RNN   # * hyper-parameter 
         self.rnn = nn.RNN(input_size=n_input, hidden_size=n_hidden, num_layers=n_layers,
@@ -109,7 +125,7 @@ class RNN(nn.Module):
         # self.rnn = nn.GRU(input_size=n_input, hidden_size=n_hidden, num_layers=n_layers,
         #    batch_first=batch_first, dropout=dropout)
 
-        self.fc = nn.Linear(n_hidden, n_output)
+        self.fc = nn.Linear(n_hidden, self.n_output)
 
     def forward(self, x):
        # (num_layers * num_directions, batch_size, hidden_size)
@@ -126,17 +142,17 @@ class RNN(nn.Module):
         return x #[-1]
 
 
-n_input = np.min((15, dry_data.n_units))
-n_hidden = 100                                  # * hyper-parameter 
-n_layers = 1                                    # * hyper-parameter 
-n_output = 1
-nonlinearity = 'relu' # {'relu', 'tanh'}
+n_input = dry_data.n_units                      #* number of UNITs 
+n_hidden = 100                                  #* hyper-parameter 
+n_layers = 1                                    #* hyper-parameter 
+# n_output = 1
+nonlinearity = 'relu' # {'relu', 'tanh'}        #* hyper-parameter 
 batch_first = True
 dropout = 0
 model = RNN(n_input = n_input, 
             n_hidden = n_hidden, 
             n_layers = n_layers, 
-            n_output = n_output,
+            # n_output = n_output,
             nonlinearity = nonlinearity, 
             batch_first = True, 
             dropout = 0).to(device)
@@ -145,19 +161,19 @@ model = RNN(n_input = n_input,
 print(model)
 
 # ! DEBUG
-print('*** DEBUGING! ***')
-X, y = next(iter(train_loader))
-yhat = model(X)
-print('- y.shape   : ', y.shape)
-print('- yhat.shape: ', yhat.shape)
-# X, y = dry_data[0]
-# yhat = model(X[None,:])     # add the BATCH dimension, as in (batch, seq_len, input_size)
+# print('*** DEBUGING! ***')
+# X, y = next(iter(train_loader))
+# yhat = model(X)
+# print('- y.shape   : ', y.shape)
+# print('- yhat.shape: ', yhat.shape)
+# # X, y = dry_data[0]
+# # yhat = model(X[None,:])     # add the BATCH dimension, as in (batch, seq_len, input_size)
 
 
 
 # %%  # *** Training ***
-epochs = 400
-lr = 1e-3       # learning rate
+epochs = 500
+lr = 1e-3       # * hyper-parameter; learning rate
 
 loss_function = nn.MSELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=lr)
@@ -173,7 +189,8 @@ for ep in range(epochs):
          
         y_pred = model( X.to(device) )
         # y_pred.squeeze_()
-        loss_k = loss_function(y_pred, y)
+        #loss_k = loss_function(y_pred, y)
+        loss_k = loss_function(y_pred.view(-1,1), y.view(-1,1))
         loss_k.backward()
         optimizer.step()
 
@@ -197,27 +214,28 @@ for k, (X, yk) in enumerate(test_loader):
         y_est.append(yk_pred.numpy())
         y_dry.append(yk.numpy())        
 
-y_est = np.concatenate(y_est, axis=0).flatten()
-y_dry = np.concatenate(y_dry, axis=0).flatten()
-y_test_drr = y_test_drr.flatten()
+# 
+y_est = np.concatenate(y_est, axis=0)
+y_dry = np.concatenate(y_dry, axis=0)
+# y_test_drr = y_test_drr.flatten()
 
-assert np.all(np.equal(y_dry, y_test.flatten()).numpy()), 'y_dry & y_test should be the same!'
+assert np.all(np.equal(y_dry, y_test).numpy()), 'y_dry & y_test should be the same!'
 
-CCdry = np.corrcoef(y_est, y_dry)[0,1]
-CCdrr = np.corrcoef(y_est, y_test_drr)[0,1]
+CCdry = np.corrcoef(y_est.flatten(), y_dry.flatten())[0,1]
+CCdrr = np.corrcoef(y_est.flatten(), y_test_drr.flatten())[0,1]
 
 print(f'CCdry: {CCdry:8.3f}')
 print(f'CCdrr: {CCdrr:8.3f}')
 
 # plt.plot(np.c_[y_est, y_dry, y_drr])
-plt.plot(y_dry, label='$y_{dry}$')
-plt.plot(y_est, label='$\hat{y}$')
-plt.plot(y_test_drr, label='$y_{drr}$')
+plt.plot(y_dry[:500,0], label='$y_{dry}$')
+plt.plot(y_est[:500,0], label='$\hat{y}$')
+plt.plot(y_test_drr[:500,0], label='$y_{drr}$')
 plt.legend()
 plt.xlabel('Samples')
 plt.ylabel('Amp.')
 plt.title(f'$CC_{{dry-est}}: {CCdry:.3f}$, $CC_{{drr-est}}: {CCdrr:.3f}$')
-
+plt.show()
 
 
 

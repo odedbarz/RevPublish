@@ -1,6 +1,16 @@
 # %%
 # %reload_ext autoreload
 # %autoreload 2
+# %reset -f 
+from IPython import get_ipython
+ipython = get_ipython()
+
+if '__IPYTHON__' in globals():
+    ipython.magic('load_ext autoreload')
+    ipython.magic('autoreload 2')
+    ipython.magic('reset -f')
+
+
 import matplotlib.pyplot as plt
 import os
 from scipy.io import loadmat
