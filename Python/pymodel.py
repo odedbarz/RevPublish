@@ -71,13 +71,6 @@ shuffle = True
 train_idx, test_idx = train_test_split(range(len(dry_data)), test_size=test_size, 
     shuffle=shuffle )  #, random_state=42)
 
-# X_train, X_test, y_train, y_test = train_test_split(drr_data.X, dry_data.y, 
-#     test_size=test_size, shuffle=shuffle ) #, random_state=42)
-
-# # Compare with ...
-# _, _, _, y_test_drr = train_test_split(np.empty_like(dry_data.X), drr_data.y, 
-#     test_size=test_size, shuffle=shuffle) #, random_state=42)
-
 # Train on DRR sequences (inputs) and DRY targets!
 _, y_train = dry_data[train_idx]    
 X_train, _ = drr_data[train_idx]
@@ -119,10 +112,10 @@ class RNN(nn.Module):
 
         # RNN   # * hyper-parameter 
         self.rnn = nn.RNN(input_size=n_input, hidden_size=n_hidden, num_layers=n_layers,
-            nonlinearity=nonlinearity, batch_first=batch_first, dropout=dropout)
+           nonlinearity=nonlinearity, batch_first=batch_first, dropout=dropout)
 
         # GRU   # * hyper-parameter 
-        # self.rnn = nn.GRU(input_size=n_input, hidden_size=n_hidden, num_layers=n_layers,
+        #self.rnn = nn.GRU(input_size=n_input, hidden_size=n_hidden, num_layers=n_layers,
         #    batch_first=batch_first, dropout=dropout)
 
         self.fc = nn.Linear(n_hidden, self.n_output)
@@ -130,16 +123,13 @@ class RNN(nn.Module):
     def forward(self, x):
        # (num_layers * num_directions, batch_size, hidden_size)
         self.h0 = torch.randn(self.n_layers, x.shape[0], self.n_hidden)
-
-        # (batch, seq_len, input_size); for batch_first == True
-        #x = x.view(x.shape[0], x.shape[1], 1)  
-
+    
         # ASSUMING batch_first == True...
         #   x input : (batch, seq_len, input_size)
         #   x output: (seq_len, batch, num_directions * hidden_size)
         x, hn = self.rnn(x, self.h0)
         x = self.fc( x[:,-1,:] )          
-        return x #[-1]
+        return x
 
 
 n_input = dry_data.n_units                      #* number of UNITs 
@@ -172,7 +162,7 @@ print(model)
 
 
 # %%  # *** Training ***
-epochs = 500
+epochs = 300
 lr = 1e-3       # * hyper-parameter; learning rate
 
 loss_function = nn.MSELoss()
@@ -206,8 +196,10 @@ print('- Finished training!')
 # %% 
 # *** Testing ***
 model.eval()
+
 y_est = []
 y_dry = []
+
 for k, (X, yk) in enumerate(test_loader):
     with torch.no_grad():   # ? DO I NEED no_grad() if I have eval() ? 
         yk_pred = model( X.to(device) )
@@ -243,3 +235,5 @@ plt.show()
 # np.corrcoef(whitening(Hdrr[-30:]), whitening(y_drr), '.')[0,1]
 # np.corrcoef(whitening(Hdry[-30:]), whitening(y_dry), '.')[0,1]
 
+
+# %%
