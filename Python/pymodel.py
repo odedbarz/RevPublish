@@ -12,7 +12,7 @@ if '__IPYTHON__' in globals():
 
 
 # %%    
-from aux import whitening
+from myaux import whitening
 import matplotlib.pyplot as plt
 import matplotlib
 # from numpy.core import tests
@@ -43,7 +43,7 @@ fn = 'data_MUA-ONLY_(08-Jan-2021)_bw(5)_fbands(30)_spec(gammatone).mat'
 path = './'
 
 seq_len = 20                # samples   #* hyper-parameter 
-unit_numbers = (0,1)                    #* NUMBER of UNITS for analysis 
+unit_numbers = (0,50)                    #* NUMBER of UNITS for analysis 
 
 dry_data = dataset( 
     seq_len = seq_len,      # binwidth * seq_len => duration in msec    
@@ -64,12 +64,14 @@ print(drr_data)
 
  
 # %% Split the data into train/test sets
-test_size = 0.2
+test_size = 0.08
 batch_size = 64
 shuffle = True
 
 train_idx, test_idx = train_test_split(range(len(dry_data)), test_size=test_size, 
     shuffle=shuffle )  #, random_state=42)
+
+print('test size %.3f sec\n' % ((test_idx[-1]-test_idx[0])*1e-3*dry_data.binwidth))
 
 # Train on DRR sequences (inputs) and DRY targets!
 _, y_train = dry_data[train_idx]    
@@ -83,8 +85,9 @@ X_test, y_test_drr = drr_data[test_idx]
 trainset = TensorDataset( X_train, y_train )
 testset = TensorDataset( X_test, y_test )
 
-train_loader = DataLoader(trainset, batch_size=batch_size, shuffle=False)
-test_loader = DataLoader(testset, batch_size=batch_size, shuffle=False)
+shuffle_loader = False
+train_loader = DataLoader(trainset, batch_size=batch_size, shuffle=shuffle_loader)
+test_loader = DataLoader(testset, batch_size=batch_size, shuffle=shuffle_loader)
 
 
 # ! DEBUG
@@ -122,7 +125,7 @@ class RNN(nn.Module):
 
     def forward(self, x):
        # (num_layers * num_directions, batch_size, hidden_size)
-        self.h0 = torch.randn(self.n_layers, x.shape[0], self.n_hidden)
+        self.h0 = torch.randn(self.n_layers, x.shape[0], self.n_hidden).to(device)
     
         # ASSUMING batch_first == True...
         #   x input : (batch, seq_len, input_size)
@@ -134,11 +137,10 @@ class RNN(nn.Module):
 
 n_input = dry_data.n_units                      #* number of UNITs 
 n_hidden = 100                                  #* hyper-parameter 
-n_layers = 1                                    #* hyper-parameter 
-# n_output = 1
+n_layers = 5                                    #* hyper-parameter 
 nonlinearity = 'relu' # {'relu', 'tanh'}        #* hyper-parameter 
 batch_first = True
-dropout = 0
+dropout = 1
 model = RNN(n_input = n_input, 
             n_hidden = n_hidden, 
             n_layers = n_layers, 
@@ -162,7 +164,7 @@ print(model)
 
 
 # %%  # *** Training ***
-epochs = 300
+epochs = 5000
 lr = 1e-3       # * hyper-parameter; learning rate
 
 loss_function = nn.MSELoss()
@@ -180,7 +182,7 @@ for ep in range(epochs):
         y_pred = model( X.to(device) )
         # y_pred.squeeze_()
         #loss_k = loss_function(y_pred, y)
-        loss_k = loss_function(y_pred.view(-1,1), y.view(-1,1))
+        loss_k = loss_function(y_pred.view(-1,1), y.view(-1,1).to(device))
         loss_k.backward()
         optimizer.step()
 
@@ -203,7 +205,7 @@ y_dry = []
 for k, (X, yk) in enumerate(test_loader):
     with torch.no_grad():   # ? DO I NEED no_grad() if I have eval() ? 
         yk_pred = model( X.to(device) )
-        y_est.append(yk_pred.numpy())
+        y_est.append(yk_pred.cpu().numpy())
         y_dry.append(yk.numpy())        
 
 # 
@@ -234,6 +236,3 @@ plt.show()
 # %%
 # np.corrcoef(whitening(Hdrr[-30:]), whitening(y_drr), '.')[0,1]
 # np.corrcoef(whitening(Hdry[-30:]), whitening(y_dry), '.')[0,1]
-
-
-# %%
