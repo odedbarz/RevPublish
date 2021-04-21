@@ -66,7 +66,7 @@ print(drr_data)
 # %% Split the data into train/test sets
 test_size = 0.08
 batch_size = 64
-shuffle = True
+shuffle = False
 
 train_idx, test_idx = train_test_split(range(len(dry_data)), test_size=test_size, 
     shuffle=shuffle )  #, random_state=42)
@@ -114,12 +114,12 @@ class RNN(nn.Module):
         self.n_output     = n_input 
 
         # RNN   # * hyper-parameter 
-        self.rnn = nn.RNN(input_size=n_input, hidden_size=n_hidden, num_layers=n_layers,
-           nonlinearity=nonlinearity, batch_first=batch_first, dropout=dropout)
+        # self.rnn = nn.RNN(input_size=n_input, hidden_size=n_hidden, num_layers=n_layers,
+        #    nonlinearity=nonlinearity, batch_first=batch_first, dropout=dropout)
 
         # GRU   # * hyper-parameter 
-        #self.rnn = nn.GRU(input_size=n_input, hidden_size=n_hidden, num_layers=n_layers,
-        #    batch_first=batch_first, dropout=dropout)
+        self.rnn = nn.GRU(input_size=n_input, hidden_size=n_hidden, num_layers=n_layers,
+           batch_first=batch_first, dropout=dropout)
 
         self.fc = nn.Linear(n_hidden, self.n_output)
 
@@ -137,10 +137,10 @@ class RNN(nn.Module):
 
 n_input = dry_data.n_units                      #* number of UNITs 
 n_hidden = 100                                  #* hyper-parameter 
-n_layers = 5                                    #* hyper-parameter 
+n_layers = 1                                    #* hyper-parameter 
 nonlinearity = 'relu' # {'relu', 'tanh'}        #* hyper-parameter 
 batch_first = True
-dropout = 1
+dropout = 0
 model = RNN(n_input = n_input, 
             n_hidden = n_hidden, 
             n_layers = n_layers, 
@@ -164,7 +164,7 @@ print(model)
 
 
 # %%  # *** Training ***
-epochs = 5000
+epochs = 1000
 lr = 1e-3       # * hyper-parameter; learning rate
 
 loss_function = nn.MSELoss()
