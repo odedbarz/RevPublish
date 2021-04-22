@@ -42,8 +42,8 @@ print(f'device: {device}')
 fn = 'data_MUA-ONLY_(08-Jan-2021)_bw(5)_fbands(30)_spec(gammatone).mat'
 path = './'
 
-seq_len = 20                # samples   #* hyper-parameter 
-unit_numbers = (0,50)                    #* NUMBER of UNITS for analysis 
+seq_len = 20                 # samples   #* hyper-parameter 
+unit_numbers = (0,10)                    #* NUMBER of UNITS for analysis 
 
 dry_data = dataset( 
     seq_len = seq_len,      # binwidth * seq_len => duration in msec    
@@ -52,11 +52,12 @@ dry_data = dataset(
     fn = fn, 
     path = path)
 
+fn_strf = 'STRF_MUA-ONLY_bw(5)_fbands(30)_spec(gammatone).mat'
 drr_data = dataset(
     seq_len = seq_len,      # binwidth * seq_len => duration in msec    
     drr_idx = 4, 
     unit_numbers = unit_numbers, 
-    fn = fn, 
+    fn = fn_strf, 
     path = path)
 
 print(drr_data)
@@ -70,6 +71,10 @@ shuffle = False
 
 train_idx, test_idx = train_test_split(range(len(dry_data)), test_size=test_size, 
     shuffle=shuffle )  #, random_state=42)
+
+# # ! ### DEBUG ###
+# train_idx = np.arange(600, len(dry_data))
+# test_idx = np.arange(600)
 
 print('test size %.3f sec\n' % ((test_idx[-1]-test_idx[0])*1e-3*dry_data.binwidth))
 
@@ -85,9 +90,8 @@ X_test, y_test_drr = drr_data[test_idx]
 trainset = TensorDataset( X_train, y_train )
 testset = TensorDataset( X_test, y_test )
 
-shuffle_loader = False
-train_loader = DataLoader(trainset, batch_size=batch_size, shuffle=shuffle_loader)
-test_loader = DataLoader(testset, batch_size=batch_size, shuffle=shuffle_loader)
+train_loader = DataLoader(trainset, batch_size=batch_size, shuffle=False)
+test_loader = DataLoader(testset, batch_size=batch_size, shuffle=False)
 
 
 # ! DEBUG
@@ -102,7 +106,7 @@ print('- y_test  :', y_test.shape)
 
 # %% #* Create RNN model
 class RNN(nn.Module):
-    def __init__(self, n_input, n_hidden, n_layers,
+    def __init__(self, n_input, n_hidden, n_layers, 
         nonlinearity='relu', batch_first=True, dropout=0) -> None:
         super(RNN, self).__init__()
         self.n_input      = n_input         # dimensions of the input tensor
@@ -113,19 +117,23 @@ class RNN(nn.Module):
         self.dropout      = dropout 
         self.n_output     = n_input 
 
+        # (num_layers * num_directions, batch_size, hidden_size)
+        #self.hn = torch.randn(self.n_layers, batch_size, self.n_hidden).to(device)
+
         # RNN   # * hyper-parameter 
-        # self.rnn = nn.RNN(input_size=n_input, hidden_size=n_hidden, num_layers=n_layers,
-        #    nonlinearity=nonlinearity, batch_first=batch_first, dropout=dropout)
+        self.rnn = nn.RNN(input_size=n_input, hidden_size=n_hidden, num_layers=n_layers,
+           nonlinearity=nonlinearity, batch_first=batch_first, dropout=dropout)
 
         # GRU   # * hyper-parameter 
-        self.rnn = nn.GRU(input_size=n_input, hidden_size=n_hidden, num_layers=n_layers,
-           batch_first=batch_first, dropout=dropout)
+        #self.rnn = nn.GRU(input_size=n_input, hidden_size=n_hidden, num_layers=n_layers,
+        #   batch_first=batch_first, dropout=dropout)
 
         self.fc = nn.Linear(n_hidden, self.n_output)
 
     def forward(self, x):
-       # (num_layers * num_directions, batch_size, hidden_size)
-        self.h0 = torch.randn(self.n_layers, x.shape[0], self.n_hidden).to(device)
+        # (num_layers * num_directions, batch_size, hidden_size)
+        #self.h0 = torch.randn(self.n_layers, x.shape[0], self.n_hidden).to(device)
+        self.h0 = torch.zeros(self.n_layers, x.shape[0], self.n_hidden).to(device)
     
         # ASSUMING batch_first == True...
         #   x input : (batch, seq_len, input_size)
@@ -140,11 +148,10 @@ n_hidden = 100                                  #* hyper-parameter
 n_layers = 1                                    #* hyper-parameter 
 nonlinearity = 'relu' # {'relu', 'tanh'}        #* hyper-parameter 
 batch_first = True
-dropout = 0
+dropout = 1
 model = RNN(n_input = n_input, 
             n_hidden = n_hidden, 
-            n_layers = n_layers, 
-            # n_output = n_output,
+            n_layers = n_layers,             
             nonlinearity = nonlinearity, 
             batch_first = True, 
             dropout = 0).to(device)
@@ -164,11 +171,18 @@ print(model)
 
 
 # %%  # *** Training ***
-epochs = 1000
-lr = 1e-3       # * hyper-parameter; learning rate
+epochs = 400
 
+# Option 1
+lr = 1e-3       # * hyper-parameter; learning rate
 loss_function = nn.MSELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+
+# Option 2
+# learning_rate = 0.05
+# loss_function = nn.L1Loss()
+# optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
+
 
 model.train()
 loss = []
@@ -179,9 +193,7 @@ for ep in range(epochs):
 
         # ? Init the hidden states!!
          
-        y_pred = model( X.to(device) )
-        # y_pred.squeeze_()
-        #loss_k = loss_function(y_pred, y)
+        y_pred = model( X.to(device) )                
         loss_k = loss_function(y_pred.view(-1,1), y.view(-1,1).to(device))
         loss_k.backward()
         optimizer.step()
@@ -221,6 +233,7 @@ CCdrr = np.corrcoef(y_est.flatten(), y_test_drr.flatten())[0,1]
 print(f'CCdry: {CCdry:8.3f}')
 print(f'CCdrr: {CCdrr:8.3f}')
 
+plt.figure(figsize=(14,8))
 # plt.plot(np.c_[y_est, y_dry, y_drr])
 plt.plot(y_dry[:500,0], label='$y_{dry}$')
 plt.plot(y_est[:500,0], label='$\hat{y}$')

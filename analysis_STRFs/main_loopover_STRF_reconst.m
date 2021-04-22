@@ -76,22 +76,33 @@ aux.vprint(verbose, '--> [main_loopover_units.m] Loading file:\n\t...<%s>\n', fn
 %% Order the units
 % [sorted_list, tbl_BF] = find_best_unit_set('CC', 'fn', fn.load.fullfile);
 
-sort_type = 'SPK';  % {'RND', 'SVD', 'FILE', 'SPK', 'NOSPK'}
+sort_type = 'RND';  % {'RND', 'SVD', 'FILE', 'SPK', 'NOSPK'}
 Hdry = squeeze( data.H(:,drr.ordered(1),:) ); 
-% sorted_list = find_best_unit_set(sort_type, 'Y', Hdry);                 % {'RND'}
+sorted_list = find_best_unit_set(sort_type, 'Y', Hdry);                 % {'RND'}
 % sorted_list = find_best_unit_set(sort_type, 'Y', Hdry, 'n_svd', 10);    % {'RND'}
 % sorted_list = find_best_unit_set(sort_type, 'fn', fn.load.fullfile);  % {'CC'}
 % sorted_list = find_best_unit_set(sort_type, 'fn', 'unit_list_MUA_drr(5).mat');  % {'FILE'}
-% find_best_unit_set('FILE', 'fn', 'idx_MUA_good_sorted_unit_thr(0-7).mat'); % {'FILE'}
-sorted_list = find_best_unit_set(sort_type, 'tbl_data', tbl_data);    % {'SPK', 'NOSPK'}
+% sorted_list = find_best_unit_set(sort_type, 'fn', 'idx_MUA_good_sorted_unit_thr(0-7).mat'); % {'FILE'}
+% sorted_list = find_best_unit_set(sort_type, 'tbl_data', tbl_data);    % {'SPK', 'NOSPK'}
 
-%     % ONLY FOR THE SU -- get the right spikes
-%     sorted_list = arrayfun(@(N) find(N == tbl_data.neuron) ,intersect(tbl_data.neuron', sorted_list) )
 
-%         H_ = squeeze( data.H(:,drr.ordered(5),:) ); 
-%         D = corrcoef(H_);
-%         [~, ii] = sort( abs(sum(D)), 'descend' );
-%         sorted_list = sorted_list(ii);
+%%
+strf.fn = 'STRF_MUA_(21-Apr-2021)_units(241)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(1)_trainDRR(3).mat';
+strf.path = load.path_to_data('Analysis');
+
+warning off
+data_strf = load( fullfile(strf.path, strf.fn) );
+warning on
+tbl_strf = data_strf.tbl_strf;
+
+% Extract the STRF reconstructions
+strf.H = nan( size(tbl_strf.y_strf_dry{1},1), drr.n_drr, ...
+    height(tbl_strf) );
+
+for k = 1:height(tbl_strf)
+    strf.H(:,:,k) = tbl_strf.y_strf_dry{k};
+end
+
 
 
 %% Reconstruction parameters
@@ -161,6 +172,7 @@ for q = 1 %1:n_drr
 
         % Select M_UNITS to reconstruct        
         H_sorted = data.H( :, 1:n_drr, sorted_list(1:m_units) );        
+        H_strf   = strf.H( :, 1:n_drr, sorted_list(1:m_units) );    % !!!!!!!!!!!! DEBUG !!!!!!!!!!!!!
         
         % >> analyze_units;
         obj_list = cell(n_drr, n_splits);
@@ -221,7 +233,8 @@ for q = 1 %1:n_drr
                 
                 % Split for the TESTING data
                 X2 = spec_st.Sft{test_drr};
-                y2 = squeeze( H_sorted(:, test_drr, :) );
+                %y2 = squeeze( H_sorted(:, test_drr, :) );      % !!!!!!!!!!!! DEBUG !!!!!!!!!!!!!
+                y2 = squeeze( H_strf(:, k, :) );
                 [~, X_test_kn, ~, y_test, ~] = train_test_split(X2, y2, ...
                     'n_splits', n_splits, ...
                     'split_time_idx', split_time_idx, ...

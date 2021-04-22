@@ -126,8 +126,8 @@ for q = 1 %1:drr.n_drr
 
 
     % Save all STRFs stuff in one table 
-    tbl_strf = array2table(cell(n_units,3), ...
-        'VariableNames', {'strf', 'strf_std', 'strf_speaker'} );    
+    tbl_strf = array2table(cell(n_units,4), ...
+        'VariableNames', {'strf', 'strf_std', 'strf_speaker', 'y_strf_dry'} );    
     
     % Add best frequency
     bf = zeros(n_units,1);
@@ -136,9 +136,13 @@ for q = 1 %1:drr.n_drr
     clear bf bf_std
     
     % Save the CC
-    CC = cell(n_units,1);
-    tbl_strf = [tbl_strf, array2table(CC)];
-    clear CC
+    CCest_dry = cell(n_units,1);
+    tbl_strf = [tbl_strf, array2table(CCest_dry)];        
+    clear CCest_dry
+    
+    CCest_drr = cell(n_units,1);
+    tbl_strf = [tbl_strf, array2table(CCest_drr)];
+    clear CCest_drr
     
     % Add row number to the beginning of the table
     index = (1:n_units)';
@@ -161,8 +165,11 @@ for q = 1 %1:drr.n_drr
         % Split the TRAINING set
         X1 = spec_st.Sft{train_drr};
 
-        CCnk = nan(n_splits, n_drr);
+        CCnk = nan(n_splits, n_drr);        % est-to-dry
+        CC2nk = nan(n_splits, n_drr);       % est-to-drr
 
+        y_strf_dry = zeros(length(y1), drr.n_drr);
+        
         
         %% Loop overSPLITS
         for n = 1:n_splits
@@ -175,15 +182,15 @@ for q = 1 %1:drr.n_drr
                 'split_time_idx', split_time_idx,...
                 'test_grp', test_grp_number ...
             );
-
-
+            
             % Fit the model
             [strf_speaker(:,:,n), ~] = obj.fit(X_train, y_train,...
                 'fignum', [],...
                 'verbose', []);
             
             % Calculate the best frequency
-            BF_speaker(n) = obj.calc_bf;     % (Hz)
+            [~, idx_bf_n] = max( max(squeeze(strf_speaker(:,:,n)),[],2) );     % (Hz)
+            BF_speaker(n) = spec_st.f(idx_bf_n);
 
             % Loop over DRRs
             for k = 1:drr.n_drr    
@@ -202,21 +209,28 @@ for q = 1 %1:drr.n_drr
                 % *** STRF ***
                 % Predict the spectrogram
                 r_est = obj.predict(X_test);
-                gof = goodness(y_test, r_est);
+                gof  = goodness(y_test0, r_est);     % est-to-dry
+                gof2 = goodness(y_test, r_est);      % est-to-drr
                 
                 % Goodness-of-fit
-                CCnk(n,k)  = gof.CC;
+                CCnk(n,k)  = gof.CC;       % est-to-dry
+                CC2nk(n,k) = gof2.CC;      % est-to-drr
+                
+                % Aggregate all reference (aka dry) responses
+                idx_split = split_time_idx(test_grp_number,1):split_time_idx(test_grp_number,2);
+                y_strf_dry(idx_split, k) = r_est;
             end
 
         end
     
-        tbl_strf.CC{m}      = CCnk;        
-        tbl_strf.bf(m)      = mean(BF_speaker);          % (Hz)
-        tbl_strf.bf_std(m)  = std(BF_speaker);           % (Hz)
-        tbl_strf.strf{m}    = mean(strf_speaker, 3);
+        tbl_strf.CCest_dry{m}   = CCnk;         % est-to-dry     
+        tbl_strf.CCest_drr{m}   = CC2nk;        % est-to-drr   
+        tbl_strf.bf(m)          = mean(BF_speaker);          % (Hz)
+        tbl_strf.bf_std(m)      = std(BF_speaker);           % (Hz)
+        tbl_strf.strf{m}        = mean(strf_speaker, 3);
         tbl_strf.strf_speaker{m}= strf_speaker;
-        tbl_strf.strf_std{m}= std(strf_speaker, [], 3);
-        
+        tbl_strf.strf_std{m}    = std(strf_speaker, [], 3);
+        tbl_strf.y_strf_dry{m}  = y_strf_dry;
     end
     
     
