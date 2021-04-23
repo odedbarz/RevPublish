@@ -15,14 +15,8 @@ if '__IPYTHON__' in globals():
 from myaux import whitening
 import matplotlib.pyplot as plt
 import matplotlib
-# from numpy.core import tests
-# from sklearn.utils import shuffle
 matplotlib.style.use('ggplot')
 
-import os
-from numpy.lib.npyio import load
-from scipy.io import loadmat
-# from aux import Struct
 import numpy as np
 
 import torch
@@ -33,6 +27,7 @@ from sklearn.model_selection import train_test_split
 
 from mydataset import dataset
 
+# set device
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 print(f'device: {device}')
 
@@ -43,7 +38,7 @@ fn = 'data_MUA-ONLY_(08-Jan-2021)_bw(5)_fbands(30)_spec(gammatone).mat'
 path = './'
 
 seq_len = 20                 # samples   #* hyper-parameter 
-unit_numbers = (0,1)                    #* NUMBER of UNITS for analysis 
+unit_numbers = 5                    #* NUMBER of UNITS for analysis 
 
 dry_data = dataset( 
     seq_len = seq_len,      # binwidth * seq_len => duration in msec    
@@ -52,12 +47,12 @@ dry_data = dataset(
     fn = fn, 
     path = path)
 
-fn_strf = 'STRF_MUA-ONLY_bw(5)_fbands(30)_spec(gammatone).mat'
+# fn_strf = 'STRF_MUA-ONLY_bw(5)_fbands(30)_spec(gammatone).mat'
 drr_data = dataset(
     seq_len = seq_len,      # binwidth * seq_len => duration in msec    
-    drr_idx = 0, 
+    drr_idx = 4, 
     unit_numbers = unit_numbers, 
-    fn = fn_strf, 
+    fn = fn, 
     path = path)
 
 print(drr_data)
@@ -66,33 +61,26 @@ print(drr_data)
  
 # %% Split the data into train/test sets
 test_size = 0.1
-batch_size = 64
+batch_size = 64*2
 shuffle = False
 
 train_idx, test_idx = train_test_split(range(len(dry_data)), test_size=test_size, 
     shuffle=shuffle )  #, random_state=42)
-
-
-# T0 = test_idx   # ! ### DEBUG ###
-
-# # ! ### DEBUG ###
-# train_idx = np.arange(600, len(dry_data))
-# test_idx = np.arange(600)
-# test_idx = T0[160:165]
 
 print('test size %.3f sec\n' % ((test_idx[-1]-test_idx[0])*1e-3*dry_data.binwidth))
 
 # Train on DRR sequences (inputs) and DRY targets!
 _, y_train = dry_data[train_idx]    
 X_train, _ = drr_data[train_idx]
+X_train = X_train.permute(0,2,1)      # (batch, units, seq) 
 
 # Test 
 _, y_test = dry_data[test_idx]
 X_test, y_test_drr = drr_data[test_idx]
+X_test = X_test.permute(0,2,1)      # (batch, units, seq)
 
-
-trainset = TensorDataset( X_train, y_train )
-testset = TensorDataset( X_test, y_test )
+trainset = TensorDataset(X_train, y_train)
+testset = TensorDataset(X_test, y_test)
 
 train_loader = DataLoader(trainset, batch_size=batch_size, shuffle=False)
 test_loader = DataLoader(testset, batch_size=batch_size, shuffle=False)
@@ -106,6 +94,49 @@ print('- y_train :', y_train.shape)
 print('- X_test  :', X_test.shape)
 print('- y_test  :', y_test.shape)
 
+
+
+# %%
+class Conv1d(nn.Module):
+    def __init__(self, n_input=1, kernel_size=3) -> None:
+        super().__init__()
+        self.n_input = n_input
+        self.n_output = n_input
+        self.kernel_size = kernel_size
+        self.p = 0.2
+
+        self.relu = nn.ReLU()
+        self.dropout = nn.Dropout(p=self.p)
+        # self.maxpool1d = nn.MaxPool1d()
+        self.conv = nn.Conv1d(self.n_input, self.n_output, self.kernel_size)
+        # self.layer1 = nn.Sequential(self.conv, self.relu, self.dropout)
+        self.layer1 = nn.Sequential(self.conv, self.dropout)
+        
+        conv_out = seq_len-2*(kernel_size-1)
+        self.fc = nn.Linear(conv_out, 1)
+
+
+    def forward(self, x):
+        # input size: (batch_size, channels, seq_length)
+
+        #self.conv.padding = 0
+        #x = self.conv(x)
+        x = self.layer1(x)
+        x = self.layer1(x)
+        x = self.fc( x[:,-1,:] )
+
+        return x
+
+model = Conv1d(n_input=dry_data.n_units, kernel_size=5)
+print(model)
+
+
+# ! DEBUG
+# X, y = next(iter(train_loader))
+# y_ = model(X)
+# print('- y : ', y.shape)
+# print('- X : ', X.shape)
+# print('- y_: ', y_.shape)
 
 
 # %% #* Create RNN model
@@ -147,21 +178,21 @@ class RNN(nn.Module):
         return x
 
 
-n_input = dry_data.n_units                      #* number of UNITs 
-n_hidden = 100                                  #* hyper-parameter 
-n_layers = 1                                    #* hyper-parameter 
-nonlinearity = 'relu' # {'relu', 'tanh'}        #* hyper-parameter 
-batch_first = True
-dropout = 0
-model = RNN(n_input = n_input, 
-            n_hidden = n_hidden, 
-            n_layers = n_layers,             
-            nonlinearity = nonlinearity, 
-            batch_first = True, 
-            dropout = 0).to(device)
+# n_input = dry_data.n_units                      #* number of UNITs 
+# n_hidden = 100                                  #* hyper-parameter 
+# n_layers = 1                                    #* hyper-parameter 
+# nonlinearity = 'relu' # {'relu', 'tanh'}        #* hyper-parameter 
+# batch_first = True
+# dropout = 0
+# model = RNN(n_input = n_input, 
+#             n_hidden = n_hidden, 
+#             n_layers = n_layers,             
+#             nonlinearity = nonlinearity, 
+#             batch_first = True, 
+#             dropout = 0).to(device)
 
 
-print(model)
+# print(model)
 
 # ! DEBUG
 # print('*** DEBUGING! ***')
@@ -175,12 +206,12 @@ print(model)
 
 
 # %%  # *** Training ***
-epochs = 400
+epochs = 200
 
 # Option 1
 lr = 1e-3       # * hyper-parameter; learning rate
 loss_function = nn.MSELoss()
-optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=0)
 
 # Option 2
 # learning_rate = 0.05
@@ -194,9 +225,6 @@ loss = []
 for ep in range(epochs):
     for k, (X, y) in enumerate(train_loader):
         optimizer.zero_grad()
-
-        # ? Init the hidden states!!
-         
         y_pred = model( X.to(device) )                
         loss_k = loss_function(y_pred.view(-1,1), y.view(-1,1).to(device))
         loss_k.backward()

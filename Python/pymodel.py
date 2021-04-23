@@ -52,12 +52,12 @@ dry_data = dataset(
     fn = fn, 
     path = path)
 
-fn_strf = 'STRF_MUA-ONLY_bw(5)_fbands(30)_spec(gammatone).mat'
+# fn_strf = 'STRF_MUA-ONLY_bw(5)_fbands(30)_spec(gammatone).mat'
 drr_data = dataset(
     seq_len = seq_len,      # binwidth * seq_len => duration in msec    
     drr_idx = 0, 
     unit_numbers = unit_numbers, 
-    fn = fn_strf, 
+    fn = fn, 
     path = path)
 
 print(drr_data)
