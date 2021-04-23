@@ -23,7 +23,8 @@ import pandas as pd
 
 # %%
 class dataset(Dataset):
-    def __init__(self, seq_len, drr_idx, unit_numbers, fn, path='.', normalize=True) -> None:
+    def __init__(self, seq_len, drr_idx, unit_numbers, fn, path='.', normalize=True, 
+    cumsum=False) -> None:
         self.fn = fn        
         self.path = path
 
@@ -40,7 +41,7 @@ class dataset(Dataset):
         self.binwidth = dummy['binwidth']                       # (ms) binwidth
 
         # Get the DRR case and transform to torch tensor array
-        M = torch.squeeze( torch.Tensor( dummy['mua'] )[:,self.drr_idx,:] )
+        M = torch.squeeze( torch.Tensor( dummy['data'] )[:,self.drr_idx,:] )
 
         # Extract desired units
         self.n_time, max_units = M.shape     # (time x number of units)    
@@ -56,6 +57,10 @@ class dataset(Dataset):
         else:
             raise Exception('unit_number must be of size 1 or 2 (scalar or matrix)!')
         
+        self.cumsum = cumsum
+        if self.cumsum:
+            self.response = np.cumsum(self.response, axis=0)
+
         self.n_units = self.response.shape[-1]          
  
         # * NORMALIZE

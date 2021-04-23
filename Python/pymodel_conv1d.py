@@ -14,8 +14,9 @@ if '__IPYTHON__' in globals():
 # %%    
 from myaux import whitening
 import matplotlib.pyplot as plt
+from matplotlib.pyplot import *
 import matplotlib
-matplotlib.style.use('ggplot')
+matplotlib.style.use('seaborn')
 
 import numpy as np
 
@@ -34,18 +35,22 @@ print(f'device: {device}')
 
 
 # %% Load from MAT file
-fn = 'data_MUA-ONLY_(08-Jan-2021)_bw(5)_fbands(30)_spec(gammatone).mat'
+fn = 'data_MUA-ONLY_(08-Jan-2021)_bw(5)_fbands(30)_spec(gammatone).mat'     # MUA
+# fn = 'data_SU-ONLY_(08-Jan-2021)_bw(5)_fbands(30)_spec(gammatone).mat'      # SU 
+# fn = 'data_SU-Hann(25)_(23-Apr-2021)_bw(5)_fbands(30)_spec(gammatone).mat'
 path = './'
 
 seq_len = 20                 # samples   #* hyper-parameter 
-unit_numbers = 5                    #* NUMBER of UNITS for analysis 
+unit_numbers = 1                    #* NUMBER of UNITS for analysis 
 
 dry_data = dataset( 
     seq_len = seq_len,      # binwidth * seq_len => duration in msec    
     drr_idx = 0, 
     unit_numbers = unit_numbers, 
     fn = fn, 
-    path = path)
+    path = path,
+    normalize=True, 
+    cumsum=False)
 
 # fn_strf = 'STRF_MUA-ONLY_bw(5)_fbands(30)_spec(gammatone).mat'
 drr_data = dataset(
@@ -53,7 +58,9 @@ drr_data = dataset(
     drr_idx = 4, 
     unit_numbers = unit_numbers, 
     fn = fn, 
-    path = path)
+    path = path, 
+    normalize=True,
+    cumsum=False)
 
 print(drr_data)
 
@@ -103,17 +110,23 @@ class Conv1d(nn.Module):
         self.n_input = n_input
         self.n_output = n_input
         self.kernel_size = kernel_size
-        self.p = 0.2
+        self.p = 0.1
 
         self.relu = nn.ReLU()
         self.dropout = nn.Dropout(p=self.p)
         # self.maxpool1d = nn.MaxPool1d()
-        self.conv = nn.Conv1d(self.n_input, self.n_output, self.kernel_size)
-        # self.layer1 = nn.Sequential(self.conv, self.relu, self.dropout)
-        self.layer1 = nn.Sequential(self.conv, self.dropout)
+        self.conv1 = nn.Conv1d(self.n_input, 5, self.kernel_size, padding=0, bias=False)
+        #self.layer1 = nn.Sequential(self.conv1, self.relu, self.dropout)
+        self.layer1 = nn.Sequential(self.conv1, self.dropout)
+
+        self.conv2 = nn.Conv1d(5, 10, self.kernel_size, padding=0, bias=False)
+        #self.layer2 = nn.Sequential(self.conv2, self.relu, self.dropout)
+        self.layer2 = nn.Sequential(self.conv2, self.dropout)        
         
         conv_out = seq_len-2*(kernel_size-1)
-        self.fc = nn.Linear(conv_out, 1)
+        # self.fc = nn.Linear(conv_out, 1)
+        self.fc1 = nn.Linear(conv_out, 1)
+        self.fc2 = nn.Linear(10, 1)
 
 
     def forward(self, x):
@@ -122,8 +135,10 @@ class Conv1d(nn.Module):
         #self.conv.padding = 0
         #x = self.conv(x)
         x = self.layer1(x)
-        x = self.layer1(x)
-        x = self.fc( x[:,-1,:] )
+        x = self.layer2(x)
+        #x = self.fc( x[:,-1,:] )
+        x = self.fc1(x)
+        x = self.fc2(x.squeeze())
 
         return x
 
@@ -131,7 +146,7 @@ model = Conv1d(n_input=dry_data.n_units, kernel_size=5)
 print(model)
 
 
-# ! DEBUG
+# # ! DEBUG
 # X, y = next(iter(train_loader))
 # y_ = model(X)
 # print('- y : ', y.shape)
@@ -163,9 +178,13 @@ class RNN(nn.Module):
         #self.rnn = nn.GRU(input_size=n_input, hidden_size=n_hidden, num_layers=n_layers,
         #   batch_first=batch_first, dropout=dropout)
 
-        self.fc = nn.Linear(n_hidden, self.n_output)
+        #self.fc = nn.Linear(n_hidden, self.n_output)
+        self.fc1 = nn.Linear(n_hidden, self.n_output)
+        self.fc2 = nn.Linear(seq_len, 1)
 
     def forward(self, x):
+        x = x.permute(0,2,1)
+
         # (num_layers * num_directions, batch_size, hidden_size)
         #self.h0 = torch.randn(self.n_layers, x.shape[0], self.n_hidden).to(device)
         self.h0 = torch.zeros(self.n_layers, x.shape[0], self.n_hidden).to(device)
@@ -174,14 +193,17 @@ class RNN(nn.Module):
         #   x input : (batch, seq_len, input_size)
         #   x output: (seq_len, batch, num_directions * hidden_size)
         x, hn = self.rnn(x, self.h0)
-        x = self.fc( x[:,-1,:] )          
+        #x = self.fc( x[:,-1,:] )   
+        x = self.fc1(x)   
+        #x = self.fc2(x.squeeze()) 
+        x = x[:,-1]
         return x
 
 
 # n_input = dry_data.n_units                      #* number of UNITs 
 # n_hidden = 100                                  #* hyper-parameter 
-# n_layers = 1                                    #* hyper-parameter 
-# nonlinearity = 'relu' # {'relu', 'tanh'}        #* hyper-parameter 
+# n_layers = 2                                    #* hyper-parameter 
+# nonlinearity = 'tanh' # {'relu', 'tanh'}        #* hyper-parameter 
 # batch_first = True
 # dropout = 0
 # model = RNN(n_input = n_input, 
@@ -190,8 +212,7 @@ class RNN(nn.Module):
 #             nonlinearity = nonlinearity, 
 #             batch_first = True, 
 #             dropout = 0).to(device)
-
-
+# 
 # print(model)
 
 # ! DEBUG
@@ -206,15 +227,22 @@ class RNN(nn.Module):
 
 
 # %%  # *** Training ***
-epochs = 200
+epochs = 400
 
 # Option 1
-lr = 1e-3       # * hyper-parameter; learning rate
-loss_function = nn.MSELoss()
+lr = 1e-4       # * hyper-parameter; learning rate
+# # loss_function = nn.MSELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=0)
 
+def loss_function(a, b):
+    av = a.flatten() - a.mean()
+    bv = b.flatten() - b.mean()
+    cov = torch.dot(av, bv)/(torch.norm(av)*torch.norm(bv))
+    return 1.0 - cov
+
+
 # Option 2
-# learning_rate = 0.05
+# learning_rate = 0.001
 # loss_function = nn.L1Loss()
 # optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
 
@@ -261,9 +289,11 @@ assert np.all(np.equal(y_dry, y_test).numpy()), 'y_dry & y_test should be the sa
 
 CCdry = np.corrcoef(y_est.flatten(), y_dry.flatten())[0,1]
 CCdrr = np.corrcoef(y_est.flatten(), y_test_drr.flatten())[0,1]
+CCdry2drr = np.corrcoef(y_dry.flatten(), y_test_drr.flatten())[0,1]
 
-print(f'CCdry: {CCdry:8.3f}')
-print(f'CCdrr: {CCdrr:8.3f}')
+print(f'CCdry    : {CCdry:8.3f}')
+print(f'CCdrr    : {CCdrr:8.3f}')
+print(f'CCdry2drr: {CCdry2drr:8.3f}')
 
 plt.figure(figsize=(14,8))
 # plt.plot(np.c_[y_est, y_dry, y_drr])
@@ -273,10 +303,12 @@ plt.plot(y_test_drr[:500,0], label='$y_{drr}$')
 plt.legend()
 plt.xlabel('Samples')
 plt.ylabel('Amp.')
-plt.title(f'$CC_{{dry-est}}: {CCdry:.3f}$, $CC_{{drr-est}}: {CCdrr:.3f}$')
+plt.title(f'$CC_{{dry-est}}: {CCdry:.3f}$, $CC_{{drr-est}}: {CCdrr:.3f}$, $CC_{{dry-drr}}: {CCdry2drr:.3f}$')
 plt.show()
 
-
+# plt.figure(figsize=(14,8))
+# plot(whitening( np.c_[y_dry[:500,0], y_est[:500,0], y_test_drr[:500,0]])) 
+# plt.show()
 
 # %%
 # np.corrcoef(whitening(Hdrr[-30:]), whitening(y_drr), '.')[0,1]
