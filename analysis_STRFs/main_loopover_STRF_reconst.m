@@ -289,12 +289,11 @@ for q = 1 %1:n_drr
     
     
     
-    
     %% Save the reconstruction results
     % %{
         fprintf('SAVE the analysis data!\n');
         fn.save.path    = '../_data/reconstruct/';
-        fn.save.file    = sprintf('reconstruct_%s_(%s)_units(%d)_bw(%g)ms_algo(%s)_fbands(%d)_splits(%d)_lags(%g)ms_cau(%d)_trainDRR(%s)',...
+        fn.save.file    = sprintf('STRF-reconstruct_%s_(%s)_units(%d)_bw(%g)ms_algo(%s)_fbands(%d)_splits(%d)_lags(%g)ms_cau(%d)_trainDRR(%s)',...
             data_type, date, m_units, binwidth, algo_type, n_bands, n_splits, lags_ms, iscausal, num2str(train_drr, '%d '));
         fn.save.fullfile= fullfile( fn.save.path, fn.save.file );
                 

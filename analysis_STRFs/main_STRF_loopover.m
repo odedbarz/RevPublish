@@ -1,5 +1,5 @@
 %
-% main_loopover_units.m
+% main_STRF_loopover.m
 %
 % Description:
 % This script loops over all loaded measurements and reconstruct the

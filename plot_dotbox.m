@@ -82,7 +82,7 @@ for k = 1:n_cases
     if isempty(pars.color)
         color_k = aux.rpalette(sprintf('new%02d', 1+mod(k-1,max_number_of_colors)));
     else
-       color_k = pars.color; 
+        color_k = pars.color; 
     end
     
     

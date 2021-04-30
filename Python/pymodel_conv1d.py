@@ -40,8 +40,9 @@ fn = 'data_MUA-ONLY_(08-Jan-2021)_bw(5)_fbands(30)_spec(gammatone).mat'     # MU
 # fn = 'data_SU-Hann(25)_(23-Apr-2021)_bw(5)_fbands(30)_spec(gammatone).mat'
 path = './'
 
-seq_len = 20                 # samples   #* hyper-parameter 
-unit_numbers = 1                    #* NUMBER of UNITS for analysis 
+seq_len = 50                 # samples   #* hyper-parameter 
+unit_numbers = 18                    #* NUMBER of UNITS for analysis 
+normalize = True
 
 dry_data = dataset( 
     seq_len = seq_len,      # binwidth * seq_len => duration in msec    
@@ -49,7 +50,7 @@ dry_data = dataset(
     unit_numbers = unit_numbers, 
     fn = fn, 
     path = path,
-    normalize=True, 
+    normalize=normalize, 
     cumsum=False)
 
 # fn_strf = 'STRF_MUA-ONLY_bw(5)_fbands(30)_spec(gammatone).mat'
@@ -59,7 +60,7 @@ drr_data = dataset(
     unit_numbers = unit_numbers, 
     fn = fn, 
     path = path, 
-    normalize=True,
+    normalize=normalize,
     cumsum=False)
 
 print(drr_data)
@@ -93,13 +94,13 @@ train_loader = DataLoader(trainset, batch_size=batch_size, shuffle=False)
 test_loader = DataLoader(testset, batch_size=batch_size, shuffle=False)
 
 
-# ! DEBUG
-print('*** DEBUGING! ***')
-X, y = next(iter(train_loader))
-print('- X_train :', X_train.shape)
-print('- y_train :', y_train.shape)
-print('- X_test  :', X_test.shape)
-print('- y_test  :', y_test.shape)
+# # ! DEBUG
+# print('*** DEBUGING! ***')
+# X, y = next(iter(train_loader))
+# print('- X_train :', X_train.shape)
+# print('- y_train :', y_train.shape)
+# print('- X_test  :', X_test.shape)
+# print('- y_test  :', y_test.shape)
 
 
 
@@ -112,46 +113,57 @@ class Conv1d(nn.Module):
         self.kernel_size = kernel_size
         self.p = 0.1
 
+        self.conv1 = nn.Conv1d(self.n_input, 5, self.kernel_size, padding=0, bias=True)
         self.relu = nn.ReLU()
-        self.dropout = nn.Dropout(p=self.p)
-        # self.maxpool1d = nn.MaxPool1d()
-        self.conv1 = nn.Conv1d(self.n_input, 5, self.kernel_size, padding=0, bias=False)
-        #self.layer1 = nn.Sequential(self.conv1, self.relu, self.dropout)
-        self.layer1 = nn.Sequential(self.conv1, self.dropout)
-
-        self.conv2 = nn.Conv1d(5, 10, self.kernel_size, padding=0, bias=False)
-        #self.layer2 = nn.Sequential(self.conv2, self.relu, self.dropout)
-        self.layer2 = nn.Sequential(self.conv2, self.dropout)        
+        self.maxpool1d = nn.MaxPool1d(kernel_size=3, stride=2, padding=1)
+        self.batchnorm = nn.BatchNorm1d(num_features=5)
+        self.layer1 = nn.Sequential(self.conv1, self.relu, self.maxpool1d, self.batchnorm)
         
-        conv_out = seq_len-2*(kernel_size-1)
-        # self.fc = nn.Linear(conv_out, 1)
-        self.fc1 = nn.Linear(conv_out, 1)
-        self.fc2 = nn.Linear(10, 1)
+        self.conv2 = nn.Conv1d(5, 10, 3, padding=2, bias=True)
+        # self.relu = nn.ReLU()
+        # self.maxpool1d = nn.MaxPool1d(kernel_size=3, stride=2, padding=1)
+        # self.batchnorm = nn.BatchNorm1d(num_features=5)
+        self.layer2 = nn.Sequential(self.conv2, self.relu, self.maxpool1d, 
+            nn.BatchNorm1d(num_features=10))
+ 
+        self.dropout = nn.Dropout(p=self.p)
+        
+        self.fc_layer1 = nn.Sequential(
+            nn.Linear(120, 1), self.dropout
+        )
 
 
     def forward(self, x):
         # input size: (batch_size, channels, seq_length)
+        
+        # #! DEBUG
+        # x = self.layer1(x)
+        # x = self.layer2(x)
+        # print('- x.shape: ', x.shape)
+        # x = self.conv2(x)
+        # print('- x.shape: ', x.shape)
+        # x = self.relu(x)
+        # x = self.maxpool1d(x)
+        # print('- x.shape: ', x.shape)
+        # x = self.batchnorm(x)
+        # print('- x.shape: ', x.shape)
 
         #self.conv.padding = 0
-        #x = self.conv(x)
         x = self.layer1(x)
         x = self.layer2(x)
-        #x = self.fc( x[:,-1,:] )
-        x = self.fc1(x)
-        x = self.fc2(x.squeeze())
-
+        x = self.fc_layer1(x.view(-1,x.shape[1]*x.shape[2]))
         return x
 
-model = Conv1d(n_input=dry_data.n_units, kernel_size=5)
+model = Conv1d(n_input=dry_data.n_units, kernel_size=7)
 print(model)
 
 
-# # ! DEBUG
-# X, y = next(iter(train_loader))
-# y_ = model(X)
-# print('- y : ', y.shape)
-# print('- X : ', X.shape)
-# print('- y_: ', y_.shape)
+# ! DEBUG
+X, y = next(iter(train_loader))
+y_ = model(X)
+print('- X : ', X.shape)
+print('- y : ', y.shape)
+print('- y_: ', y_.shape)
 
 
 # %% #* Create RNN model
@@ -227,24 +239,22 @@ class RNN(nn.Module):
 
 
 # %%  # *** Training ***
-epochs = 400
+epochs = 200
 
-# Option 1
-lr = 1e-4       # * hyper-parameter; learning rate
-# # loss_function = nn.MSELoss()
-optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=0)
+# - OPTIMIZERs
+optimizer = torch.optim.Adam(model.parameters(), lr=1e-3, weight_decay=0)
+# optimizer = torch.optim.Adadelta(model.parameters())
+# optimizer = torch.optim.SGD(model.parameters(), lr=0.001)
 
+
+# - LOSS FUNCTIONs
+# loss_function = nn.MSELoss()
+# loss_function = nn.L1Loss()
 def loss_function(a, b):
     av = a.flatten() - a.mean()
     bv = b.flatten() - b.mean()
     cov = torch.dot(av, bv)/(torch.norm(av)*torch.norm(bv))
     return 1.0 - cov
-
-
-# Option 2
-# learning_rate = 0.001
-# loss_function = nn.L1Loss()
-# optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
 
 
 model.train()
