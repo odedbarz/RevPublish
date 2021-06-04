@@ -70,7 +70,7 @@ print(drr_data)
 # %% Split the data into train/test sets
 test_size = 0.1
 batch_size = 64*2
-shuffle = False
+shuffle = True
 
 train_idx, test_idx = train_test_split(range(len(dry_data)), test_size=test_size, 
     shuffle=shuffle )  #, random_state=42)
@@ -154,8 +154,8 @@ class Conv1d(nn.Module):
         x = self.fc_layer1(x.view(-1,x.shape[1]*x.shape[2]))
         return x
 
-model = Conv1d(n_input=dry_data.n_units, kernel_size=7)
-print(model)
+# model = Conv1d(n_input=dry_data.n_units, kernel_size=7)
+# print(model)
 
 
 # ! DEBUG
@@ -179,67 +179,76 @@ class RNN(nn.Module):
         self.dropout      = dropout 
         self.n_output     = n_input 
 
+        self.hn = []
+
         # (num_layers * num_directions, batch_size, hidden_size)
         #self.hn = torch.randn(self.n_layers, batch_size, self.n_hidden).to(device)
 
         # RNN   # * hyper-parameter 
-        self.rnn = nn.RNN(input_size=n_input, hidden_size=n_hidden, num_layers=n_layers,
-           nonlinearity=nonlinearity, batch_first=batch_first, dropout=dropout)
+        #self.rnn = nn.RNN(input_size=n_input, hidden_size=n_hidden, num_layers=n_layers,
+        #   nonlinearity=nonlinearity, batch_first=batch_first, dropout=dropout)
 
         # GRU   # * hyper-parameter 
-        #self.rnn = nn.GRU(input_size=n_input, hidden_size=n_hidden, num_layers=n_layers,
-        #   batch_first=batch_first, dropout=dropout)
+        self.rnn = nn.GRU(input_size=n_input, hidden_size=n_hidden, num_layers=n_layers,
+          batch_first=batch_first, dropout=dropout)
 
         #self.fc = nn.Linear(n_hidden, self.n_output)
         self.fc1 = nn.Linear(n_hidden, self.n_output)
-        self.fc2 = nn.Linear(seq_len, 1)
+
+    def init_hidden(self, x):
+         #self.h0 = torch.randn(self.n_layers, x.shape[0], self.n_hidden).to(device)
+        self.hn = torch.zeros(self.n_layers, x.shape[0], self.n_hidden).to(device)       
+        return None
 
     def forward(self, x):
         x = x.permute(0,2,1)
 
         # (num_layers * num_directions, batch_size, hidden_size)
         #self.h0 = torch.randn(self.n_layers, x.shape[0], self.n_hidden).to(device)
-        self.h0 = torch.zeros(self.n_layers, x.shape[0], self.n_hidden).to(device)
-    
+        #self.h0 = torch.zeros(self.n_layers, x.shape[0], self.n_hidden).to(device)
+
         # ASSUMING batch_first == True...
         #   x input : (batch, seq_len, input_size)
         #   x output: (seq_len, batch, num_directions * hidden_size)
-        x, hn = self.rnn(x, self.h0)
+        x, self.hn = self.rnn(x, self.hn)
         #x = self.fc( x[:,-1,:] )   
         x = self.fc1(x)   
         #x = self.fc2(x.squeeze()) 
         x = x[:,-1]
         return x
 
+n_input = dry_data.n_units                      #* number of UNITs 
+n_hidden = 100                                  #* hyper-parameter 
+n_layers = 1                                    #* hyper-parameter 
+nonlinearity = 'relu' # {'relu', 'tanh'}        #* hyper-parameter 
+batch_first = True
+dropout = 0.3
+model = RNN(n_input = n_input, 
+            n_hidden = n_hidden, 
+            n_layers = n_layers,             
+            nonlinearity = nonlinearity, 
+            batch_first = batch_first, 
+            dropout = 0).to(device)
 
-# n_input = dry_data.n_units                      #* number of UNITs 
-# n_hidden = 100                                  #* hyper-parameter 
-# n_layers = 2                                    #* hyper-parameter 
-# nonlinearity = 'tanh' # {'relu', 'tanh'}        #* hyper-parameter 
-# batch_first = True
-# dropout = 0
-# model = RNN(n_input = n_input, 
-#             n_hidden = n_hidden, 
-#             n_layers = n_layers,             
-#             nonlinearity = nonlinearity, 
-#             batch_first = True, 
-#             dropout = 0).to(device)
-# 
-# print(model)
+print(model)
 
 # ! DEBUG
-# print('*** DEBUGING! ***')
-# X, y = next(iter(train_loader))
-# yhat = model(X)
-# print('- y.shape   : ', y.shape)
-# print('- yhat.shape: ', yhat.shape)
-# # X, y = dry_data[0]
-# # yhat = model(X[None,:])     # add the BATCH dimension, as in (batch, seq_len, input_size)
+print('*** DEBUGING! ***')
+X, y = next(iter(train_loader))
+model.init_hidden(X)
+yhat = model(X)
+print('- y.shape   : ', y.shape)
+print('- yhat.shape: ', yhat.shape)
+# X, y = dry_data[0]
+# yhat = model(X[None,:])     # add the BATCH dimension, as in (batch, seq_len, input_size)
+
+#! DEBUG
+# data = loadmat('../_data/Analysis/analyzed_librosa.mat', squeeze_me=True)
 
 
 
 # %%  # *** Training ***
-epochs = 200
+epochs = 60
 
 # - OPTIMIZERs
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-3, weight_decay=0)
@@ -248,26 +257,27 @@ optimizer = torch.optim.Adam(model.parameters(), lr=1e-3, weight_decay=0)
 
 
 # - LOSS FUNCTIONs
-# loss_function = nn.MSELoss()
+loss_function = nn.MSELoss()
 # loss_function = nn.L1Loss()
-def loss_function(a, b):
-    av = a.flatten() - a.mean()
-    bv = b.flatten() - b.mean()
-    cov = torch.dot(av, bv)/(torch.norm(av)*torch.norm(bv))
-    return 1.0 - cov
+# def loss_function(a, b):
+#     av = a.flatten() - a.mean()
+#     bv = b.flatten() - b.mean()
+#     cov = torch.dot(av, bv)/(torch.norm(av)*torch.norm(bv))
+#     return 1.0 - cov
 
 
 model.train()
 loss = []
 
 for ep in range(epochs):
+    #model.init_hidden()
     for k, (X, y) in enumerate(train_loader):
+        model.init_hidden(X)
         optimizer.zero_grad()
         y_pred = model( X.to(device) )                
         loss_k = loss_function(y_pred.view(-1,1), y.view(-1,1).to(device))
         loss_k.backward()
         optimizer.step()
-
 
     loss.append(loss_k.item())
     if ep%25 == 1:
@@ -285,7 +295,8 @@ y_est = []
 y_dry = []
 
 for k, (X, yk) in enumerate(test_loader):
-    with torch.no_grad():   # ? DO I NEED no_grad() if I have eval() ? 
+    with torch.no_grad():   
+        model.init_hidden(X)
         yk_pred = model( X.to(device) )
         y_est.append(yk_pred.cpu().numpy())
         y_dry.append(yk.numpy())        
@@ -319,9 +330,5 @@ plt.show()
 # plt.figure(figsize=(14,8))
 # plot(whitening( np.c_[y_dry[:500,0], y_est[:500,0], y_test_drr[:500,0]])) 
 # plt.show()
-
-# %%
-# np.corrcoef(whitening(Hdrr[-30:]), whitening(y_drr), '.')[0,1]
-# np.corrcoef(whitening(Hdry[-30:]), whitening(y_dry), '.')[0,1]
 
 # %%

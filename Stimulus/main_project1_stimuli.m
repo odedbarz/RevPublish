@@ -47,8 +47,10 @@ switch Fs
         path_males   = load.path_to_data('timit_males_36sec_fs100khz');
 
     case 16e3
-        path_females = load.path_to_data('timit_females_36sec');
-        path_males   = load.path_to_data('timit_males_36sec');
+        %path_females = load.path_to_data('timit_females_36sec');
+        %path_males   = load.path_to_data('timit_males_36sec');
+        path_females = load.path_to_data('TIMIT_Females_Fs(16kHz)_ShortLength');
+        path_males   = load.path_to_data('TIMIT_Males_Fs(16kHz)_ShortLength');
 
     otherwise
         error('--> ERROR: unrecognized Fs!');
@@ -119,7 +121,7 @@ if is_new_rir
 
 else    
     psth2rir = load.path_to_data('wav_spch_36sec');    
-    load([psth2rir, 'spch_36_metadata.mat']);
+    load(fullfile(psth2rir, 'spch_36_metadata.mat'));
     aux.cprintf('cyan', '--> Used LOADED RIR response!\n');
     
 end

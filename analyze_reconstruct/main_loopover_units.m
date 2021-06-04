@@ -16,8 +16,6 @@ fignum = 11;
 verbose = 1;
 
 setup_environment('../');
-
-
     
 drr   = get_DRR_list_and_indices;
 n_drr = drr.n_drr;                  % # DRRs of used 
@@ -28,7 +26,7 @@ idx_dry = drr.ordered(1);
 %% Load data
 %   Run [main_aggregate_MUA_data.m] again to update this file if needed
 % 
-data_type   = 'MUA';       % {'SU', MUA'}
+data_type   = 'SU';       % {'SU', MUA'}
 fn.load.path= '../_data';
 data_type   = upper(data_type);
 
@@ -41,7 +39,7 @@ switch data_type
         %         spec_st: [1×1 struct]
         %      tbl_impale: [437×20 table]
         fn.load.file = 'data_SU_(08-Jan-2021)_bw(5)_fbands(30)_win(NaN)ms_spec(gammatone).mat';       
-        unit_list = 25; %[10, 25, 50, 103];
+        unit_list = 100; %[10, 25, 50, 103];
 
     case 'MUA'
         %Loads a struct with fields:
@@ -52,7 +50,7 @@ switch data_type
         %         stim_st: [1×1 struct]
         %      tbl_impale: [437×20 table]        
         fn.load.file = 'data_MUA_(08-Jan-2021)_bw(5)_fbands(30)_win(NaN)ms_spec(gammatone).mat';  
-        unit_list = 25; %[10, 25, 50, 103, 241];
+        unit_list = [10, 25, 50, 241]; %[10, 25, 50, 103, 241];
 
     otherwise
         error('--> Unrecognized DATA_TYPE!');
@@ -77,7 +75,7 @@ aux.vprint(verbose, '--> [main_loopover_units.m] Loading file:\n\t...<%s>\n', fn
 % [sorted_list, tbl_BF] = find_best_unit_set('CC', 'fn', fn.load.fullfile);
 
 sort_type = 'SPK';  % {'RND', 'SVD', 'FILE', 'SPK', 'NOSPK'}
-Hdry = squeeze( data.H(:,drr.ordered(1),:) ); 
+% Hdry = squeeze( data.H(:,drr.ordered(1),:) ); 
 % sorted_list = find_best_unit_set(sort_type, 'Y', Hdry);                 % {'RND'}
 % sorted_list = find_best_unit_set(sort_type, 'Y', Hdry, 'n_svd', 10);    % {'RND'}
 % sorted_list = find_best_unit_set(sort_type, 'fn', fn.load.fullfile);  % {'CC'}
@@ -171,6 +169,11 @@ for q = 1 %1:n_drr
         scores.nmse= nan(n_drr, n_splits);
         scores2 = scores;
         
+        % Get valid measurements
+        y1 = squeeze( H_sorted(:, train_drr, :) );
+
+        % Split the TRAINING set
+        X1 = spec_st.Sft{train_drr};
         
         % Loop over SPLITS
         for n = 1:n_splits
@@ -183,13 +186,6 @@ for q = 1 %1:n_drr
             % Enable to train on more than 1 DRR            
             % %{
             assert(1 == length(train_drr), '--> Use this Option for only ONE train_drr!');
-            
-            % Get valid measurements
-            y1 = squeeze( H_sorted(:, train_drr, :) );
-
-            % Split the TRAINING set
-            X1 = spec_st.Sft{train_drr};
-            
             [X_train, X_test0, y_train, y_test0, splits] = train_test_split(X1, y1, ...
                'n_splits', n_splits, ...
                'split_time_idx', split_time_idx, ...
@@ -217,11 +213,12 @@ for q = 1 %1:n_drr
             for k = 1:n_drr    
                 % Choose the DRR case for the testing signals
                 %test_drr  = k;
-                test_drr  = drr.ordered(k);                                               
+                test_drr = drr.ordered(k);                                               
                 
                 % Split for the TESTING data
                 X2 = spec_st.Sft{test_drr};
-                y2 = squeeze( H_sorted(:, test_drr, :) );
+                y2 = squeeze( H_sorted(:, test_drr, :) );                
+                
                 [~, X_test_kn, ~, y_test, ~] = train_test_split(X2, y2, ...
                     'n_splits', n_splits, ...
                     'split_time_idx', split_time_idx, ...
@@ -280,7 +277,7 @@ for q = 1 %1:n_drr
     %% Save the reconstruction results
     % %{
         fprintf('SAVE the analysis data!\n');
-        fn.save.path    = '../_data/reconstruct/';
+        fn.save.path    = '../_data/Reconstruct/';
         fn.save.file    = sprintf('reconstruct_%s_(%s)_units(%d)_bw(%g)ms_algo(%s)_fbands(%d)_splits(%d)_lags(%g)ms_cau(%d)_trainDRR(%s)',...
             data_type, date, m_units, binwidth, algo_type, n_bands, n_splits, lags_ms, iscausal, num2str(train_drr, '%d '));
         fn.save.fullfile= fullfile( fn.save.path, fn.save.file );

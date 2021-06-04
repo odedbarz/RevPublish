@@ -62,18 +62,20 @@ neuron_list = find(tbl_impale.duration_sec == duration_sec);
 % Get all units (rows) with duration_sec
 tbl_MUA = tbl_impale(neuron_list, :);
 n_rows  = height(tbl_MUA);
-H_labels    = zeros(n_rows, n_drr);
+H_labels= zeros(n_rows, n_drr);
 
 % Initialize the statistical structure
+clear stats
 stats.drr_labels = drr.labels(drr.ordered);
-stats.CC  = cell(n_drr,1);
-stats.grp = cell(n_drr,1);
-stats.n   = zeros(n_drr, 1);
-stats.mean = zeros(n_drr, 1);
-stats.median = zeros(n_drr, 1);
-stats.std = zeros(n_drr, 1);
-stats.mad = zeros(n_drr, 1);
-            
+stats.CC.CC  = cell(n_drr,1);
+stats.CC.grp = cell(n_drr,1);
+stats.CC.n   = zeros(n_drr, 1);
+stats.CC.mean = zeros(n_drr, 1);
+stats.CC.median = zeros(n_drr, 1);
+stats.CC.std = zeros(n_drr, 1);
+stats.CC.mad = zeros(n_drr, 1);            
+stats.snr = zeros(n_drr, 1);
+
 
 
 %% Prepare the MUA measurements to match the spectrograms
@@ -131,27 +133,38 @@ for k = 1:n_rows
     
     % Calculate pairwise-distance between all vectors. 
     for dr = 1:n_drr
-        drr_idx = drr.ordered(dr);        
-        Mcc = corr(tbl_kth_meas.single_meas{drr_idx}, 'Type', 'Pearson');
-        CCk = 1.0 - squareform(1 - Mcc, 'tovector');
+        drr_idx = drr.ordered(dr);    
+        Y = tbl_kth_meas.single_meas{drr_idx};
+        
+        % ### Correlation between trials ###
+        Mcc = corr(Y, 'Type', 'Pearson');
+        
+        % -> Get the upper off-diagonals values. But distance matrix Z must 
+        %    be square with 0 along the diagonal.
+        CCk = 1.0 - squareform(1 - Mcc, 'tovector');        
         
         % Add to the right row
-        stats.n(dr)   = 1 + stats.n(dr); 
+        stats.CC.n(dr)   = 1 + stats.CC.n(dr); 
         len_CC        = length(CCk);
-        stats.grp{dr} = [stats.grp{dr}, stats.n(dr)*ones(1, len_CC)];
-        stats.CC{dr}  = [stats.CC{dr}, CCk];
+        stats.CC.grp{dr} = [stats.CC.grp{dr}, stats.CC.n(dr)*ones(1, len_CC)];
+        stats.CC.CC{dr}  = [stats.CC.CC{dr}, CCk];
         
-        stats.median(dr, stats.n(dr))   = median(CCk);
-        stats.mean(dr, stats.n(dr))     = mean(CCk);
-        stats.std(dr, stats.n(dr))      = std(CCk);
-        stats.mad(dr, stats.n(dr))      = mad(CCk);
+        stats.CC.median(dr, stats.CC.n(dr)) = median(CCk);
+        stats.CC.mean(dr, stats.CC.n(dr))   = mean(CCk);
+        stats.CC.std(dr, stats.CC.n(dr))    = std(CCk);
+        stats.CC.mad(dr, stats.CC.n(dr))    = mad(CCk);
+        
+        
+        % ### Signal-to-Noise between trials ###
+        Yavg = mean(Y, 2);
+        stats.snr(dr, stats.CC.n(dr)) = median( var(Yavg)./var(Yavg-Y+eps) );
         
     end
     tbl_MUA.drr{k} = CCk;
        
 end
 
-arrayfun(@(N) assert( length(stats.CC{N}) == length(stats.grp{N}),...
+arrayfun(@(N) assert( length(stats.CC.CC{N}) == length(stats.CC.grp{N}),...
     'ERROR: something is wrong! number of GROUPs and number of CCs must be the same!'),...
     1:n_drr);
 
@@ -167,7 +180,7 @@ tbl_MUA = tbl_MUA(valid_neuron_idx, :);
 % %{
 fprintf('SAVE the analysis!');
 
-fn.path = load.path_to_data('Analysis');
+fn.path = load.path_to_data('Stats');
 fn.file = sprintf('stats_raw(MUA)_(%s)_BW(%g)ms_duration(%d)sec_units(%d)', ...
     date, binwidth, duration_sec, height(tbl_MUA));
 fn.save = fullfile(fn.path, fn.file);

@@ -68,7 +68,6 @@ classdef reconstruct_c < handle
                 addOptional(p, 'gpu_flag', obj.gpu_flag, @isnumeric);  
                 
                 addOptional(p, 'verbose', 0, @isnumeric);           
-                %addOptional(p, 'fignum', obj.fignum, @isnumeric);     
                 
                 parse(p, binwidth, varargin{:});
                 pars = p.Results;
@@ -78,8 +77,6 @@ classdef reconstruct_c < handle
                 obj.iscausal    = pars.iscausal;
                 obj.bias.remove = pars.remove_bias;  
                 obj.gpu_flag    = pars.gpu_flag;                  
-                %obj.verbose     = pars.verbose;                
-                %obj.fignum      = pars.fignum;       
 
                 % Algorithm type to calculate the STRF 
                 obj.algo_type  = pars.algo_type;     % {'ASD', 'regression'}

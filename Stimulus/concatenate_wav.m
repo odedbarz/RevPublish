@@ -13,8 +13,10 @@ p = inputParser;
 
 addOptional(p, 'Fs', 16e3, @isnumeric);
 addOptional(p, 'min_silence_sec', 0.2, @isnumeric);     % 0.2 sec
-addOptional(p, 'path_females', load.path_to_data('timit_females_36sec_fs100khz'), @ischar);
-addOptional(p, 'path_males', load.path_to_data('timit_males_36sec_fs100khz'), @ischar);
+% addOptional(p, 'path_females', load.path_to_data('timit_females_36sec_fs100khz'), @ischar);
+% addOptional(p, 'path_males', load.path_to_data('timit_males_36sec_fs100khz'), @ischar);
+addOptional(p, 'path_females', load.path_to_data('TIMIT_Females_Fs(100kHz)'), @ischar);
+addOptional(p, 'path_males', load.path_to_data('TIMIT_Males_Fs(100kHz)'), @ischar);
 addOptional(p, 'perm_list', 1, @(x) isnumeric(x) || islogical(x));
 addOptional(p, 'fignum', [], @isnumeric);
 

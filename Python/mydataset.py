@@ -21,6 +21,7 @@ from torch.utils.data import Dataset
 import pandas as pd
 
 
+
 # %%
 class dataset(Dataset):
     def __init__(self, seq_len, drr_idx, unit_numbers, fn, path='.', normalize=True, 
@@ -83,23 +84,21 @@ class dataset(Dataset):
         '''
         A nice print of the object's fields
         '''
-        str = 'Struct fields:\n'
+        #str = 'Struct fields:\n'
+        #for key, value in self.__dict__.items():
+        #    if isinstance(value, np.ndarray) or isinstance(value, torch.Tensor):
+        #        new_var = value.shape
+        #        value = ['shape: ', new_var]
+        #
+        #    str += '- {0}: {1}\n'.format(key, value)
+        #return str
+        
+        df = pd.DataFrame({'Pars': []})
         for key, value in self.__dict__.items():
             if isinstance(value, np.ndarray) or isinstance(value, torch.Tensor):
-                new_var = value.shape
-                value = ['shape: ', new_var]
-
-            str += '- {0}: {1}\n'.format(key, value)
-        return str
-        
-        # D = pd.DataFrame();
-        # for key, value in self.__dict__.items():
-        #     if isinstance(value, np.ndarray) or isinstance(value, torch.Tensor):
-        #         value = value.shape
-        #     print(key, value)
-        #     D.append( pd.DataFrame([value], index=[key]) )
-        
-        # return D.to_string()
+                value = value.shape
+            df.loc[key] = [value]
+        return df.__str__()
 
     def __len__(self):
         return self.X.shape[0]

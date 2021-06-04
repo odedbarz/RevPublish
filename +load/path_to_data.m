@@ -48,6 +48,11 @@ switch lower(data_type)
         path_data = load.path_to_data('_data');
         p = fullfile(path_data, 'Reconstruct', filesep);
         
+    case 'stats'
+        path_data = load.path_to_data('_data');
+        p = fullfile(path_data, 'Stats', filesep);
+        
+        
     case {'impale_data', 'meas'}
         [before_root, ~, ~] = fileparts(rootpath);
         p = fullfile(before_root, '.data', filesep);
@@ -57,17 +62,32 @@ switch lower(data_type)
         p_stimulus = load.path_to_data('stimulus');
         p = fullfile(p_stimulus, 'Spch_(36)sec');
         
+    case 'timit_females_fs(100khz)'
+        p_stimulus = load.path_to_data('wav_spch_36sec');
+        p = fullfile(p_stimulus, 'TIMIT_Females_Fs(100kHz)');
+        
+    case 'timit_males_fs(100khz)'
+        p_stimulus = load.path_to_data('wav_spch_36sec');
+        p = fullfile(p_stimulus, 'TIMIT_Males_Fs(100kHz)');      
+        
+    case 'timit_females_fs(16khz)_shortlength'
+        p_stimulus = load.path_to_data('wav_spch_36sec');
+        p = fullfile(p_stimulus, 'TIMIT_Females_Fs(16kHz)_ShortLength');
+        
+    case 'timit_males_fs(16khz)_shortlength'
+        p_stimulus = load.path_to_data('wav_spch_36sec');
+        p = fullfile(p_stimulus, 'TIMIT_Males_Fs(16kHz)_ShortLength');           
+        
         
     case 'raw'  % not on the HD, so it's "Hard-coded"
-        computer_name = getenv('computername');
-        if strcmpi('OdedAlienware', computer_name)
+        %computer_name = getenv('computername');
+        computer_name = computer;        
+        if strcmpi('PCWIN64', computer_name)    %if strcmpi('OdedAlienware', computer_name)
             % OdedAlienware
-            p = 'D:/DataBases/myMeas/Rabbits/!RAW/';
-
-        elseif strcmpi('ODEDSDELL', computer_name)
+            p = 'D:\Dropbox (Partners HealthCare)\DataBases\myMeas\Rabbits\!RAW';
+        elseif strcmpi('MACI64', computer_name)  % elseif strcmpi('ODEDSDELL', computer_name)
             % Oded's external HD
-            p = 'D:/oded_backups/myDataBases/DataBases 03-17-2020/myMeas/Rabbits/!RAW/';
-        
+            p = '/Users/ob993/Dropbox (Partners HealthCare)/DataBases/myMeas/Rabbits/!RAW';        
         else        
             % Apollo drive
             warning('--> Can''t find this COMPUTER! Trying to get the RAW path from APOLLO!');

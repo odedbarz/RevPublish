@@ -37,12 +37,14 @@ fn_path   = '../_data/Reconstruct';
 data_type = upper(data_type);
 switch data_type
     case 'SU'
-        fn_template = 'reconstruct_SU_(14-Jan-2021)_units(%d)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(0)_trainDRR(3).mat';       
-        n_units = 103;  	% [10, 25, 50, 103]
+        %fn_template = 'reconstruct_SU_(14-Jan-2021)_units(%d)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(0)_trainDRR(3).mat';       
+        fn_template = 'reconstruct_SU_(02-Jun-2021)_units(%d)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(0)_trainDRR(3).mat';       
+        n_units = 100;  	% [10, 25, 50, 100]
         
     case 'MUA'
-        fn_template = 'reconstruct_MUA_(14-Jan-2021)_units(%d)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(0)_trainDRR(3).mat';        
-        n_units = 103;      %[10, 25, 50, 103, 150, 241];    
+        %fn_template = 'reconstruct_MUA_(14-Jan-2021)_units(%d)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(0)_trainDRR(3).mat';        
+        fn_template = 'reconstruct_MUA_(02-Jun-2021)_units(%d)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(0)_trainDRR(3).mat';        
+        n_units = 100;      %[10, 25, 50, 100, 150, 241];    
 
     otherwise
         error('--> Unrecognized DATA_TYPE!');
@@ -163,6 +165,7 @@ end
 
 
 debug_flag = 0;
+clc
 
 % Loop over the splits (exclusive intervals)
 for sp = 1:n_splits 
@@ -178,7 +181,8 @@ for sp = 1:n_splits
         Sdrr_ = spec_st.Sft{rv}(:, idx_sp);           
 
         Sest_ = obj_list{rv,sp}.X_est;
-
+        assert(0 == nnz(isnan(Sest_)))
+        
         % Concatenate all reconstructions\estimations into one big 3D
         Sest(:, idx_sp, k) = Sest_;
         
@@ -240,9 +244,9 @@ info = ['- All DRR dimensions are already SORTED!\n',...
 %% Save the analysis results
 % %{
 fprintf('\n- About to save the analysis results...\n');
-fn_path = '../_data/Analysis/';
-fn_name = sprintf('analyzed_cc_%s_units(%d).mat', data_type, n_units);
-fn_fullfile = fullfile( fn_path, fn_name );
+FN_PATH = load.path_to_data('Analysis');
+fn_name = sprintf('analyzed_cc_(%s)_%s_units(%d).mat', date, data_type, n_units);
+fn_fullfile = fullfile( FN_PATH, fn_name );
 
 % Save the results for that 
 save(fn_fullfile, ... 
