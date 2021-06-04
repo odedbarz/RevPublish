@@ -46,18 +46,18 @@ markersize = 24;
 %                                      taken from different recording sites.
 % >> reconstruct_XXX_(02-Jun-2021)_...: SUs & MUAs are taken from THE SAME recording sites.
  %
-data_type   = 'MUA';       % {'SU', MUA'}
-fn_path= '../_data/Reconstruct';
+data_type   = 'SU';       % {'SU', MUA'}
+fn_path= '../_data/Reconstruct/Reconstruct_sortType(SPK)_(04-Jun-2021)/';
 data_type   = upper(data_type);
 switch data_type
     case 'SU'
         %fn_template = 'reconstruct_SU_(14-Jan-2021)_units(%d)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(0)_trainDRR(3).mat';       
-        fn_template = 'reconstruct_SU_(02-Jun-2021)_units(%d)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(0)_trainDRR(3).mat';       
+        fn_template = 'reconstruct_SU_(04-Jun-2021)_units(%d)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(0)_trainDRR(3).mat';       
         unit_list = 100;    % load max number of available units
         
     case 'MUA'
         %fn_template = 'reconstruct_MUA_(14-Jan-2021)_units(%d)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(0)_trainDRR(3).mat';        
-        fn_template = 'reconstruct_MUA_(02-Jun-2021)_units(%d)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(0)_trainDRR(3).mat';        
+        fn_template = 'reconstruct_MUA_(04-Jun-2021)_units(%d)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(0)_trainDRR(3).mat';        
         unit_list = 100;    % load max number of available units
 
     otherwise

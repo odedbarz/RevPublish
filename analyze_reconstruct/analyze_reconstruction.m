@@ -10,20 +10,13 @@
 clc
 fignum = 10;
 verbose = 1;
-
 setup_environment('../');
 
-
-
-
-%% Plot properties
+% Plot properties
 fontsize = 32;
 fontsize_big = 42;
 fontsize_bigger = 64;
-
 markersize = 24;
-
-
 
 
 %% Load data
@@ -40,17 +33,20 @@ markersize = 24;
 %
 data_type   = 'SU';       % {'SU', MUA'}
 fn_path = load.path_to_data('Reconstruct');
+fn_path = fullfile(fn_path, 'Reconstruct_sortType(SPK)_(04-Jun-2021)');
 
 data_type   = upper(data_type);
 switch data_type
     case 'SU'
         %fn_template = 'reconstruct_SU_(14-Jan-2021)_units(%d)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(0)_trainDRR(3).mat';       
-        fn_template = 'reconstruct_SU_(19-Mar-2021)_units(100)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(0)_trainDRR(3).mat';
+        %fn_template = 'reconstruct_SU_(19-Mar-2021)_units(100)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(0)_trainDRR(3).mat';
+        fn_template = 'reconstruct_SU_(04-Jun-2021)_units(100)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(0)_trainDRR(3).mat';
         unit_list = 100; % [10, 25, 50, 103];
         
     case 'MUA'
         %fn_template = 'reconstruct_MUA_(14-Jan-2021)_units(%d)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(0)_trainDRR(3).mat';        
-        fn_template = 'reconstruct_MUA_(19-Mar-2021)_units(100)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(0)_trainDRR(3).mat';
+        %fn_template = 'reconstruct_MUA_(19-Mar-2021)_units(100)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(0)_trainDRR(3).mat';
+        fn_template = 'reconstruct_MUA_(04-Jun-2021)_units(100)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(0)_trainDRR(3).mat';
         unit_list = 100; % [10, 25, 50, 103, 150, 241];
 
     otherwise
@@ -288,7 +284,7 @@ xlabel('Speaker Sex', 'FontSize', fontsize_big);
 ylabel('CC', 'FontSize', fontsize_big);
 aux.ctitle('Dry Stimulus vs. Reconstructions', sprintf('(%d %ss)', n_units, data_type));
 
-legend( drr.labels{drr_idx}, 'Location', 'southeast', 'FontSize', fontsize_big);
+legend( drr.labels(drr_idx), 'Location', 'southeast', 'FontSize', fontsize_big);
 axis tight 
 ylim([0, 1]);
 
@@ -310,7 +306,7 @@ plth = errorbar(1e-3*repmat(f, 1, 5), scores.mu.CCf', scores.SE.CCf', 's-', 'Mar
 if strcmpi('MUA', data_type)
     arrayfun(@(I) set(plth(I), 'MarkerFaceColor', plth(I).Color), 1:length(plth));
 end
-ylim([0.75, 1.0]);
+ylim([0.1, 1.0]);
 
 set(gca, 'FontSize', fontsize);
 xlabel('Frequency (kHz)', 'FontSize', fontsize_big);
