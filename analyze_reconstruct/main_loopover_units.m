@@ -26,10 +26,10 @@ idx_dry = drr.ordered(1);
 %% Load data
 %   Run [main_aggregate_MUA_data.m] again to update this file if needed
 % 
-data_type   = 'SU';       % {'SU', MUA'}
-fn.load.path= '../_data';
+data_type   = 'MUA';       % {'SU', MUA'}
+fn.load.path= load.path_to_data('_data');
 data_type   = upper(data_type);
-
+fn.load.file_template = 'data_%s_(08-Jan-2021)_bw(5)_fbands(30)_win(NaN)ms_spec(gammatone).mat';
 switch data_type
     case 'SU'
         % Loads a struct with fields:
@@ -38,8 +38,8 @@ switch data_type
         %     neuron_list: [150×1 double]
         %         spec_st: [1×1 struct]
         %      tbl_impale: [437×20 table]
-        fn.load.file = 'data_SU_(08-Jan-2021)_bw(5)_fbands(30)_win(NaN)ms_spec(gammatone).mat';       
-        unit_list = 100; %[10, 25, 50, 103];
+        %fn.load.file = 'data_SU_(08-Jan-2021)_bw(5)_fbands(30)_win(NaN)ms_spec(gammatone).mat';       
+        unit_list = [10, 25, 50, 100];
 
     case 'MUA'
         %Loads a struct with fields:
@@ -49,13 +49,14 @@ switch data_type
         %         spec_st: [1×1 struct]
         %         stim_st: [1×1 struct]
         %      tbl_impale: [437×20 table]        
-        fn.load.file = 'data_MUA_(08-Jan-2021)_bw(5)_fbands(30)_win(NaN)ms_spec(gammatone).mat';  
-        unit_list = [10, 25, 50, 241]; %[10, 25, 50, 103, 241];
+        %fn.load.file = 'data_MUA_(08-Jan-2021)_bw(5)_fbands(30)_win(NaN)ms_spec(gammatone).mat';  
+        unit_list = [10, 25, 50, 100]; %[10, 25, 50, 103, 241];
 
     otherwise
         error('--> Unrecognized DATA_TYPE!');
         
 end
+fn.load.file = sprintf(fn.load.file_template, data_type);
 fn.load.fullfile = fullfile( fn.load.path, fn.load.file );
 data      = load(fn.load.fullfile);
 
@@ -81,7 +82,8 @@ sort_type = 'SPK';  % {'RND', 'SVD', 'FILE', 'SPK', 'NOSPK'}
 % sorted_list = find_best_unit_set(sort_type, 'fn', fn.load.fullfile);  % {'CC'}
 % sorted_list = find_best_unit_set(sort_type, 'fn', 'unit_list_MUA_drr(5).mat');  % {'FILE'}
 % find_best_unit_set('FILE', 'fn', 'idx_MUA_good_sorted_unit_thr(0-7).mat'); % {'FILE'}
-sorted_list = find_best_unit_set(sort_type, 'tbl_data', tbl_data);    % {'SPK', 'NOSPK'}
+sorted_list = find_best_unit_set(sort_type, 'fn_template', ...
+    {fn.load.path, fn.load.file_template, data_type});    % {'SPK', 'NOSPK'}
 
 %     % ONLY FOR THE SU -- get the right spikes
 %     sorted_list = arrayfun(@(N) find(N == tbl_data.neuron) ,intersect(tbl_data.neuron', sorted_list) )

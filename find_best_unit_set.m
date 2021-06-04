@@ -26,7 +26,8 @@ addParameter(p, 'n_svd', 1, @isnumeric);         % # of singular values (SVs) to
 addParameter(p, 'N', [], @isnumeric);           % total number of units    
 
 % - SPK & NOSPK
-addParameter(p, 'tbl_data', [], @istable);           % total number of units    
+% addParameter(p, 'tbl_data', [], @istable);           % total number of units    
+addParameter(p, 'fn_template', [], @iscell);           % total number of units    
 
 
 % - Verbose
@@ -94,16 +95,42 @@ switch upper(pars.type)
         varargout{1} = {};
         
         
-    case {'SPK', 'NOSPK'} 
-        if isfield(pars, 'Y')
-            N = nnz(pars.tbl_data.SPK);                  
+    case 'SPK'     
+        data_type = pars.fn_template{3};
+        fn_path = pars.fn_template{1};
+        
+        fn_su = sprintf(pars.fn_template{2}, 'SU');
+        fn_SU_full = fullfile(fn_path, fn_su);
+        data = load(fn_SU_full);
+        tbl_su = data.(sprintf('tbl_%s', 'SU'));
+        
+        fn_mua = sprintf(pars.fn_template{2}, 'MUA');
+        fn_MUA_full = fullfile(fn_path, fn_mua);
+        data = load(fn_MUA_full);
+        tbl_mua = data.(sprintf('tbl_%s', 'MUA'));
+        
+        plausible_neurons = intersect(tbl_su.neuron, tbl_mua.neuron);
+        
+        % Get the correct lines in the relevant table
+        switch data_type
+            case 'SU'
+                tbl_slc = tbl_su;
+            case 'MUA'
+                tbl_slc = tbl_mua;
+            otherwise
+                error('--> Unrecognized DATA_TYPE!');        
+        end
+        plausible_units = arrayfun(@(X) find(tbl_slc.neuron == X), plausible_neurons);      
+        
+        if isfield(pars, 'N') && ~isempty(pars.N)
+            N = pars.N;             
+        elseif isfield(pars, 'Y')
+            N = length(plausible_units); 
+        else
+            error('Pleae enter number of units (N)!');
         end
         
-        if strcmpi(pars.type, 'SPK')
-            plausible_units = find(pars.tbl_data.SPK);
-        else
-            plausible_units = find(~pars.tbl_data.SPK);
-        end
+        % Get N random units (if require)
         ind_units = randi( length(plausible_units), N, 1 );
         sorted_list = plausible_units(ind_units);
         varargout{1} = {};
