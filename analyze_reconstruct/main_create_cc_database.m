@@ -37,7 +37,7 @@ fn_path   = '../_data/Reconstruct';
 data_type = upper(data_type);
 switch data_type
     case 'SU'
-        %fn_template = 'reconstruct_SU_(14-Jan-2021)_units(%d)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(0)_trainDRR(3).mat';       
+        %fn_template = '_units(RND)_(14-Jan-2021)/reconstruct_SU_(14-Jan-2021)_units(%d)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(0)_trainDRR(3).mat';       
         fn_template = 'reconstruct_SU_(02-Jun-2021)_units(%d)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(0)_trainDRR(3).mat';       
         n_units = 100;  	% [10, 25, 50, 100]
         
@@ -181,7 +181,7 @@ for sp = 1:n_splits
         Sdrr_ = spec_st.Sft{rv}(:, idx_sp);           
 
         Sest_ = obj_list{rv,sp}.X_est;
-        assert(0 == nnz(isnan(Sest_)))
+        assert(0 == nnz(isnan(Sest_)))        
         
         % Concatenate all reconstructions\estimations into one big 3D
         Sest(:, idx_sp, k) = Sest_;

@@ -47,7 +47,8 @@ split_time_idx(end) = n_time;   % finish at the end of the stimulus
 split_time_idx(:,1) = max(1, split_time_idx(:,1)-margin_sec);
 split_time_idx(:,2) = min(split_time_idx(:,2)+margin_sec, n_time);
 
-
+% Avoid gaps between intervals
+split_time_idx(1:end-1,2) = split_time_idx(2:end,1)-1;
 
 
 %% DEBUG mode; check that the splitting is OK
