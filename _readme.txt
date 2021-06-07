@@ -12,7 +12,7 @@ ROOT: the project root directory.
 	ROOT/_DATA DIRECTORY.
 	
 (B) Analyze: 
-	(1) ANALYZE_RECONSTRUCT/CREATE_BF_TABLE.M: use itto create a file
+	(1) ANALYZE_RECONSTRUCT/CREATE_BF_TABLE.M: use it to create a file
 	with the best-frequencies (BFs). This procedure creates a table of BFs that is
 	saved in the _DATA directory. This new file ends with _BF. The software will
 	use this file to sort neurons according to their "quality". Creates a

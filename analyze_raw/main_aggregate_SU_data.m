@@ -125,13 +125,14 @@ aux.vprint(verbose, '--> Finished\n');
 
 %% Get all rows (measurements) that have full session (all DRR conditions)
 H_labels = zeros(size(H,3), size(H,2));
-for unit = 1:size(H,3)     % # of measurement
+% for unit = 1:size(H,3)     % # of measurement
+for unit = 52:54
     for ndrr = 1:size(H,2)     % DRR case
         H_labels(unit, ndrr) = any(~isnan( H(:,ndrr,unit) ));
     end
 end
 
-valid_neuron_idx = n_drr == sum(H_labels(:,1:n_drr),2);
+valid_neuron_idx = n_drr <= sum(H_labels(:,1:n_drr),2);
 tbl_SU = tbl_SU(valid_neuron_idx, :);
 H      = H(:,:,valid_neuron_idx);
 S_list = S_list(valid_neuron_idx);

@@ -126,7 +126,8 @@ tbl_MUA_all= [tbl_MUA_all, table(all_meas)];
 
 %% Prepare the MUA measurements to match the spectrograms
 aux.vprint(verbose, '\n-> Starting main loop...\n');
-for k = 1:n_rows
+% for k = 1:n_rows
+for k = 149:151
     tbl_neuron_k = tbl_MUA_all(k,:);
     S = load.response( tbl_neuron_k, duration_sec );
     if isempty(S)
@@ -181,7 +182,7 @@ end
 
 
 %% Get all rows (measurements) that have full session (all DRR conditions)
-valid_neuron_idx = n_drr == sum(H_labels(:,1:n_drr),2);
+valid_neuron_idx = n_drr <= sum(H_labels(:,1:n_drr),2);
 tbl_MUA = tbl_MUA(valid_neuron_idx, :);
 H = H(:,:,valid_neuron_idx);
 

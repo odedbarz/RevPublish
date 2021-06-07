@@ -23,15 +23,7 @@ pars = p.Results;
 
 
 %%
-% x_axis_jitter_std  = p.Results.x_axis_jitter_std;
-labels             = p.Results.labels;
-% median_line_length = p.Results.median_line_length;
-% median_line_width  = p.Results.median_line_width;
-% marker_size        = p.Results.marker_size;
-% std_outliers_factor= p.Results.std_outliers_factor;
-% verbose           = p.Results.verbose;
-% fignum             = p.Results.fignum;
-
+labels = p.Results.labels;
 if ~isempty(pars.fignum)
     figure(pars.fignum);
     clf;

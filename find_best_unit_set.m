@@ -88,7 +88,7 @@ switch upper(pars.type)
         elseif isfield(pars, 'Y')
             N = size(pars.Y,2); 
         else
-            error('Pleae enter number of units (N)!');
+            error('Please enter number of units (N)!');
         end
         
         sorted_list = randperm(N);
@@ -112,28 +112,22 @@ switch upper(pars.type)
         plausible_neurons = intersect(tbl_su.neuron, tbl_mua.neuron);
         
         % Get the correct lines in the relevant table
-        switch data_type
-            case 'SU'
-                tbl_slc = tbl_su;
-            case 'MUA'
-                tbl_slc = tbl_mua;
-            otherwise
-                error('--> Unrecognized DATA_TYPE!');        
-        end
+        tbl_slc = eval(sprintf('tbl_%s', lower(data_type)));   % tbl_mua OR tbl_su
         plausible_units = arrayfun(@(X) find(tbl_slc.neuron == X), plausible_neurons);      
         
-        if isfield(pars, 'N') && ~isempty(pars.N)
-            N = pars.N;             
-        elseif isfield(pars, 'Y')
-            N = length(plausible_units); 
-        else
-            error('Pleae enter number of units (N)!');
-        end
+%         if isfield(pars, 'N') && ~isempty(pars.N)
+%             N = pars.N;             
+%         elseif isfield(pars, 'Y')
+%             N = length(plausible_units); 
+%         else
+%             error('Please enter number of units (N)!');
+%         end
         
         % Get N random units (if require)
-        ind_units = randi( length(plausible_units), N, 1 );
-        sorted_list = plausible_units(ind_units);
-        varargout{1} = {};
+        %ind_units = randperm( length(plausible_units), N );
+        %sorted_list = plausible_units(ind_units);
+        sorted_list = plausible_units;
+        arargout{1} = {};
 
         
         
