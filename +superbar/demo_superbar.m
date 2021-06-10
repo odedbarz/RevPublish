@@ -4,6 +4,8 @@
 % most basic usage, and show how the same code for BAR can be achieved
 % using SUPERBAR.
 
+import superbar.*
+
 % Make a figure to put the example plots into
 figure;
 

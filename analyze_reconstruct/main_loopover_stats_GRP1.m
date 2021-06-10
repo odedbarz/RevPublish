@@ -122,7 +122,7 @@ end
 
 % Number of repetitions for later statisic analysis
 n_rep = 30
-splits_range = 0 + (1:6),  '######'
+splits_range = 6 + (1:6),  '######'
 n_splits = length(splits_range);
 
 aux.cprintf('UnterminatedStrings', '--> n_rep   : %d\n', n_rep);
@@ -293,7 +293,7 @@ drr_labels = drr.labels(drr.ordered);
 % %{
     fprintf('SAVE the analysis data!\n');
     fn.save.path    = '../_data/Stats/';
-    fn.save.file    = sprintf('CCstats_TEST(1)_%s_(%s)_units(%d)_bw(%g)ms_algo(%s)_fbands(%d)_splits(%d)_lags(%g)ms_cau(%d)_trainDRR(%s)',...
+    fn.save.file    = sprintf('CCstats_TEST(2)_%s_(%s)_units(%d)_bw(%g)ms_algo(%s)_fbands(%d)_splits(%d)_lags(%g)ms_cau(%d)_trainDRR(%s)',...
         data_type, date, n_units, binwidth, algo_type, n_bands, n_splits, lags_ms, iscausal, num2str(train_drr, '%d '));
     fn.save.fullfile= fullfile( fn.save.path, fn.save.file );
 

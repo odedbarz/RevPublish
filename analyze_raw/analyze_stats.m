@@ -13,7 +13,6 @@
 clc
 fignum = 10;
 verbose = 1;
-
 setup_environment('../');
 
 
@@ -23,7 +22,6 @@ setup_environment('../');
 fontsize = 32;
 fontsize_big = 42;
 fontsize_bigger = 64;
-
 markersize = 24;
 
 
@@ -51,11 +49,11 @@ fn_path= '../_data/Reconstruct/';
 data_type   = upper(data_type);
 switch data_type
     case 'SU'
-        fn_template = 'reconstruct_SU_(06-Jun-2021)_units(%d)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(0)_trainDRR(3).mat';       
+        fn_template = 'reconstruct_SU_(07-Jun-2021)_units(%d)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(0)_trainDRR(3).mat';       
         unit_list = 100;    % load max number of available units
         
     case 'MUA'
-        fn_template = 'reconstruct_MUA_(06-Jun-2021)_units(%d)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(0)_trainDRR(3).mat';        
+        fn_template = 'reconstruct_MUA_(07-Jun-2021)_units(%d)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(0)_trainDRR(3).mat';        
         unit_list = 100;    % load max number of available units
 
     otherwise
@@ -134,18 +132,32 @@ fn_path_data = '../_data';
 
 switch data_type
     case 'SU'
-        fn_data = 'data_SU_(08-Jan-2021)_bw(5)_fbands(30)_win(NaN)ms_spec(gammatone).mat';       
+        fn_data = 'data_SU_(08-Jan-2021)_bw(5)_fbands(30)_win(NaN)ms_spec(gammatone).mat';  
+        fn_strf = 'STRF_SU_(22-Apr-2021)_units(103)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(1)_trainDRR(3).mat';
 
     case 'MUA'
-        fn_data = 'data_MUA_(08-Jan-2021)_bw(5)_fbands(30)_win(NaN)ms_spec(gammatone).mat';        
+        fn_data = 'data_MUA_(08-Jan-2021)_bw(5)_fbands(30)_win(NaN)ms_spec(gammatone).mat';  
+        fn_strf = 'STRF_MUA_(22-Apr-2021)_units(241)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(1)_trainDRR(3).mat';
 
     otherwise
         error('--> Unrecognized DATA_TYPE!');
-        
 end
 
-[~, tbl_BF] = find_best_unit_set('CC', 'fn', fullfile(fn_path_data, fn_data) );
+% [~, tbl_BF] = find_best_unit_set('CC', 'fn', fullfile(fn_path_data, fn_data) );
+% BF = tbl_BF.BF;
+    
+% Get spike-units for both SU & MUA
+file_path = load.path_to_data('_data');
+file_template = 'data_%s_(08-Jan-2021)_bw(5)_fbands(30)_win(NaN)ms_spec(gammatone).mat';
+sorted_list = find_best_unit_set('SPK', 'fn_template', ...
+    {file_path, file_template, data_type});    % {'SPK', 'NOSPK'}
 
+% Load the STRF table with the BFs
+file_path = load.path_to_data('Analysis');
+data = load( fullfile(file_path, fn_strf) );
+
+% Get the spike-units's BFs
+BF = data.tbl_strf.bf(sorted_list);
 
 
 
@@ -165,7 +177,6 @@ end
 
 
 
-
 %% Plot: RMD, MG, Kurtosis, and CCr
 % RMD: response modulation depth
 % MG : modulation gain
@@ -181,12 +192,12 @@ scores.ku   = nan(n_units, n_drr);
 % The DRY response 
 Hdry = squeeze( H(:, 1, :) );        % size(H_sorted) = [time\samples x DRR x units]
 
-
 for n = 1:n_units
-    In = sorted_list(n);
+    %In = sorted_list(n);
+    In = n;
     
     % Stimulus envelope; find the closest frequency band to the neuron's CF 
-    [~, idx_cf] = min(abs(f - tbl_BF.BF(In)));
+    [~, idx_cf] = min(abs(f - BF(In)));
 
     for k = 1:n_drr                
          % CC
@@ -216,7 +227,7 @@ end
 
 
 
-%%
+%% RMD
 figure(100+fignum);
 clf;
 ax = gca;
@@ -226,10 +237,19 @@ ylabel(aux.ctitle('RMD', '$(\sqrt{2}\sigma/\mu)$'));
 xlabel('Direct to Reverberation Ratio (dB)');
 title(sprintf('%d %s', n_units, data_type));
 
+% Wilcoxon signed rank test between SU & MUA 
+tbl_pv = array2table(nan(2, n_drr-1), 'VariableNames',...
+    {'dryTOdB9_4', 'dB9_4TOdB4_8', 'dB4_8TOdBm2_5', 'dBm2_5TOdBm8_2'} );
+for k = 1:n_drr-1
+    [tbl_pv{1,k}, tbl_pv{2,k}] = signrank(scores.RMD(:,k), scores.RMD(:,k+1));
+end
+fprintf('\n RMD: Wilcoxon signed rank test between SU (reverberant vs. dry speech)\n')
+tbl_pv
 
 
 
-%%
+
+%% MG
 figure(105+fignum);
 clf;
 ax = gca;
@@ -239,10 +259,19 @@ ylabel('MG (dB)');
 xlabel('Direct to Reverberation Ratio (dB)');
 title(sprintf('%d %s', n_units, data_type));
 
+% Wilcoxon signed rank test between SU & MUA 
+tbl_pv = array2table(nan(2, n_drr-1), 'VariableNames',...
+    {'dryTOdB9_4', 'dB9_4TOdB4_8', 'dB4_8TOdBm2_5', 'dBm2_5TOdBm8_2'} );
+for k = 1:n_drr-1
+    [tbl_pv{1,k}, tbl_pv{2,k}] = signrank(scores.MG(:,k), scores.MG(:,k+1));
+end
+fprintf('\n MG: Wilcoxon signed rank test between SU (reverberant vs. dry speech)\n')
+tbl_pv
 
 
 
-%%
+
+%% CC
 figure(110+fignum);
 clf;
 ax = gca;
@@ -254,6 +283,18 @@ plth = plot(CCs, 'sk:', 'MarkerSize', 0.4*markersize, 'MarkerFaceColor', 'k');
 hold off
 legend(plth, 'CCs stimulus');
 xlabel('Direct to Reverberation Ratio (dB)');
+
+
+% Wilcoxon signed rank test between SU & MUA 
+tbl_pv = array2table(nan(2, n_drr-1), 'VariableNames',...
+    {'dryTOdB9_4', 'dB9_4TOdB4_8', 'dB4_8TOdBm2_5', 'dBm2_5TOdBm8_2'} );
+for k = 1:n_drr-1
+    [tbl_pv{1,k}, tbl_pv{2,k}] = signrank(scores.CCr(:,k), scores.CCr(:,k+1));
+end
+fprintf('\n CC: Wilcoxon signed rank test between SU (reverberant vs. dry speech)\n')
+tbl_pv
+
+
 
 
 

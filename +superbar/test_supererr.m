@@ -1,6 +1,8 @@
 % Run and advance each cell and output is generated appropriately
 clear all;
 figure;
+import superbar.*
+
 
 %% Plotting single X errorbar
 clear all;
@@ -18,6 +20,8 @@ xlim([0 2]);
 ylim([0 2]);
 title('Plotting single X errorbar, empty Y');
 
+
+
 %% Plotting single Y errorbar
 clear all;
 clf;
@@ -25,6 +29,7 @@ supererr(1, 1, [], 0.2);
 xlim([0 2]);
 ylim([0 2]);
 title('Plotting single Y errorbar');
+
 
 %% Plot three bars, one at a time
 clear all;

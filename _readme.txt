@@ -26,19 +26,32 @@ ROOT: the project root directory.
 	(3) ANALYZE_RAW/MAIN_RAW_MUA_STATS.M: use it to get statistics on RAW
 	(measurements, before averaging. This will creates the CCSTATS_(MUA)_XXX.MAT files.
 
-	(4) ANALYZE_FEATURES/MAIN_CREATE_CC_DATABASE.M: compares spectrogram reconstructions (estimations) with other DRR conditions and saves the database into ANALYZED_CC_XX mat file.
+	(4) ANALYZE_RECONSTRUCT/MAIN_CREATE_CC_DATABASE.M: compares spectrogram reconstructions (estimations) with other DRR conditions and saves the database into ANALYZED_CC_XX mat file.
 
-
+	(5) ANALYZE_RECONSTRUCT/CREATE_BF_TABLE: 
 
 
 
 (C) Plots:
-	(1) _FIGS4PAPES/RESULTS_CC_ERRORBAR_ANALYSIS.M: plots 2 bar plots with erro bars, one for SU and another for MUA. In each figure the bars compare spectrogram reconstructions of Sdry-to-Sest (blue bars) and Sdrr-to-Sest (red bars). 
-	
-	(2) _FIGS4PAPES/RESULTS_CC_ANALYSIS.M: 
-		(a) Two plots of SU & MUA reconstructions. Each plot shows CC as a function of DRRs for various number of units used for the reconstructions.
+	(1) _Figs4Paper/RESULTS - POPULATION RESPONSE/RESULTS_CC_ANALYSIS.M: 
+		(a) Two plots of SU & MUA reconstructions. Each plot shows CC as a function of DRRs for various number  
+			of units used for the reconstructions.		
+			- SUvsMUA_CC(Sdry-vs-Sest)_vs_drr_units(10-100).png
+			- CC(Sdry-vs-Sest & Sdrr-vs-Sest)_for_SU_&_MUA_units(100).png
+			- SUvsMUA_CC(Sdry-vs-Sest)_vs_drr_units(100).png			
 		(b) Boxplot of SU & MUA side by side on the same figure.
-		(c) Two-ways ANOVA plot (data-type vs DRRs).
+		(c) Wilcoxon signed rank tests
+		
+		
+		
+		
+	(?) _Figs4Paper/RESULTS_CC_ERRORBAR_ANALYSIS.M: plots 2 bar plots with error bars, one for SU and another for MUA. In each figure the bars compare spectrogram reconstructions of Sdry-to-Sest (blue bars) and Sdrr-to-Sest (red bars). 
+	
+
+
+
+
+
 
 
 
