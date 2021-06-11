@@ -49,7 +49,7 @@ switch upper(pars.type)
             '--> ERROR: can''t find the _BF file! If needed, create the file with best_envelope_frequency.m');
         dummy = load( fn_bf );
         tbl_BF = dummy.tbl_BF;
-        [~, sorted_list] = sort(tbl_BF.BF_cc);
+        [~, sorted_list] = sort(tbl_BF.BF_cc, 'descend');
         
         varargout{1} = tbl_BF;
         

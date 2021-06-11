@@ -85,13 +85,9 @@ sort_type = 'SPK';  % {'RND', 'SVD', 'FILE', 'SPK', 'NOSPK'}
 sorted_list = find_best_unit_set(sort_type, 'fn_template', ...
     {fn.load.path, fn.load.file_template, data_type});    % {'SPK', 'NOSPK'}
 
-%     % ONLY FOR THE SU -- get the right spikes
-%     sorted_list = arrayfun(@(N) find(N == tbl_data.neuron) ,intersect(tbl_data.neuron', sorted_list) )
+sorted_list = find_best_unit_set(sort_type, 'fn_template', ...
+    {fn.load.path, fn.load.file_template, data_type});    % {'SPK', 'NOSPK'}
 
-%         H_ = squeeze( data.H(:,drr.ordered(5),:) ); 
-%         D = corrcoef(H_);
-%         [~, ii] = sort( abs(sum(D)), 'descend' );
-%         sorted_list = sorted_list(ii);
 
 
 %% Reconstruction parameters

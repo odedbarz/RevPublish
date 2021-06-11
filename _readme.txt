@@ -30,6 +30,9 @@ ROOT: the project root directory.
 
 	(5) ANALYZE_RECONSTRUCT/CREATE_BF_TABLE: 
 
+	(6) ANALYZE_RECONSTRUCT/MAIN_LOOPOVER_STATS.m: used to check effect of dependence between reconstructions. 
+		The analysis is done in _FIGS4PAPER\ADDITIONALS.m. This file uses data from, 
+		_DATA\STATS\CCUNITS_(09-JUN-2021)_FOR_VALID_STATS_TEST.m.
 
 
 (C) Plots:

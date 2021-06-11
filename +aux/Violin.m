@@ -49,6 +49,13 @@ classdef Violin < handle
     % Copyright (c) 2016, Bastian Bechtold
     % This code is released under the terms of the BSD 3-clause license
 
+    properties  % OBZ
+        avg_linewidth = 4;          % linewidth of the mean/median horizontal line
+        scatter_dot_size = 150;     % size of dots of the data in the scatter plot
+        plot_wisker = false;        % plot the vertical line at the center of the violine?
+        avg_fun = @(x) median(x)    % MEDIAN or MEAN
+    end
+    
     properties
         ScatterPlot % scatter plot of the data points
         ViolinPlot  % fill plot of the kernel density estimate
@@ -56,8 +63,7 @@ classdef Violin < handle
         WhiskerPlot % line plot between the whisker ends
         MedianPlot  % scatter plot of the median (one point)
         NotchPlots  % scatter plots for the notch indicators
-        MeanPlot    % line plot of the mean (horizontal line)
-        scatter_dot_size;
+        MeanPlot    % line plot of the mean (horizontal line)        
     end
 
     properties (Dependent=true)
@@ -108,7 +114,7 @@ classdef Violin < handle
             args = obj.checkInputs(data, pos, varargin{:});
             data = data(not(isnan(data)));
             if numel(data) == 1
-                obj.MedianPlot = scatter(pos, data, args.scatter_dot_size, 'filled');
+                obj.MedianPlot = scatter(pos, data, obj.scatter_dot_size, 'filled');
                 obj.MedianColor = args.MedianColor;
                 obj.MedianPlot.MarkerEdgeColor = args.EdgeColor;
                 return
@@ -141,7 +147,7 @@ classdef Violin < handle
             end
             jitter = 2*(rand(size(data))-0.5);
             obj.ScatterPlot = ...
-                scatter(pos + jitter.*jitterstrength, data, args.scatter_dot_size, 'filled');
+                scatter(pos + jitter.*jitterstrength, data, obj.scatter_dot_size, 'filled');
 
             % plot the violin
             obj.ViolinPlot =  ... % plot color will be overwritten later
@@ -156,7 +162,8 @@ classdef Violin < handle
                      [1 1 1]);
                  
             % plot the data mean
-            meanValue = mean(data);
+            %meanValue = mean(data);
+            meanValue = obj.avg_fun(data);
             if length(density) > 1
                 meanDensityWidth = interp1(value, density, meanValue)*width;
             else % all data is identical:
@@ -167,24 +174,28 @@ classdef Violin < handle
             end
             obj.MeanPlot = plot(pos+[-1,1].*meanDensityWidth, ...
                                 [meanValue, meanValue]);
-            obj.MeanPlot.LineWidth = 1;
+            obj.MeanPlot.LineWidth = obj.avg_linewidth;
                  
             IQR = quartiles(3) - quartiles(1);
-            lowhisker = quartiles(1) - 1.5*IQR;
-            lowhisker = max(lowhisker, min(data(data > lowhisker)));
-            hiwhisker = quartiles(3) + 1.5*IQR;
-            hiwhisker = min(hiwhisker, max(data(data < hiwhisker)));
-            if ~isempty(lowhisker) && ~isempty(hiwhisker)
-                obj.WhiskerPlot = plot([pos pos], [lowhisker hiwhisker]);
+            
+            % plot wisker
+            if obj.plot_wisker
+                lowhisker = quartiles(1) - 1.5*IQR;
+                lowhisker = max(lowhisker, min(data(data > lowhisker)));
+                hiwhisker = quartiles(3) + 1.5*IQR;
+                hiwhisker = min(hiwhisker, max(data(data < hiwhisker)));
+                if ~isempty(lowhisker) && ~isempty(hiwhisker)
+                    obj.WhiskerPlot = plot([pos pos], [lowhisker hiwhisker]);
+                end
             end
-            obj.MedianPlot = scatter(pos, quartiles(2), args.scatter_dot_size, [1 1 1], 'filled');
+            obj.MedianPlot = scatter(pos, quartiles(2), obj.scatter_dot_size, [1 1 1], 'filled');
 
             obj.NotchPlots = ...
                  scatter(pos, quartiles(2)-1.57*IQR/sqrt(length(data)), ...
-                         args.scatter_dot_size, [1 1 1], 'filled', '^');
+                         obj.scatter_dot_size, [1 1 1], 'filled', '^');
             obj.NotchPlots(2) = ...
                  scatter(pos, quartiles(2)+1.57*IQR/sqrt(length(data)), ...
-                         args.scatter_dot_size, [1 1 1], 'filled', 'v');
+                         obj.scatter_dot_size, [1 1 1], 'filled', 'v');
 
             obj.EdgeColor = args.EdgeColor;
             obj.BoxColor = args.BoxColor;
@@ -328,7 +339,7 @@ classdef Violin < handle
             p.addRequired('Data', @isnumeric);
             p.addRequired('Pos', isscalarnumber);
             p.addParameter('Width', 0.3, isscalarnumber);
-            p.addParameter('scatter_dot_size', 50, isscalarnumber);
+            %p.addParameter('scatter_dot_size', 50, isscalarnumber);
             p.addParameter('Bandwidth', [], isscalarnumber);
             iscolor = @(x) (isnumeric(x) & length(x) == 3);
             p.addParameter('ViolinColor', [], iscolor);
@@ -340,7 +351,7 @@ classdef Violin < handle
             isscalarlogical = @(x) (islogical(x) & isscalar(x));
             p.addParameter('ShowData', true, isscalarlogical);
             p.addParameter('ShowNotches', false, isscalarlogical);
-            p.addParameter('ShowMean', false, isscalarlogical);
+            p.addParameter('ShowMean', true, isscalarlogical);
 
             p.parse(data, pos, varargin{:});
             results = p.Results;

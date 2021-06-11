@@ -19,3 +19,5 @@ TIMIT*/
 *.wav
 *.ppt
 *.pptx
+*.doc?
+*.tif
