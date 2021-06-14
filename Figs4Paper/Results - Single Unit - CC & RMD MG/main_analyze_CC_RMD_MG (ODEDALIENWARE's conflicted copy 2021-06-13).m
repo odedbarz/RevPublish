@@ -25,8 +25,8 @@ sorted_unit_list = dummy.unit_list;
 %% Load data
 %   Run [main_aggregate_MUA_data.m] again to update this file if needed
 % 
-data_type   = 'SU';       % {'SU', MUA'}
-data_type   = upper(data_type);
+data_type = 'MUA';       % {'SU', MUA'}
+data_type = upper(data_type);
 
 switch data_type
     case 'SU'
@@ -39,8 +39,8 @@ switch data_type
         fn.load.file = 'data_SU_(08-Jan-2021)_bw(5)_fbands(30)_win(NaN)ms_spec(gammatone).mat';       
         unit_list = 103; %[10, 25, 50, 103];
         
-        fn.strf.path = load.path_to_data('Analysis');
-        fn.strf.file = 'STRF_SU_(22-Apr-2021)_units(103)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(1)_trainDRR(3).mat';
+        %fn.strf.path = load.path_to_data('Analysis');
+        %fn.strf.file = 'STRF_SU_(22-Apr-2021)_units(103)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(1)_trainDRR(3).mat';
         
 
     case 'MUA'
@@ -54,8 +54,8 @@ switch data_type
         fn.load.file = 'data_MUA_(08-Jan-2021)_bw(5)_fbands(30)_win(NaN)ms_spec(gammatone).mat';  
         unit_list = 241; %[10, 25, 50, 103, 241];
         
-        fn.strf.path = load.path_to_data('Analysis');
-        fn.strf.file = 'STRF_MUA_(22-Apr-2021)_units(241)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(1)_trainDRR(3).mat';
+        %fn.strf.path = load.path_to_data('Analysis');
+        %fn.strf.file = 'STRF_MUA_(22-Apr-2021)_units(241)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(1)_trainDRR(3).mat';
 
     otherwise
         error('--> Unrecognized DATA_TYPE!');
@@ -68,8 +68,10 @@ fn.load.fullfile = fullfile( fn.load.path, fn.load.file );
 data = load(fn.load.fullfile);
 
 % Load tbl_strf
-dummy = load(fullfile(fn.strf.path, fn.strf.file));
-tbl_strf = dummy.tbl_strf;
+% dummy = load(fullfile(fn.strf.path, fn.strf.file));
+% tbl_strf = dummy.tbl_strf;
+[~, tbl_BF] = find_best_unit_set('CC', 'fn', fn.load.fullfile);  % {'CC'}
+
 
 spec_st   = data.spec_st;
 stim_st   = data.stim_st;
@@ -128,7 +130,7 @@ CCs = CC_stimuli( spec_st );
 n_units = size(data.H,3);
 
 % Select data for analysis
-H           = squeeze( data.H(:,:, 1:n_units) );
+H = squeeze( data.H(:,:, 1:n_units) );
 
 clear scores
 scores.CCer = nan(n_units, n_drr);       % % CC(response dry & response)
@@ -144,7 +146,7 @@ for n = 1:n_units
     
     % Option #1:
     % Stimulus envelope; find the closest frequency band to the neuron's CF 
-    [~, idx_bf] = min(abs(spec_st.f - tbl_strf.bf(n)));
+    [~, idx_bf] = min(abs(spec_st.f - tbl_BF.BF(n)));
     
     % Option #2
     % Stimulus envelope: best correlation between envelope and response
@@ -235,18 +237,18 @@ scores.MG_sorted   = scores.MG(cc_sorted_idx, :);
 
 
 %% Load shared measurements (between SU & MUA)
-file_template = 'data_%s_(08-Jan-2021)_bw(5)_fbands(30)_win(NaN)ms_spec(gammatone).mat';
+% file_template = 'data_%s_(08-Jan-2021)_bw(5)_fbands(30)_win(NaN)ms_spec(gammatone).mat';
+% 
+% sorted_list = find_best_unit_set('SPK', 'fn_template', ...
+%     {load.path_to_data('_data'), file_template, data_type});    % {'SPK', 'NOSPK'}
+% 
+% 
+% CCer_sorted = scores.CCer_sorted(sorted_list,:);
+% n_sorted_units_to_plot = length(sorted_list);
 
-sorted_list = find_best_unit_set('SPK', 'fn_template', ...
-    {load.path_to_data('_data'), file_template, data_type});    % {'SPK', 'NOSPK'}
-
-
-CCer_sorted = scores.CCer_sorted(sorted_list,:);
-n_sorted_units_to_plot = length(sorted_list);
-
-% % *** OR ***
-% n_sorted_units_to_plot = 100;
-% CCer_sorted = scores.CCer_sorted(1:n_sorted_units_to_plot,:);
+% *** OR ***
+n_sorted_units_to_plot = 100;
+CCer_sorted = scores.CCer_sorted(1:n_sorted_units_to_plot,:);
 
 
 %% === SORTed ===
@@ -255,10 +257,9 @@ figure(0+fignum);
 % clf;
 
 markersize = 32;
-fontsize = 32;
+fontsize = 28;
 fontsize_big = 42;
-fontsize_bigger = 58;
-
+fontsize_bigger = 48;
 
 switch upper(data_type)
     case 'SU'
@@ -272,27 +273,23 @@ switch upper(data_type)
         
 end
 
-% % Add a violine plot
-% % h = aux.violinplot(CCer_sorted, {}, 'ShowMean', true, 'ShowData', false);
-% h = aux.violinplot(CCer_sorted, drr.labels(drr.ordered), 'ShowMean', true, 'ViolinAlpha', 0.5); %, 'ShowData', false);
-% for k = 1:n_drr
-%     h(k).ViolinColor = aux.rpalette(k);
-% end
-% plth = [];
+% Add a violine plot
+% h = aux.violinplot(CCer_sorted, {}, 'ShowMean', true, 'ShowData', false);
+h = aux.violinplot(CCer_sorted, drr.labels(drr.ordered), 'ShowMean', true, 'ViolinAlpha', 0.5); %, 'ShowData', false);
+for k = 1:n_drr
+    h(k).ViolinColor = aux.rpalette(k);
+end
 
-pars = plot_dotbox(CCer_sorted, 'labels', drr.labels(drr.ordered));
-plth = pars.points_h;
-
+plth = [];
+% pars = plot_dotbox(CCer_sorted, 'labels', drr.labels(drr.ordered));
+% plth = pars.points_h;
 set(ax, 'FontSize', fontsize);
-
 hold on
 plth(end+1) = plot(CCs, 'sk:', 'MarkerSize', markersize, 'MarkerFaceColor', 'k');
 hold off
-
 % legend(plth, {'CC (Broadband Envelope)', 'CC (Stimulus DRY-to-DRR)'});
 % legend(plth(1:end-1), {'$S_{dry}$ vs. $\hat{S}_{drr}$', '$S_{drr}$ vs. $\hat{S}_{drr}$'}, 'FontSize', fontsize_big);
 % aux.abc(ax, 'fontsize', 2*fontsize, 'location', 'northwestoutside');
-
 
 switch upper(data_type)
     case 'SU'
@@ -309,7 +306,6 @@ xlabel('DRR', 'FontSize', fontsize_big);
 title(sprintf('%d %ss', n_sorted_units_to_plot, data_type), ...
     'FontSize', fontsize_bigger);
 ylim([-0.15, 1.1]);
-
 
 
 %% Plot RMD\MG\CC\Kurtosis

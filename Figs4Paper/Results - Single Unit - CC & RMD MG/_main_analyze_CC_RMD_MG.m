@@ -42,6 +42,7 @@ switch data_type
         fn.strf.path = load.path_to_data('Analysis');
         fn.strf.file = 'STRF_SU_(22-Apr-2021)_units(103)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(1)_trainDRR(3).mat';
         
+        fn.sort.file = 'sorted(freq,CC)_(13-Jun-2021)_unitList_data(SU)_units(103).mat';
 
     case 'MUA'
         %Loads a struct with fields:
@@ -57,6 +58,8 @@ switch data_type
         fn.strf.path = load.path_to_data('Analysis');
         fn.strf.file = 'STRF_MUA_(22-Apr-2021)_units(241)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(1)_trainDRR(3).mat';
 
+        fn.sort.file = 'sorted(freq,CC)_(13-Jun-2021)_unitList_data(MUA)_units(241).mat';
+        
     otherwise
         error('--> Unrecognized DATA_TYPE!');
         
@@ -83,6 +86,9 @@ assert(duration_sec == spec_st.duration_ms * 1e-3,...
 
 aux.vprint(verbose, '--> [main_loopover_units.m] Loading file:\n\t...<%s>\n', fn.load.file);
 
+
+% Load shared measurements (between SU & MUA)
+sorted_list = find_best_unit_set('FILE', 'fn', fn.sort.file);
 
 
 
@@ -128,7 +134,7 @@ CCs = CC_stimuli( spec_st );
 n_units = size(data.H,3);
 
 % Select data for analysis
-H           = squeeze( data.H(:,:, 1:n_units) );
+H = squeeze( data.H(:,:, 1:n_units) );
 
 clear scores
 scores.CCer = nan(n_units, n_drr);       % % CC(response dry & response)
@@ -141,10 +147,11 @@ scores.ku   = nan(n_units, n_drr);
 
 for n = 1:n_units
     %un = sorted_unit_list(n);
+    un = sorted_list(n);
     
     % Option #1:
     % Stimulus envelope; find the closest frequency band to the neuron's CF 
-    [~, idx_bf] = min(abs(spec_st.f - tbl_strf.bf(n)));
+    [~, idx_bf] = min(abs(spec_st.f - tbl_strf.bf(un)));
     
     % Option #2
     % Stimulus envelope: best correlation between envelope and response
@@ -212,41 +219,13 @@ for n = 1:n_units
 end
 
 
-
-
-%%
-% [~, cc_sorted_idx] = sort(scores.CCer(:,1), 'descend');
-switch upper(data_type)
-    case 'SU'
-        cc_sorted_idx = 1:n_units;      
-        
-    case 'MUA'
-        cc_sorted_idx = sorted_unit_list;
-        
-    otherwise
-        error('--> Unrecognized DATA_TYPE!');
-        
-end
-
-scores.CCer_sorted = scores.CCer(cc_sorted_idx, :);
-scores.RMD_sorted  = scores.RMD(cc_sorted_idx, :);
-scores.MG_sorted   = scores.MG(cc_sorted_idx, :);
+scores.sorted_list = sorted_list;
+scores.CCer = scores.CCer(sorted_list, :);
+scores.RMD_sorted  = scores.RMD(sorted_list, :);
+scores.MG_sorted   = scores.MG(sorted_list, :);
 
 
 
-%% Load shared measurements (between SU & MUA)
-file_template = 'data_%s_(08-Jan-2021)_bw(5)_fbands(30)_win(NaN)ms_spec(gammatone).mat';
-
-sorted_list = find_best_unit_set('SPK', 'fn_template', ...
-    {load.path_to_data('_data'), file_template, data_type});    % {'SPK', 'NOSPK'}
-
-
-CCer_sorted = scores.CCer_sorted(sorted_list,:);
-n_sorted_units_to_plot = length(sorted_list);
-
-% % *** OR ***
-% n_sorted_units_to_plot = 100;
-% CCer_sorted = scores.CCer_sorted(1:n_sorted_units_to_plot,:);
 
 
 %% === SORTed ===
@@ -255,10 +234,9 @@ figure(0+fignum);
 % clf;
 
 markersize = 32;
-fontsize = 32;
+fontsize = 28;
 fontsize_big = 42;
-fontsize_bigger = 58;
-
+fontsize_bigger = 48;
 
 switch upper(data_type)
     case 'SU'
@@ -272,27 +250,22 @@ switch upper(data_type)
         
 end
 
-% % Add a violine plot
-% % h = aux.violinplot(CCer_sorted, {}, 'ShowMean', true, 'ShowData', false);
-% h = aux.violinplot(CCer_sorted, drr.labels(drr.ordered), 'ShowMean', true, 'ViolinAlpha', 0.5); %, 'ShowData', false);
-% for k = 1:n_drr
-%     h(k).ViolinColor = aux.rpalette(k);
-% end
-% plth = [];
+% Add a violine plot
+h = aux.violinplot(sorted_list, drr.labels(drr.ordered), 'ShowMean', true, 'ViolinAlpha', 0.5); %, 'ShowData', false);
+for k = 1:n_drr
+    h(k).ViolinColor = aux.rpalette(k);
+end
 
-pars = plot_dotbox(CCer_sorted, 'labels', drr.labels(drr.ordered));
-plth = pars.points_h;
-
+plth = [];
+% pars = plot_dotbox(sorted_list, 'labels', drr.labels(drr.ordered));
+% plth = pars.points_h;
 set(ax, 'FontSize', fontsize);
-
 hold on
 plth(end+1) = plot(CCs, 'sk:', 'MarkerSize', markersize, 'MarkerFaceColor', 'k');
 hold off
-
 % legend(plth, {'CC (Broadband Envelope)', 'CC (Stimulus DRY-to-DRR)'});
 % legend(plth(1:end-1), {'$S_{dry}$ vs. $\hat{S}_{drr}$', '$S_{drr}$ vs. $\hat{S}_{drr}$'}, 'FontSize', fontsize_big);
 % aux.abc(ax, 'fontsize', 2*fontsize, 'location', 'northwestoutside');
-
 
 switch upper(data_type)
     case 'SU'
@@ -309,7 +282,6 @@ xlabel('DRR', 'FontSize', fontsize_big);
 title(sprintf('%d %ss', n_sorted_units_to_plot, data_type), ...
     'FontSize', fontsize_bigger);
 ylim([-0.15, 1.1]);
-
 
 
 %% Plot RMD\MG\CC\Kurtosis
@@ -336,7 +308,7 @@ set(gca, 'XTickLabel', '');
 xlabel('');
 
 % ax(3) = subplot(3,1,3);
-% plot_dotbox(scores.CCer_sorted(1:n_sorted_units_to_plot,:), 'labels', drr.labels(drr.ordered));
+% plot_dotbox(scores.sorted_list(1:n_sorted_units_to_plot,:), 'labels', drr.labels(drr.ordered));
 % ylabel('$CC$');
 
 % hold on
@@ -373,7 +345,7 @@ set(gca, 'XTickLabel', '');
 xlabel('');
 
 % ax(3) = subplot(3,1,3);
-% boxplot(scores.CCer_sorted(1:n_sorted_units_to_plot,:), 'labels', drr.labels(drr.ordered))
+% boxplot(scores.sorted_list(1:n_sorted_units_to_plot,:), 'labels', drr.labels(drr.ordered))
 % ylabel('$CC$');
 
 % hold on

@@ -85,47 +85,32 @@ Sdry    = spec_st.Sft{dry_idx};     % fry spectrogram
 n_freq  = size(Sdry, 1); 
 
 % Best-frequency correlation coefficient
-BF    = nan(n_units, 1);
-BF_cc = nan(n_units, 1);
-BF_pv = nan(n_units, 1);
-alpha = 0.05;   % significance
+BF = nan(n_units, 1);
+R  = nan(n_units, 1);
+% BF_pv = nan(n_units, 1);
+% alpha = 0.05;   % significance
+N = size(Sdry,2);
 
-for n = 1:n_units    
+for k = 1:n_units    
     % extract only the dry measurements 
-    ydry =  squeeze( data.H(:,dry_idx,n) );
+    ydry =  squeeze( data.H(:,dry_idx,k) );
     
-    Rbest = -1;         % best correlation
-    Pbest = nan;        % best p-value    
-    kbest = nan;
-    for k = 1:n_freq
-        [Rn, Pn] = corrcoef(Sdry(k,:), ydry, 'alpha', alpha );
-        
-        if Rbest < Rn(1,2)
-            Rbest = Rn(1,2);
-            Pbest = Pn(1,2);
-            kbest = k;
-        elseif Rbest == Rn(1,2) && Pbest > Pn(1,2)
-            Pbest = Pn(1,2);
-            kbest = k;
-        end
-        
-        
-    end
+    Rn = (Sdry - mean(Sdry,2)) * (ydry - mean(ydry));
+    Rn = Rn./(N*std(Sdry,[],2)*std(ydry));   % normalize
+    [~, kbest] = max(Rn);
     
     % Get the best frequency over all envelopes of the spectrogram
-    BF(n)    = spec_st.f(kbest);    % (Hz)
-    BF_cc(n) = Rn(1,2);             % correlation coefficient of the best frequency
-    BF_pv(n) = Rn(1,2);             % p-value of the correlation coefficient
-    
+    BF(k)= spec_st.f(kbest);    % (Hz)
+    R(k) = Rn(kbest); %(1,2);             % correlation coefficient of the best frequency    
 end
 
 
 %% Add BF as columns into the measurement table
 % Create a new table with all the information of the measurements and save it
 neuron = tbl_data.neuron;
-tbl_BF = [table(neuron), table(BF), table(BF_cc), table(BF_pv)];
+tbl_BFcc = [table(neuron), table(BF), table(R)]; 
 
-save([fn.load.fullfile(1:end-4), '_BF'], 'tbl_BF', 'spec_st', 'stim_st');
+save([fn.load.fullfile(1:end-4), '_BFcc'], 'tbl_BFcc', 'spec_st', 'stim_st');
 %}
 
 

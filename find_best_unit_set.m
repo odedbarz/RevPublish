@@ -17,6 +17,7 @@ addRequired(p, 'type', @(x) ischar(x) || isstring(x));
 % Optional:
 % - CC:
 addParameter(p, 'fn', '', @(x) ischar(x) || isstring(x));
+addParameter(p, 'fpath', load.path_to_data('_data'), @(x) ischar(x) || isstring(x));
 
 % - SVD
 addParameter(p, 'Y', [], @isnumeric);            
@@ -44,23 +45,20 @@ switch upper(pars.type)
     case 'CC' 
         [fpath, fname, fext] = fileparts(pars.fn);        
         assert(~isempty(dir( pars.fn )), '--> ERROR: can''t find the DATA file!');
-        fn_bf = fullfile(fpath, [fname, '_BF', fext]);
+        fn_bf = fullfile(fpath, [fname, '_BFcc', fext]);
         assert(~isempty(dir( fn_bf )),...
             '--> ERROR: can''t find the _BF file! If needed, create the file with best_envelope_frequency.m');
         dummy = load( fn_bf );
-        tbl_BF = dummy.tbl_BF;
-        [~, sorted_list] = sort(tbl_BF.BF_cc, 'descend');
+        tbl_BFcc = dummy.tbl_BFcc;
+        [~, sorted_list] = sort(tbl_BFcc.R, 'descend');
         
-        varargout{1} = tbl_BF;
+        varargout{1} = tbl_BFcc;
         
         
     case 'FILE'
-        fpath = load.path_to_data('Analysis');
-        [~, fname, ~] = fileparts(pars.fn); 
-        fn    = fullfile(fpath, [fname, '.mat']);
-        assert(~isempty(dir( fn )), '--> ERROR: can''t find the DATA file!');
-        dummy = load( fn );
-        sorted_list = dummy.unit_list;
+        %fpath = load.path_to_data('_data');
+        dummy = load( fullfile(pars.fpath, pars.fn) );
+        sorted_list = dummy.sorted_list;
 
         
         
@@ -113,22 +111,9 @@ switch upper(pars.type)
         
         % Get the correct lines in the relevant table
         tbl_slc = eval(sprintf('tbl_%s', lower(data_type)));   % tbl_mua OR tbl_su
-        plausible_units = arrayfun(@(X) find(tbl_slc.neuron == X), plausible_neurons);      
-        
-%         if isfield(pars, 'N') && ~isempty(pars.N)
-%             N = pars.N;             
-%         elseif isfield(pars, 'Y')
-%             N = length(plausible_units); 
-%         else
-%             error('Please enter number of units (N)!');
-%         end
-        
-        % Get N random units (if require)
-        %ind_units = randperm( length(plausible_units), N );
-        %sorted_list = plausible_units(ind_units);
-        sorted_list = plausible_units;
-        arargout{1} = {};
-
+        sorted_list = arrayfun(@(X) find(tbl_slc.neuron == X), plausible_neurons);      
+        varargout{1} = tbl_su;
+        varargout{2} = tbl_mua;
         
         
     otherwise
