@@ -64,6 +64,10 @@ for k = 1:n_neurons
         'syncchan', syncchan ...
         );
 
+    if size(isi_k,2) ~= n_stimuli
+        continue;
+    end
+    
     isi_mtx(:,:,k) = isi_k;
     
 end

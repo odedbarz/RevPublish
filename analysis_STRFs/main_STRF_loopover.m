@@ -151,7 +151,7 @@ for q = 1 %1:drr.n_drr
     
     
     %% Loop over UNITS
-    for m = 1:n_units
+    for m = 44 % 1:n_units
         if verbose && 0 == rem(m,2)
             fprintf('\n--> unit #%d (out of %d)\n', m, n_units);
         end

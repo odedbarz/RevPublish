@@ -25,7 +25,7 @@ sorted_unit_list = dummy.unit_list;
 %% Load data
 %   Run [main_aggregate_MUA_data.m] again to update this file if needed
 % 
-data_type   = 'MUA';       % {'SU', MUA'}
+data_type   = 'SU';       % {'SU', MUA'}
 data_type   = upper(data_type);
 
 switch data_type

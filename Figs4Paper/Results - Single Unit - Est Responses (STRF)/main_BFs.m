@@ -26,7 +26,7 @@ idx_dry = drr.ordered(1);
 %   splits          1x1                58376  struct              
 %   strf_st         1x1                 7365  struct              
 %   tbl_strf      241x9             75466618  table               
-data_type   = 'MUA';       % {'SU', MUA'}
+data_type   = 'SU';       % {'SU', MUA'}
 data_type   = upper(data_type);
 
 switch data_type
@@ -80,35 +80,29 @@ end
 CCs = CC_stimuli( spec_st );
 
 
-%% Load shared measurements (between SU & MUA)
-% switch data_type
-%     case 'SU'
-%         len_unit_list = height(tbl_strf);        
-%         unit_list = 1:len_unit_list;    % so sorting in this case
-% 
-%     case 'MUA'
-%         dummy = load(fullfile(load.path_to_data('Analysis'), 'idx_MUA_good_sorted_unit_thr(0-7).mat'));
-%         unit_list = dummy.unit_list;
-%         len_unit_list = length(unit_list);
-% 
-%     otherwise
-%         error('--> Unrecognized DATA_TYPE!');
-%         
-% end
+%%
+switch data_type
+    case 'SU'
+        len_unit_list = height(tbl_strf);        
+        unit_list = 1:len_unit_list;    % so sorting in this case
 
-file_template = 'data_%s_(08-Jan-2021)_bw(5)_fbands(30)_win(NaN)ms_spec(gammatone).mat';
+    case 'MUA'
+        dummy = load(fullfile(load.path_to_data('Analysis'), 'idx_MUA_good_sorted_unit_thr(0-7).mat'));
+        unit_list = dummy.unit_list;
+        len_unit_list = length(unit_list);
 
-unit_list = find_best_unit_set('SPK', 'fn_template', ...
-    {load.path_to_data('_data'), file_template, data_type});    % {'SPK', 'NOSPK'}
-
+    otherwise
+        error('--> Unrecognized DATA_TYPE!');
+        
+end
 
 
 
 %%
-% un = 103;   % number of units to include
+un = 103;   % number of units to include
 
-a = cellfun(@(X) mean(X), tbl_strf.CCest_dry(unit_list,:), 'UniformOutput', false);
-b = cellfun(@(X) mean(X), tbl_strf.CCest_drr(unit_list,:), 'UniformOutput', false);
+a = cellfun(@(X) mean(X), tbl_strf.CCest_dry(unit_list(1:un),:), 'UniformOutput', false);
+b = cellfun(@(X) mean(X), tbl_strf.CCest_drr(unit_list(1:un),:), 'UniformOutput', false);
 
 % CC of STRFs reconstructions
 % CCest_dry = cell2mat( tbl_strf.CCest_dry(unit_list(1:un),:)  );
@@ -147,12 +141,10 @@ fprintf('-- Using SEM\n');
 
 switch upper(data_type)
     case 'SU'
-        ax = subplot(1,2,1);     
-        set(gca, 'Position', [0.0970, 0.1100, 0.3928, 0.8038]);
+        ax = subplot(1,2,1);        
         
     case 'MUA'
         ax = subplot(1,2,2);
-        set(gca, 'Position', [0.5279, 0.1100, 0.3928, 0.8038]);
         
     otherwise
         error('--> Unrecognized DATA_TYPE!');
@@ -160,53 +152,36 @@ switch upper(data_type)
 end
 
 M = [mu_est_dry(:), mu_est_drr(:)];
-
-% CCs
-plth = plot(1:n_drr, CCs, 'ks:', 'MarkerSize', markersize, 'MarkerFaceColor', 'k' );
-hold off
-set(gca, 'FontSize', fontsize);
-
-%{% errbar = [q_est_dry, q_est_drr];
+% errbar = [q_est_dry, q_est_drr];
 h = bar(M); 
 set(gca, 'XTick', 1:n_drr, 'XTickLabel', drr.labels(drr.ordered));
 h(1).FaceColor = aux.rpalette(sprintf('new%02d',1));
 h(2).FaceColor = aux.rpalette(sprintf('new%02d',2));
+
 dx = 0.2*h(1).BarWidth;
 hold on
 % ERROR BARs
 er = errorbar((1:5)'-dx, mu_est_dry , q_est_dry(1,:), q_est_dry(2,:), 'CapSize',24);
 hold on
 er(2) = errorbar((1:5)'+dx, mu_est_drr , q_est_drr(1,:)', q_est_drr(2,:)', 'CapSize',24);
-for k = 1:length(er)
-    er(k).Color = [0 0 0];                            
-    er(k).LineStyle = 'none'; 
-    er(k).LineWidth = 4;
-end
-
 
 % CCs
 plth = plot(1:n_drr, CCs, 'ks:', 'MarkerSize', markersize, 'MarkerFaceColor', 'k' );
 hold off
 set(gca, 'FontSize', fontsize);
 
+for k = 1:length(er)
+    er(k).Color = [0 0 0];                            
+    er(k).LineStyle = 'none'; 
+    er(k).LineWidth = 4;
+end
 
 ylim([0.0, 1.2]);
+legend(h, {'$r_{dry}$ vs. $\hat{r}_{drr}$', '$r_{drr}$ vs. $\hat{r}_{drr}$'}, 'FontSize', fontsize_big);
+ylabel('$CC_{response}$', 'FontSize', fontsize_bigger);
 xlabel('DRR', 'FontSize', fontsize_bigger);
 title(sprintf('%d %s', size(Zest_dry,1), upper(data_type)), 'FontSize', fontsize_bigger);
 
-switch upper(data_type)
-    case 'SU'
-        ylabel('$CC_{response}$', 'FontSize', fontsize_bigger);
-
-        
-    case 'MUA'
-        set(ax, 'YTickLabel', '');
-        legend(h, {'$r_{dry}$ vs. $\hat{r}_{drr}$', '$r_{drr}$ vs. $\hat{r}_{drr}$'}, 'FontSize', fontsize_big);
-        
-    otherwise
-        error('--> Unrecognized DATA_TYPE!');
-        
-end
 
 
 
