@@ -18,6 +18,8 @@ addRequired(p, 'type', @(x) ischar(x) || isstring(x));
 % - CC:
 addParameter(p, 'fn', '', @(x) ischar(x) || isstring(x));
 addParameter(p, 'fpath', load.path_to_data('_data'), @(x) ischar(x) || isstring(x));
+addParameter(p, 'data_type', 'MUA', @(x) ischar(x) || isstring(x));
+
 
 % - SVD
 addParameter(p, 'Y', [], @isnumeric);            
@@ -54,13 +56,10 @@ switch upper(pars.type)
         
         varargout{1} = tbl_BFcc;
         
-        
     case 'FILE'
         %fpath = load.path_to_data('_data');
         dummy = load( fullfile(pars.fpath, pars.fn) );
         sorted_list = dummy.sorted_list;
-
-        
         
     case 'SVD'
         % Orthogonalize the measurements

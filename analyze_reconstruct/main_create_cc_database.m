@@ -21,50 +21,37 @@ setup_environment('../');
 
 
 %% Load data
-% 
-%   Name                Size                 Bytes  Class     Attributes
-% 
-%   H_units          7200x5x10             2880000  double              
-%   fn                  1x1                   2206  struct              
-%   obj_list            5x12              13504080  cell                
-%   sorted_list       241x1                   1928  double              
-%   spec_st             1x1               15039029  struct              
-%   splits              1x1                  58552  struct              
-%   tbl_data          241x20                339094  table               
-%
-data_type   = 'SU';       % {'SU', MUA'}
-fn_path   = '../_data/Reconstruct/';
-data_type = upper(data_type);
-fn_template = 'reconstruct_%s_(07-Jun-2021)_units(%d)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(0)_trainDRR(3).mat';       
+data_type   = 'SU'       % {'SU', MUA'}
+fn_path     = load.path_to_data('Reconstruct'); 
+fn_path     = fullfile(fn_path, 'Reconstruct_sortType(CC)_(11-Jun-2021)');
+data_type   = upper(data_type);
+fn_template = 'reconstruct_%s_(11-Jun-2021)_units(%d)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(0)_trainDRR(3).mat';       
 
 switch data_type
     case 'SU'
-        units = [10, 25, 50, 100]
+        unit_list = [10, 25, 50, 103]
     case 'MUA'
-        units = [10, 25, 50, 100];      %[10, 25, 50, 100, 150, 241];    
+        unit_list = [10, 25, 50, 103];      %[10, 25, 50, 100, 150, 241];    
     otherwise
         error('--> Unrecognized DATA_TYPE!');
 end
 
-n_units = length(units);
+n_unit_list = length(unit_list);
 drr = get_DRR_list_and_indices; 
 n_drr = drr.n_drr;
 drr_idx = drr.sortby(1:n_drr);
 
 
 
-%% Start Looping over all units
-for un = 1:n_units
+
+%% Start Looping over all unit_list
+for un = 1:n_unit_list
     % Loading first file to get preliminary metadata
-    %        H_sorted: [7200×5×10 double]
-    %              fn: [1×1 struct]
-    %        obj_list: {5×12 cell}
-    %     sorted_list: [1×241 double]
-    %         spec_st: [1×1 struct]
-    %          splits: [1×1 struct]
-    %         stim_st: [1×1 struct]
-    %        tbl_data: [241×20 table]
-    fn_n = sprintf(fn_template, data_type, units(un));
+    %       splits: [1�1 struct]
+    %      spec_st: [1�1 struct]
+    %      stim_st: [1�1 struct]
+    %     tbl_data: [241�20 table]
+    fn_n = sprintf(fn_template, data_type, unit_list(un));
     aux.cprintf('String', '\n-> Loading FIRST file to get preliminary data <%s>...\n', fn_n);
     warning off
     dummy = load( fullfile(fn_path, fn_n), 'splits', 'spec_st', 'stim_st', 'tbl_data' );
@@ -133,7 +120,7 @@ for un = 1:n_units
 
 
     % Load the file
-    fn_n = sprintf(fn_template, data_type, units(un));
+    fn_n = sprintf(fn_template, data_type, unit_list(un));
     aux.cprintf('Comments', '\n-> Loading <%s>...\n', fn_n);
     warning off
     data = load(fullfile(fn_path, fn_n));
@@ -143,7 +130,7 @@ for un = 1:n_units
     splits   = data.splits;
 
     % # of neurons
-    assert( units(un) ==  obj_list{1}.n_neurons, 'ERROR: something is wrong!' );
+    assert( unit_list(un) ==  obj_list{1}.n_neurons, 'ERROR: something is wrong!' );
     n_neurons = obj_list{1}.n_neurons;
 
     if verbose
@@ -209,7 +196,7 @@ for un = 1:n_units
                 legend('CC(Dry-est)', sprintf('CC(%s-est)', drr.labels{rv}));
                 xlabel('Time (sec)');
                 ylabel('CC');
-                title(sprintf('%s %d', data_type, units(un)));
+                title(sprintf('%s %d', data_type, unit_list(un)));
             end
         end
     end
@@ -235,7 +222,7 @@ for un = 1:n_units
     % %{
     fprintf('\n- About to save the analysis results...\n');
     FN_PATH = load.path_to_data('Analysis');
-    fn_name = sprintf('analyzed_%s_CC_(%s)_units(%d).mat', data_type, date, units(un));
+    fn_name = sprintf('analyzed_%s_CC_(%s)_unit_list(%d).mat', data_type, date, unit_list(un));
     fn_fullfile = fullfile( FN_PATH, fn_name );
 
     % Save the results for that 

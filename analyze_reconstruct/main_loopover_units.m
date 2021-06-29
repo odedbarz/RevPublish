@@ -87,7 +87,7 @@ sort_type = 'CC';  % {'CC', 'RND', 'SVD', 'FILE', 'SPK', 'NOSPK'}
 
 
 %% Get best measurement (CC) for each frequency group (sort by CC(BF) AND frequency 
-% %{
+%{
 T = tbl_BFcc;
 %         dummy = load('/Users/ob993/Dropbox (Partners HealthCare)/codeOnCloud/RevPublish/_data/Analysis/STRF_SU_(22-Apr-2021)_units(103)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(1)_trainDRR(3).mat');
 %         tbl_strf = dummy.tbl_strf;
@@ -134,7 +134,7 @@ assert(length(sorted_list) == n_units);
 %}
 
 % *** SAVE sorted list ***
-% %{
+%{
 fn_sorted_list = sprintf('sorted(freq,CC)_(%s)_unitList_data(%s)_units(%d).mat', date, data_type, n_units);
 save( fullfile(load.path_to_data('_data'), fn_sorted_list), 'sorted_list' );   
 %}
