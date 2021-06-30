@@ -35,17 +35,22 @@ end
 
 
 fn_path = load.path_to_data('Analysis');
-fn_name = sprintf('analyzed_cc_%s_units(%d).mat', data_type, n_units);
+% fn_name = sprintf('analyzed_cc_%s_units(%d).mat', data_type, n_units);
+fn_name = sprintf('analyzed_%s_CC_(11-Jun-2021)_unit_list(%d).mat', data_type, n_units);
 fn_fullfile = fullfile( fn_path, fn_name );
 warning off
 data = load(fn_fullfile);
 warning on
 
-aux.cprintf('String', '\nLoading analyzed data...\n');
-aux.cprintf('String', 'data_type: %s\n', data_type);
-aux.cprintf('String', 'n_units  : %d\n', n_units);
-aux.cprintf('String', 'filename : %s\n', fn_name);
-aux.cprintf('String', 'path     : %s\n\n', fn_path);
+if verbose
+    aux.cprintf('String', '\nLoading analyzed data...\n');
+    aux.cprintf('String', 'data_type: %s\n', data_type);
+    aux.cprintf('String', 'n_units  : %d\n', n_units);
+    aux.cprintf('String', 'filename : %s\n', fn_name);
+    aux.cprintf('String', 'path     : %s\n\n', fn_path);
+    fprintf('\n');
+    fprintf(data.info);
+end
 
 fprintf('Loading the CC arrays...\n');
 
@@ -61,14 +66,12 @@ CC      = data.tbl.CC.Variables;         % Sdry vs. Sest, averaged over time
 CC2     = data.tbl.CC2.Variables;        % Sdrr vs. Sest
 CC3     = data.tbl.CC3.Variables;        % Sdry vs. Sdrr
 
-CCt     = data.CCt;         % compares dry vs. est, as a function of time
-CCt2    = data.CCt2;        % compares drr vs. est
-CCt3    = data.CCt3;        % compares drr vs. est
+CCt     = data.CCt;         % compares Sdry-vs-Sest, as a function of time
+CCt2    = data.CCt2;        % compares Sdrr-vs-Sest
+CCt3    = data.CCt3;        % compares Sdry-vs-Sdrr
 
 % non-nans indices
-%idx_nn = ~isnan(CCt(:,5)) & ~isnan( CCt3(:,5) );
 idx_nnan = ~isnan(CCt(:,5)) & ~isnan( CCt3(:,5) );
-
 
 % splits  = data.splits;
 spec_st = data.spec_st;
@@ -76,7 +79,6 @@ stim_st = data.stim_st;
 tbl_data= data.tbl_data;
 n_bands = spec_st.n_bands;
 n_time  = spec_st.n_time;
-
 
 % Sampling frequency along the time axis
 binwidth    = spec_st.binwidth;     % (ms)
