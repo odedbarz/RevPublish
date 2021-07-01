@@ -34,7 +34,7 @@ ROOT: the project root directory.
 	(1) FIGS4PAPER/RESULTS - SINGLE UNIT - CC & RMD MG/MAIN_ANALYZE_CCRESPONSE.M:
 		Plots the CC between each response (SU or MU) and the "best envelope". The best envelope is taken from CREATE_BF_TABLE.M (see above). It's the frequency with the highest Pearson correlation (CC) between one of the spectrogram frequency bands and the response. 
 
-	(1) _Figs4Paper/RESULTS - POPULATION RESPONSE/RESULTS_CC_ANALYSIS.M:
+	(2) _Figs4Paper/RESULTS - POPULATION RESPONSE/RESULTS_CC_ANALYSIS.M:
 		(a) Two plots of SU & MUA reconstructions. Each plot shows CC as a function of DRRs for various number
 			of units used for the reconstructions.
 			- SUvsMUA_CC(Sdry-vs-Sest)_vs_drr_units(10-100).png
@@ -43,7 +43,9 @@ ROOT: the project root directory.
 		(b) Boxplot of SU & MUA side by side on the same figure.
 		(c) Wilcoxon signed rank tests
 
-
+	(3) _FIGS4PAPER/RESULTS - CCT/MAIN_PLOT_CCT.M:
+		(a) Voice vs. Unvoiced histograms.
+		(b) 
 
 
 	(?) _Figs4Paper/RESULTS_CC_ERRORBAR_ANALYSIS.M: plots 2 bar plots with error bars, one for SU and another for MUA. In each figure the bars compare spectrogram reconstructions of Sdry-to-Sest (blue bars) and Sdrr-to-Sest (red bars).
