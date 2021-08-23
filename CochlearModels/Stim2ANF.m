@@ -20,9 +20,9 @@ function [anf, cfs, t, Fs] = Stim2ANF( stim, varargin)
 %       sfun = @(ff) ones(1,length(ff)) * 0.001*sin(2*pi*[0:0.1*100e3-1]/100e3 .* ff(:));
 %       [anf, cfs, Fs] = Stim2ANF( sfun(1500) + sfun(2750), 'fignum', 11);
 %   
-%   or for the Zilany model,
+%   or for the Zilany & Carney's model,
 %
-%   	[anf, cfs, Fs] = Stim2ANF( sfun(1500)+sfun(2750), 'method', 'Zilany', 'fignum', 11);
+%   	[anf, cfs, Fs] = Stim2ANF( sfun(1500)+sfun(2750), 'method', 'Carney', 'fignum', 11);
 %
 %
 
@@ -31,14 +31,13 @@ p = inputParser;
 
 addRequired(p, 'stim', @isnumeric);                % (1xT) the stimulus to convert to anf 
 
-% chk_method = @() ~isempty(cell2mat(strfind({'Zilany', 'Meddis'}, method)));
 chl_method = @(method)...
-    any(cellfun(@(SS) strcmpi(SS,method), {'none', 'zilany', 'slaney', 'meddis', 'gammatone'}, 'UniformOutput', 1 ));
+    any(cellfun(@(SS) strcmpi(SS,method), {'none', 'carney', 'slaney', 'meddis', 'gammatone'}, 'UniformOutput', 1 ));
 addOptional(p, 'method', 'meddis', chl_method);           % (str) the method to use {'Zilany', 'Meddis'}
 
 addOptional(p, 'Fs', 100e3, @isnumeric);        % [Hz] stimulus' sampling rate
 addOptional(p, 'Nch', 256, @isnumeric);         % # of channels\filters in cochlea
-addOptional(p, 'downsmp', 1, @isnumeric);       % downsampling factor
+addOptional(p, 'downsmp', 0, @isnumeric);       % downsampling factor
 addOptional(p, 'lowfreq', 360.0, @isnumeric); 	% [Hz] lowest frequency (for rabbits)
 addOptional(p, 'highfreq', 42e3, @isnumeric); 	% [Hz] highest frequency (for rabbits)
 addOptional(p, 'align_cfs', 'ascend', @(s) any(strcmpi({'ascend', 'descend'}, s)) ); % arrange the CFs
@@ -159,8 +158,8 @@ switch lower(method)
         anf = MeddisHairCell( 80* coch/max(coch(:)), Fs); 
 
         
-    case 'zilany'  	% see Zilany(2014)Code_and_paper file        
-        % Zilany's model parameters:
+    case 'carney'  	% see Zilany & Carney's (2014)Code_and_paper file        
+        % Carney's model parameters:
         cohc        = p.Results.cohc;       % ==1 for normal ohc function
         cihc        = p.Results.cihc;       % ==1 for normal ihc function
         species    	= p.Results.species;    % 1 for cat (2 for human with Shera et al. tuning; 3 for human with Glasberg & Moore tuning)
@@ -186,7 +185,7 @@ switch lower(method)
 
         %cfs = ERBSpace( lowfreq, highfreq, Nch); 	% cochlear frequencies
 
-        assert(100e3 == Fs, '--> ERROR in [Stim2ANF.m]: For the Zilany model, Fs MUST be 100k Hz!');
+        assert(100e3 == Fs, '--> ERROR in [Stim2ANF.m]: For the Zilany & Carney model, Fs MUST be 100k Hz!');
         T  = length(stim)*(1/Fs);  % total stimulus' time
         Ts = 1/Fs;              
         Ls = length(stim);         % (samples) stimulus' length 
@@ -218,8 +217,7 @@ switch lower(method)
             [mediumsr,~,~]  = model_Synapse( vihc, CF, nrep, Ts, 2, noiseType, implnt );    % fiberType == 2
             [lowsr,~,~]     = model_Synapse( vihc, CF, nrep, Ts, 1, noiseType, implnt );    % fiberType == 1
             meanrate        = 0.6*highsr + 0.25*mediumsr + 0.15*lowsr;
-            %}
-            
+            %}            
             anf(ch,:) = meanrate;
 
         end
@@ -241,12 +239,16 @@ end
 
 
 %% Downsampling
-Fs = Fs/downsmp;
-anf = resample(anf', 1, downsmp)';
+if 0 < downsmp
+    Fs = Fs/downsmp;
+    anf = resample(anf', 1, downsmp)';
+end
 
+
+%%
 Nt = size(anf,2);
 stimulus_time = Nt*1/Fs;   % (sec) total stimulus time
-t = [1/Fs:1/Fs:stimulus_time];
+t = (1/Fs:1/Fs:stimulus_time);
 
 
 %% PLOT the ANF using log scale for the frequencies:

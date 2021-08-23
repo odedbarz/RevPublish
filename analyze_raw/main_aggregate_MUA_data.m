@@ -126,8 +126,7 @@ tbl_MUA_all= [tbl_MUA_all, table(all_meas)];
 
 %% Prepare the MUA measurements to match the spectrograms
 aux.vprint(verbose, '\n-> Starting main loop...\n');
-% for k = 1:n_rows
-for k = 149:151
+for k = 1:n_rows
     tbl_neuron_k = tbl_MUA_all(k,:);
     S = load.response( tbl_neuron_k, duration_sec );
     if isempty(S)
