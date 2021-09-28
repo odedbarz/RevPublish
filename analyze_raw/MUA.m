@@ -91,13 +91,12 @@ nnl.x = clip.x.^2;  % full cutoff
 nnl.order = 2;
 nnl.fc = 0.4*fs_dwn;       % (Hz) cuttoff frequency for the lowpass filter
 [nnl.b, nnl.a] = butter(nnl.order, (nnl.fc/fs), 'low');
-% nnl.x_lpf = filtfilt(nnl.b, nnl.a, nnl.x);            ### DEBUG Aug-23-2021 ##
+nnl.x_lpf = filtfilt(nnl.b, nnl.a, nnl.x);
 
 % Downsample to 500 Hz
 nnl.fs_new = pars.fs_dwn;
 [P, Q] = rat(nnl.fs_new/fs);
-% nnl.xd = resample(nnl.x_lpf, P, Q);                   ### DEBUG Aug-23-2021 ##
-nnl.xd = resample(nnl.x, P, Q);
+nnl.xd = resample(nnl.x_lpf, P, Q);
 
 % [MUA > 0] Make sure that there are no negative values
 nnl.xd = max(0,nnl.xd);

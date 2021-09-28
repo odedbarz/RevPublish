@@ -39,7 +39,7 @@ end
 'Loads stimuli with the SAME duration'
 duration_sec= 36;   % (sec) stimulus duration to use 
 duration_ms = units.sec2ms( duration_sec );
-binwidth    = 1         % (ms) binwidth of the resulted spectrogram 
+binwidth    = 5         % (ms) binwidth of the resulted spectrogram 
 fs          = 1/(1e-3*binwidth);         % (Hz)
 
 if verbose

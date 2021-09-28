@@ -38,7 +38,7 @@ n_bands  = size(Sft,1);
 unbias_single_autocorr_mtx = 0;
 
 
-%% Remove the means fomr the frequency bands of the spectrogram
+%% Remove the means from the frequency bands of the spectrogram
 avg.Sft = mean( Sft, 2);
 Sft     = Sft - avg.Sft;
 
