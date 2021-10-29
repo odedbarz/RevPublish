@@ -4,22 +4,22 @@ function [anf, cfs, t, Fs] = Stim2ANF( stim, varargin)
 %
 %   stim: (Tx1) the stimulus to convert to auditory nerve response (ANF);
 %         !!! NOTE: <stim> must be sampled at 100k Hz
-% 
+%
 %
 % Description:
 %   Converts the stimulus stim to ANF activity.
-% 
+%
 % Example:
 %
 %   Run Meddis' model with x1 tone od 2.5k Hz:
 %   >> Stim2ANF( 0.001*sin(2*pi*[0:0.1*100e3-1]/100e3 * 2500), 'Meddis', 'fignum', 11);
-% 
+%
 %   Run Meddis' model with Fs = 25k Hz:
-%       
+%
 %       (Fs = 100kHz)
 %       sfun = @(ff) ones(1,length(ff)) * 0.001*sin(2*pi*[0:0.1*100e3-1]/100e3 .* ff(:));
 %       [anf, cfs, Fs] = Stim2ANF( sfun(1500) + sfun(2750), 'fignum', 11);
-%   
+%
 %   or for the Zilany & Carney's model,
 %
 %   	[anf, cfs, Fs] = Stim2ANF( sfun(1500)+sfun(2750), 'method', 'Carney', 'fignum', 11);
@@ -29,7 +29,7 @@ function [anf, cfs, t, Fs] = Stim2ANF( stim, varargin)
 %% Parse the input
 p = inputParser;
 
-addRequired(p, 'stim', @isnumeric);                % (1xT) the stimulus to convert to anf 
+addRequired(p, 'stim', @isnumeric);                % (1xT) the stimulus to convert to anf
 
 chl_method = @(method)...
     any(cellfun(@(SS) strcmpi(SS,method), {'none', 'carney', 'slaney', 'meddis', 'gammatone'}, 'UniformOutput', 1 ));
@@ -43,7 +43,7 @@ addOptional(p, 'highfreq', 42e3, @isnumeric); 	% [Hz] highest frequency (for rab
 addOptional(p, 'align_cfs', 'ascend', @(s) any(strcmpi({'ascend', 'descend'}, s)) ); % arrange the CFs
 
 % gammatone
-addOptional(p, 'calc_envelope', false, @(x) islogical(x) || isscalar(x));% use rabbit's cochlea parameters
+addOptional(p, 'calc_envelope', false, @(x) islogical(x) || isscalar(x));
 
 
 % Meddis' parameters:
@@ -56,7 +56,7 @@ addOptional(p, 'species', 1, @isnumeric);       % 1 for cat (2 for human with Sh
 addOptional(p, 'noiseType', 0, @isnumeric);     % 1 for variable fGn (0 for fixed fGn)
 addOptional(p, 'fiberType', 3, @isnumeric);     % spontaneous rate (in spikes/s) of the fiber BEFORE refractory effects; "1" = Low; "2" = Medium; "3" = High
 addOptional(p, 'implnt', 0, @isnumeric);        % "0" for approximate or "1" for actual implementation of the power-law functions in the Synapse
-addOptional(p, 'nrep', 1, @isnumeric);          % The number of stimulus repetitions, e.g., 50 (always 1 by default in this implementation). 
+addOptional(p, 'nrep', 1, @isnumeric);          % The number of stimulus repetitions, e.g., 50 (always 1 by default in this implementation).
 
 addOptional(p, 'fignum', [], @isnumeric);       % figure number to plot (if so desired)
 
@@ -74,12 +74,12 @@ lowfreq     = p.Results.lowfreq;
 highfreq    = min(Fs, p.Results.highfreq);
 fignum      = p.Results.fignum;
 
-% Make sure that <stim> is a vector 
+% Make sure that <stim> is a vector
 assert( iscolumn(stim) || isrow(stim),...
     '--> [ERROR in Stim2ANF]: the input stimulus <stim> MUST be a vector!')
 
-% Make sure that <stim> is a row vector 
-if iscolumn(stim), stim = stim'; end 
+% Make sure that <stim> is a row vector
+if iscolumn(stim), stim = stim'; end
 
 % The CF filters in the cochlea
 cfs = ERBSpace(lowfreq, highfreq, Nch, rabbit_flag);     % (also implemented in MakeERBFilters.m)
@@ -97,9 +97,9 @@ switch lower(method)
         t_ = [1/Fs:1/Fs:stimulus_time];
 
         stimulus_fun = @(FF) ( ones(length(FF),1) * sin(2*pi*t_'.*FF(:)) )';
-        
+
         anf = cell2mat(arrayfun(@(X) stimulus_fun(X), cfs, 'UniformOutput', false) );
-    
+
     case 'gammatone'
         % Slaney's toolbox (see AuditoryToolboxTechReport)
         fcoefs = MakeERBFilters(...
@@ -110,18 +110,18 @@ switch lower(method)
             rabbit_flag ... % use rabbit's cochlea parameters
         );
         coch = ERBFilterBank( stim, fcoefs );
-        
+
         if calc_envelope
             anf = envelope(coch')';
         else
             anf = coch;
         end
-        
-    case 'slaney'   
+
+    case 'slaney'
         % Slaney's toolbox (see AuditoryToolboxTechReport)
         % MIDDLE EAR filter\Pre-emphasis filter (Meddis & O'Mard, 1997)
         ear_filter = OuterEarFilt(Fs);
-        s_filt = filter( ear_filter, stim );    
+        s_filt = filter( ear_filter, stim );
 
         fcoefs = MakeERBFilters(...
             Fs,...          % Sampling rate
@@ -131,22 +131,22 @@ switch lower(method)
             rabbit_flag ... % use rabbit's cochlea parameters
         );
         coch = ERBFilterBank( s_filt, fcoefs );
-        
+
         % From the AuditoryToolboxTechReport, page 24-25:
-        % Note: "...there is no adaptation or automatic gain control to 
+        % Note: "...there is no adaptation or automatic gain control to
         %       equalize the formant frequencies and enhance the onsets."
-        %        
+        %
         % (below is my implementation using MATLAB's vectorization)
         c = max(coch, 0);                   	% half-wave rectifier
         anf = filter(1, [1 -.99], c, [], 2); 	% low-pass filter
-        
 
-    case 'meddis' 	% Ray Meddis’ 1986 JASA paper hair cell model 
-                    % (see also AuditoryToolboxTechReport)  
+
+    case 'meddis' 	% Ray Meddisï¿½ 1986 JASA paper hair cell model
+                    % (see also AuditoryToolboxTechReport)
         % MIDDLE EAR filter\Pre-emphasis filter (Meddis & O'Mard, 1997)
         ear_filter = OuterEarFilt(Fs);
-        s_filt = filter( ear_filter, stim );    
-                    
+        s_filt = filter( ear_filter, stim );
+
         fcoefs = MakeERBFilters(...
             Fs,...          % Sampling rate
             Nch,...         % number of channels in the cochlea
@@ -155,10 +155,10 @@ switch lower(method)
             rabbit_flag ... % use rabbit's cochlea parameters
         );
         coch = ERBFilterBank( s_filt, fcoefs );
-        anf = MeddisHairCell( 80* coch/max(coch(:)), Fs); 
+        anf = MeddisHairCell( 80* coch/max(coch(:)), Fs);
 
-        
-    case 'carney'  	% see Zilany & Carney's (2014)Code_and_paper file        
+
+    case 'carney'  	% see Zilany & Carney's (2014)Code_and_paper file
         % Carney's model parameters:
         cohc        = p.Results.cohc;       % ==1 for normal ohc function
         cihc        = p.Results.cihc;       % ==1 for normal ihc function
@@ -172,23 +172,23 @@ switch lower(method)
         % If the <rabbit_flag> is ON, then teh cat's model should be used
         % (species = 1); the cat's cochlea fits better to the rabbit's cochlea!
         if rabbit_flag && 1 ~= species
-            warning('--> [Warning at Stim2ANF:] <rabbit_flag> is ON; Setting species to 1 (cat model)!!!'); 
+            warning('--> [Warning at Stim2ANF:] <rabbit_flag> is ON; Setting species to 1 (cat model)!!!');
             species = 1;
-        end        
-        
+        end
+
         % Note: For Carney's model:
         %   * CF must be between 125 Hz and 20 kHz for HUMAN model
         %   * CF must be between 125 Hz and 40 kHz for CAT model
         assert(lowfreq >= 125, 'lowfreq MUST be bigger or equal than 125!');
-        %lowfreq     = max(125, lowfreq);    % (Hz) 
-        %highfreq    = min(40e3, highfreq);  % (Hz) 
+        %lowfreq     = max(125, lowfreq);    % (Hz)
+        %highfreq    = min(40e3, highfreq);  % (Hz)
 
         %cfs = ERBSpace( lowfreq, highfreq, Nch); 	% cochlear frequencies
 
         assert(100e3 == Fs, '--> ERROR in [Stim2ANF.m]: For the Zilany & Carney model, Fs MUST be 100k Hz!');
         T  = length(stim)*(1/Fs);  % total stimulus' time
-        Ts = 1/Fs;              
-        Ls = length(stim);         % (samples) stimulus' length 
+        Ts = 1/Fs;
+        Ls = length(stim);         % (samples) stimulus' length
         anf = zeros(Nch, Ls);
 
         warning('off', 'MATLAB:RandStream:ActivatingLegacyGenerators');
@@ -200,24 +200,24 @@ switch lower(method)
             % calc. the IHCs voltage at each CF:
             % * (secs+Ts): avoid the numerical issue of (reptime < pxbins*tdres) over (reptime <= pxbins*tdres).
             %   make sure that <reptime> is greater than the stimulus duration
-            % * species: 
+            % * species:
             %   (1) for cat;
-            %   (2) for human with Shera et al. tuning; 
+            %   (2) for human with Shera et al. tuning;
             %   (3) for human with Glasberg & Moore tuning.
-            dummy = model_IHC( stim, CF, nrep, Ts, T+2*Ts, cohc, cihc, species );  
-            vihc = dummy(1:Ls);   % remove the last added sample.  
+            dummy = model_IHC( stim, CF, nrep, Ts, T+2*Ts, cohc, cihc, species );
+            vihc = dummy(1:Ls);   % remove the last added sample.
 
             % from IHCs voltage to mean rate:
-            [meanrate, ~, ~] = model_Synapse( vihc, CF, nrep, Ts, fiberType, noiseType, implnt ); 
-            %[meanrate, varrate, psth] = model_Synapse( vihc, CF, nrep, Ts, fiberType, noiseType, implnt ); 
-            
+            [meanrate, ~, ~] = model_Synapse( vihc, CF, nrep, Ts, fiberType, noiseType, implnt );
+            %[meanrate, varrate, psth] = model_Synapse( vihc, CF, nrep, Ts, fiberType, noiseType, implnt );
+
             % Use this case for IHC fibers with various rates
             %{
             [highsr,~,~]    = model_Synapse( vihc, CF, nrep, Ts, 3, noiseType, implnt );    % fiberType == 3
             [mediumsr,~,~]  = model_Synapse( vihc, CF, nrep, Ts, 2, noiseType, implnt );    % fiberType == 2
             [lowsr,~,~]     = model_Synapse( vihc, CF, nrep, Ts, 1, noiseType, implnt );    % fiberType == 1
             meanrate        = 0.6*highsr + 0.25*mediumsr + 0.15*lowsr;
-            %}            
+            %}
             anf(ch,:) = meanrate;
 
         end
@@ -264,7 +264,7 @@ if ~isempty(fignum)
     ttt = 1e3* linspace(0, T-1/Fs, size(anf,2));
     fff = log(cfs);
     [TTT,FFF] = meshgrid(ttt, fff);
-    surface(TTT,FFF,log(abs(anf)),'EdgeColor','none');     
+    surface(TTT,FFF,log(abs(anf)),'EdgeColor','none');
     ax(1) = gca;
     ax(1).YScale = 'linear';
     ax(1).YDir = 'normal';
@@ -274,7 +274,7 @@ if ~isempty(fignum)
     xlabel('Time [ms]');
     ylabel('CF [kHz]');
     title('AN Population Response');
-    
+
     subplot(1,10,9:10);
     plot(sum(anf,2), fff);
     axis tight
@@ -286,19 +286,3 @@ if ~isempty(fignum)
     grid on
     axis tight
 end
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

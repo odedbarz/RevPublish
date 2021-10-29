@@ -14,16 +14,22 @@ ROOT: the project root directory.
 
 (B) Analyze:
 	(1) ANALYZE_RECONSTRUCT/CREATE_BF_TABLE.M:
-		Use it to create a file	with the best-frequencies (BFs). This procedure creates a table of BFs that is	saved in the _DATA directory. This new file ends with _BF. The software will use this file to sort neurons according to their "quality". Creates a	DATA_MUA_XXX_BF.MAT file.
+		* Use it to create a file with the best-frequencies (BFs). 
+		* This procedure creates a table of BFs that is	saved in the _DATA directory. 
+		* This new file ends with _BF. 
+		* The software will use this file to sort neurons according to their "quality". Creates a	DATA_MUA_XXX_BF.MAT file.
 
 	(2) ANALYZE_RECONSTRUCT/MAIN_LOOPOVER_UNITS.M:
-		Use it to perform the	(reconstruction on various number of units. Each such case is save seperately (at _DATA/_RECONSTRUC. Creates the RECONSTRUCT_(MUA)_XXX.MAT or	(RECONSTRUCT_(MUA)_XXX.MAT files.
+		* Use it to perform the	reconstruction on various number of units. 
+		*Each such case is save seperately (at _DATA/_RECONSTRUC. Creates the RECONSTRUCT_(MUA)_XXX.MAT or(RECONSTRUCT_(MUA)_XXX.MAT files.
 
 	(3) ANALYZE_RAW/MAIN_RAW_MUA_STATS.M:
-		use it to get statistics on RAW	(measurements, before averaging. This will creates the CCSTATS_(MUA)_XXX.MAT files.
+		* Use it to get statistics on RAW measurements, before averaging. 
+		* This will creates the CCSTATS_(MUA)_XXX.MAT files.
 
 	(4) ANALYZE_RECONSTRUCT/MAIN_CREATE_CC_DATABASE.M:
-		compares spectrogram reconstructions (estimations) with other DRR conditions and saves the database into ANALYZED_CC_XX mat file.
+		* Compares spectrogram reconstructions (estimations) with other DRR conditions and saves the database into ANALYZED_CC_XX mat file.
+		* Creates the CCt (temporal correlation coefficients).
 
 	(5) ANALYZE_RECONSTRUCT/MAIN_LOOPOVER_STATS.m: used to check effect of dependence between reconstructions.
 		The analysis is done in _FIGS4PAPER\ADDITIONALS.m. This file uses data from,

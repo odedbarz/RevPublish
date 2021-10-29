@@ -11,6 +11,7 @@ verbose = 1;
 
 setup_environment('../');
 
+save_results = false
 
 
 %% Load data
@@ -87,8 +88,6 @@ n_freq  = size(Sdry, 1);
 % Best-frequency correlation coefficient
 BF = nan(n_units, 1);
 R  = nan(n_units, 1);
-% BF_pv = nan(n_units, 1);
-% alpha = 0.05;   % significance
 N = size(Sdry,2);
 
 for k = 1:n_units    
@@ -96,7 +95,7 @@ for k = 1:n_units
     ydry =  squeeze( data.H(:,dry_idx,k) );
     
     Rn = (Sdry - mean(Sdry,2)) * (ydry - mean(ydry));
-    Rn = Rn./(N*std(Sdry,[],2)*std(ydry));   % normalize
+    Rn = (Rn/N)./(std(Sdry,[],2)*std(ydry));   % normalize
     [~, kbest] = max(Rn);
     
     % Get the best frequency over all envelopes of the spectrogram
@@ -105,12 +104,16 @@ for k = 1:n_units
 end
 
 
+
+
 %% Add BF as columns into the measurement table
 % Create a new table with all the information of the measurements and save it
 neuron = tbl_data.neuron;
 tbl_BFcc = [table(neuron), table(BF), table(R)]; 
 
-save([fn.load.fullfile(1:end-4), '_BFcc'], 'tbl_BFcc', 'spec_st', 'stim_st');
+if save_results
+    save([fn.load.fullfile(1:end-4), '_BFcc'], 'tbl_BFcc', 'spec_st', 'stim_st');
+end
 %}
 
 
