@@ -46,7 +46,7 @@ n_bands     = 30        % (1x1) # of bins along the frequency domain of the spec
 binwidth    = 5         % (ms) binwidth of the resulted spectrogram 
 win_size_ms = nan       % (ms) temporal window size over which to calc the spectrogram; 
                         %      'gammatone' filterbanks do not use it!
-lowfreq     = 200;      % (Hz)
+lowfreq     = 100;      % (Hz)
 highfreq    = 8840;     % (Hz) %8800;     
 nw          = [];       % applies only for SPECTROGRAM_TYPE = 'multitaper'
 neurons     = 1;        % neuron #1 (#115) is for stimulus of 36 sec (40 sec)

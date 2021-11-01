@@ -19,7 +19,8 @@ addRequired(p, 't', @isnumeric);             % (ms)
 addRequired(p, 'f', @isnumeric);             % (kHz)        
 addRequired(p, 'Sft', @isnumeric);           % (fxt) spectrogram       
 
-addOptional(p, 'fignum', [], @(x) isnumeric(x) || ishandle(x)); 
+% addOptional(p, 'fignum', [], @(x) isnumeric(x) || ishandle(x)); 
+addOptional(p, 'ax', [], @(x) isnumeric(x) || ishandle(x)); 
 addOptional(p, 'nolabels', 0, @(x) isnumeric(x) || islogical(x)); 
 addOptional(p, 'fontsize', 14, @isnumeric); 
 addOptional(p, 'log_scale', 1, @isnumeric); 
@@ -28,30 +29,39 @@ addOptional(p, 'precision', 4, @isnumeric);     % 10^precision
 parse(p, t, f, Sft, varargin{:});
 pars = p.Results;
 
-if isempty(pars.fignum) || pars.fignum == 0
-    % Create a new & clean figure
-    pars.fignum = figure;
-    figure(pars.fignum);
-    clf;
+% Axes to plot on
+if isempty(pars.ax) || pars.ax == 0
+    pars.ax = gca;
 end
+axes(pars.ax);
+pars.fignum = get(get(pars.ax, 'Parent'), 'Number');
+
+
+% % Create a new & clean figure
+% if isempty(pars.fignum) || pars.fignum == 0
+%     pars.fignum = figure;
+%     figure(pars.fignum);
+%     clf;
+% end
+
 
 
 %% Plot the spectrogram on log-scaled axes (using surf)
 figure(pars.fignum);
-ax = gca;
+axes(pars.ax);
 
 if pars.log_scale
     surf_h = surf(t, log2(f), Sft, 'LineStyle', 'none');
     view(2); 
     axis tight;
-    set(ax, 'FontSize', pars.fontsize);
-    yticks = get(ax, 'YTick');
-    set(ax, 'YTickLabel', arrayfun(@(x) num2str(2.^x, pars.precision), yticks, 'uni', 0) );
+    set(pars.ax, 'FontSize', pars.fontsize);
+    yticks = get(pars.ax, 'YTick');
+    set(pars.ax, 'YTickLabel', arrayfun(@(x) num2str(2.^x, pars.precision), yticks, 'uni', 0) );
 else
     surf_h = surf(t, f, Sft, 'LineStyle', 'none');
     view(2); 
     axis tight;
-    set(ax, 'FontSize', pars.fontsize);
+    set(pars.ax, 'FontSize', pars.fontsize);
 end
 drawnow;
 
@@ -62,7 +72,7 @@ if ~pars.nolabels
 end
 
 % surf_h.LineStyle = 'none';
-set(ax, 'YDir', 'normal');
+set(pars.ax, 'YDir', 'normal');
 colormap jet
 
 
