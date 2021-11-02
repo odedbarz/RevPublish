@@ -17,7 +17,7 @@ save_results = false
 %% Load data
 %   Run [main_aggregate_MUA_data.m] again to update this file if needed
 % 
-data_type    = 'SU';       % {'SU', MUA'}
+data_type    = 'MUA';       % {'SU', MUA'}
 data_type    = upper(data_type);
 fn.load.path = '../_data';
 
@@ -32,7 +32,7 @@ switch data_type
         %     neuron_list: [150×1 double]
         %         spec_st: [1×1 struct]
         %      tbl_impale: [437×20 table]
-        fn.load.file = 'data_SU_(08-Jan-2021)_bw(5)_fbands(30)_win(NaN)ms_spec(gammatone).mat';       
+        fn.load.file = 'data_SU_(08-Jan-2021)_bw(5)_fbands(30)_win(NaN)ms_spec(gammatone).mat';                     
         
     case 'MUA'
         %Loads a struct with fields:
@@ -42,7 +42,8 @@ switch data_type
         %         spec_st: [1×1 struct]
         %         stim_st: [1×1 struct]
         %      tbl_impale: [437×20 table]        
-        fn.load.file = 'data_MUA_(08-Jan-2021)_bw(5)_fbands(30)_win(NaN)ms_spec(gammatone).mat';        
+        %fn.load.file = 'data_MUA_(08-Jan-2021)_bw(5)_fbands(30)_win(NaN)ms_spec(gammatone).mat';   
+        fn.load.file = 'data_MUA_(01-Nov-2021)_bw(1)_fbands(30)_win(NaN)ms_spec(gammatone).mat'; 
         
     otherwise
         error('--> Unrecognized DATA_TYPE!');

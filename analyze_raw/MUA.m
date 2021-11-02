@@ -89,7 +89,7 @@ nnl.x = clip.x.^2;  % full cutoff
 
 % Lowpass
 nnl.order = 2;
-nnl.fc = 0.4*fs_dwn;       % (Hz) cuttoff frequency for the lowpass filter
+nnl.fc = 0.45*fs_dwn;       % (Hz) cuttoff frequency for the lowpass filter
 [nnl.b, nnl.a] = butter(nnl.order, (nnl.fc/fs), 'low');
 nnl.x_lpf = filtfilt(nnl.b, nnl.a, nnl.x);
 
