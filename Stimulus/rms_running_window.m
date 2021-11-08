@@ -1,6 +1,7 @@
 function rms_percentile_db = rms_running_window(y, Fs, varargin) 
 %
-%   function [rms_percentile_db, rms_percentile] = rms_running_window(y, Fs, percentile, win_size_ms, Nhist, fignum)
+%   function [rms_percentile_db, rms_percentile] = rms_running_window(y, Fs, 
+%     percentile, win_size_ms, Nhist, fignum)
 %
 % Description:
 % Finds the RMS value of a signal.

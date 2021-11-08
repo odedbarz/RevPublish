@@ -21,15 +21,20 @@ setup_environment('../');
 
 
 %% Load data
-data_type   = 'SU'       % {'SU', MUA'}
-fn_path     = load.path_to_data('Reconstruct'); 
-fn_path     = fullfile(fn_path, 'Reconstruct_sortType(CC)_(11-Jun-2021)');
+data_type   = 'MUA'       % {'SU', MUA'}
 data_type   = upper(data_type);
-fn_template = 'reconstruct_%s_(11-Jun-2021)_units(%d)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(0)_trainDRR(3).mat';       
+
+fn_path     = load.path_to_data('Reconstruct'); 
+
+%fn_path     = fullfile(fn_path, 'Reconstruct_sortType(CC)_(11-Jun-2021)');
+fn_path     = fullfile(fn_path, 'Reconstruct_sortType(CC)_(01-Nov-2021)');
+
+%fn_template = 'reconstruct_%s_(11-Jun-2021)_units(%d)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(0)_trainDRR(3).mat';       
+fn_template = 'reconstruct_%s_(01-Nov-2021)_units(%d)_bw(1)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(0)_trainDRR(3).mat';       
 
 switch data_type
     case 'SU'
-        unit_list = [10, 25, 50, 103]
+        unit_list = [10, 25, 50, 103];
     case 'MUA'
         unit_list = [10, 25, 50, 103];      %[10, 25, 50, 100, 150, 241];    
     otherwise

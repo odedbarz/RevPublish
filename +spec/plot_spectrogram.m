@@ -55,7 +55,7 @@ if pars.log_scale
     view(2); 
     axis tight;
     set(pars.ax, 'FontSize', pars.fontsize);
-    yticks = get(pars.ax, 'YTick');
+    yticks = [get(pars.ax, 'YTick'), log2(f(end))];
     set(pars.ax, 'YTickLabel', arrayfun(@(x) num2str(2.^x, pars.precision), yticks, 'uni', 0) );
 else
     surf_h = surf(t, f, Sft, 'LineStyle', 'none');

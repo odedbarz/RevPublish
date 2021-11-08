@@ -9,11 +9,13 @@ if 4 > nargin
 end
 
 x = x(:);
-
+nf2 = nf*2;
 fs = 1/dt;
-f = [0:fs/(nf-1):fs]';
-abs_xf = abs(fft(x, nf));    
-x_am = abs_xf/abs_xf(1);
+f = [0:fs/(nf2-1):fs/2]';
+abs_xf = log10(abs(fft(x, nf2)));
+% x_am = abs_xf/abs_xf(1);
+x_am = abs_xf - abs_xf(1);
+x_am = x_am(1:fix(end/2));
 
 if plot_output    
     subplot(1,2,1);

@@ -12,11 +12,12 @@ fignum = 10;
 verbose = 1;
 setup_environment('../');
 
-% Plot properties
-fontsize = 32;
-fontsize_big = 42;
-fontsize_bigger = 64;
-markersize = 24;
+
+%% Plot properties
+fontsize        = 18; % 32;
+fontsize_big    = 24; % 42;
+fontsize_bigger = 32; % 64;
+markersize      = 20; % 24;
 
 
 %% Load data
@@ -31,30 +32,33 @@ markersize = 24;
 %   splits              1x1                  58552  struct              
 %   tbl_data          241x20                339094  table               
 %
-data_type   = 'SU';       % {'SU', MUA'}
+data_type   = 'MUA';       % {'SU', MUA'}
 fn_path = load.path_to_data('Reconstruct');
-fn_path = fullfile(fn_path, 'Reconstruct_sortType(SPK)_(04-Jun-2021)');
+% fn_path = fullfile(fn_path, 'Reconstruct_sortType(SPK)_(04-Jun-2021)');
+% fn_template = 'reconstruct_%s_(04-Jun-2021)_units(%d)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(0)_trainDRR(3).mat';
 
-data_type   = upper(data_type);
+fn_path = fullfile(fn_path, 'Reconstruct_sortType(CC)_(01-Nov-2021)');
+fn_template = 'reconstruct_%s_(01-Nov-2021)_units(%d)_bw(1)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(0)_trainDRR(3).mat';
+
+data_type = upper(data_type);
 switch data_type
     case 'SU'
-        %fn_template = 'reconstruct_SU_(14-Jan-2021)_units(%d)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(0)_trainDRR(3).mat';       
-        %fn_template = 'reconstruct_SU_(19-Mar-2021)_units(100)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(0)_trainDRR(3).mat';
-        fn_template = 'reconstruct_SU_(04-Jun-2021)_units(100)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(0)_trainDRR(3).mat';
-        unit_list = 100; % [10, 25, 50, 103];
+        %fn_path = fullfile(fn_path, 'Reconstruct_sortType(SPK)_(04-Jun-2021)');
+        %fn_template = 'reconstruct_%s_(04-Jun-2021)_units(%d)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(0)_trainDRR(3).mat';
+        unit_list = 100; % [10, 25, 50, 100/103];
         
     case 'MUA'
-        %fn_template = 'reconstruct_MUA_(14-Jan-2021)_units(%d)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(0)_trainDRR(3).mat';        
-        %fn_template = 'reconstruct_MUA_(19-Mar-2021)_units(100)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(0)_trainDRR(3).mat';
-        fn_template = 'reconstruct_MUA_(04-Jun-2021)_units(100)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(0)_trainDRR(3).mat';
-        unit_list = 100; % [10, 25, 50, 103, 150, 241];
+        %fn_path = fullfile(fn_path, 'Reconstruct_sortType(SPK)_(04-Jun-2021)');
+        %fn_template = 'reconstruct_%s_(04-Jun-2021)_units(%d)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(0)_trainDRR(3).mat';
+        
+        %fn_template = 'reconstruct_%s_(01-Nov-2021)_units(%d)_bw(1)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(0)_trainDRR(3).mat';
+        %fn_path = fullfile(fn_path, 'Reconstruct_sortType(CC)_(01-Nov-2021)');
+        unit_list = [10, 25, 50, 103];
 
     otherwise
         error('--> Unrecognized DATA_TYPE!');
         
 end
-
-
 
 
 %% Initialization
@@ -73,7 +77,7 @@ len_unit_list = length(unit_list);
 %          splits: [1×1 struct]
 %         stim_st: [1×1 struct]
 %        tbl_data: [241×20 table]
-fn_n = sprintf(fn_template, unit_list(1));
+fn_n = sprintf(fn_template, data_type, unit_list(1));
 aux.cprintf('String', '\n-> Loading FIRST file to get preliminary data <%s>...\n', fn_n);
 warning off
 dummy = load( fullfile(fn_path, fn_n), 'splits', 'spec_st', 'stim_st', 'tbl_data' );
@@ -85,7 +89,7 @@ stim_st  = dummy.stim_st;
 tbl_data = dummy.tbl_data;
 n_splits = splits.n_splits;
 n_bands  = spec_st.n_bands;
-n_units  = height(tbl_data);
+% n_units  = height(tbl_data);
 
 % Sampling frequency along the time axis
 binwidth    = spec_st.binwidth;     % (ms)
@@ -116,7 +120,7 @@ scores2.info      = 'X_drr vs. X_est';
 %%
 for n = 1:len_unit_list
     % Load the file
-    fn_n = sprintf(fn_template, unit_list(n));
+    fn_n = sprintf(fn_template, data_type, unit_list(n));
     aux.cprintf('Comments', '\n-> Loading <%s>...\n', fn_n);
     warning off
     data = load(fullfile(fn_path, fn_n));
@@ -228,7 +232,8 @@ end
 %% CC vs. various DRRs (bar plot)
 figure(0+fignum);
 clf;
-    
+
+n_units = unit_list(len_unit_list);     % get the data with most units
 
 x = 1:n_drr;
 M = [scores.mu.CC(:,end), scores2.mu.CC(:,len_unit_list)];
@@ -290,8 +295,9 @@ ylim([0, 1]);
 
 speaker_sex_list = {'M$_1$','M$_2$','M$_3$','F$_1$','M$_4$','F$_2$','F$_3$',...
     'F$_4$','M$_5$','F$_5$','F$_6$','M$_6$'};
-xticks = get(ax(1), 'XTick');
-set(ax(1), 'XTickLabel', speaker_sex_list(xticks));
+% xticks = get(ax(1), 'XTick');
+xticks = 1:length(speaker_sex_list);
+set(ax(1), 'XTick', xticks, 'XTickLabel', speaker_sex_list(xticks));
 
 
 
@@ -342,11 +348,11 @@ for k = 1:n_drr
     
     %ax(k,1) = subplot(5,2,1+2*(k-1));            
     ax(k,1) = subplot(5,2, 5*2 - (1+2*(k-1)));    
-    spec.plot_spectrogram(t, 1e-3*f, Sft_thr, figh, 1);
+    spec.plot_spectrogram(t, 1e-3*f, Sft_thr, ax(k,1), 1);
     
     %ax(k,2) = subplot(5,2,2*k);
     ax(k,2) = subplot(5,2, 5*2-2*(k-1));
-    spec.plot_spectrogram(t, 1e-3*f, Sft_est_thr, figh, 1);
+    spec.plot_spectrogram(t, 1e-3*f, Sft_est_thr, ax(k,2), 1);
     
     % Add the DRRs to the ylabels
     if 3 ~= k

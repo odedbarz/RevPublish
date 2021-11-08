@@ -35,7 +35,6 @@ end
 
 
 fn_path = load.path_to_data('Analysis');
-% fn_name = sprintf('analyzed_cc_%s_units(%d).mat', data_type, n_units);
 fn_name = sprintf('analyzed_%s_CC_(11-Jun-2021)_unit_list(%d).mat', data_type, n_units);
 fn_fullfile = fullfile( fn_path, fn_name );
 warning off

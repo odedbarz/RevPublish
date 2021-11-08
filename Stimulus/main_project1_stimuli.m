@@ -72,10 +72,11 @@ assert(~isempty(dir(path_males)), '--> <path_male> is invalid!');
 % duration_sec = len_yv/Fs;  % (sec) duration of the concatenated signal
 
 
-%% Save the new aggregated audio file for later reference   
+%% Save the new aggregated audio file for later reference  
+%{
 fprintf('--> Saving the new aggregated audio file...\n');
 audiowrite([path2save, 'TIMIT_concatenate', '.wav'], y_cat, Fs);
-
+%}
     
 
 
@@ -121,7 +122,7 @@ if is_new_rir
 
 else    
     psth2rir = load.path_to_data('wav_spch_36sec');    
-    load(fullfile(psth2rir, 'spch_36_metadata.mat'));
+    load(fullfile(psth2rir, 'spch_36_metadata_new.mat'));
     aux.cprintf('cyan', '--> Used LOADED RIR response!\n');
     
 end
@@ -156,7 +157,7 @@ opts.params.val(:,1)= ceil(100 * opts.params.val(:,1));    % (cm) Distance in cm
 opts.params.val(:,2)= ceil(100 * opts.params.val(:,2));    % (%) Absorption coeff, in percents
 
 %rms_values = split_wav_to_Impale( Yv, Fs, Trir, outer_inner_cols, fn_generic, path2save, max_seg_time );
-[rms_values, file_list] = split_wav_to_Impale( y_rir, Trir, opts );
+[rms_values, file_list] = split_wav_to_Impale( y_rir, opts );
 
 
 
