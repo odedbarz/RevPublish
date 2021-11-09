@@ -43,13 +43,13 @@ fprintf('--> Load stimuli & spectrograms\n');
 spectrogram_type = 'gammatone';      % {['matlab'], 'stft', 'multitaper', 'gammatone'}
 f_scale     = 'log';	% {['lin'], 'log', 'erb'}
 n_bands     = 30        % (1x1) # of bins along the frequency domain of the spectrogram
-binwidth    = 1         % (ms) binwidth of the resulted spectrogram 
+binwidth    = 5         % (ms) binwidth of the resulted spectrogram 
 win_size_ms = nan       % (ms) temporal window size over which to calc the spectrogram; 
                         %      'gammatone' filterbanks do not use it!
 lowfreq     = 100;      % (Hz)
 highfreq    = 8900;     % (Hz) 8900 Hz so that to get as high as possible to near 8k Hz with the 
 nw          = [];       % applies only for SPECTROGRAM_TYPE = 'multitaper'
-neurons     = 1;        % neuron #1 (#115) is for stimulus of 36 sec (40 sec)
+duration_to_load = 36;   % neuron #1 (#115) is for stimulus of 36 sec (40 sec)
 spectral_diff= 0;       % (logical) perform derivative (DIFF) along the frequency domain
 hpf_pole    = nan;
 
@@ -57,7 +57,7 @@ hpf_pole    = nan;
 % 40 s stimuli)
 [stim_st, spec_st] = load.stimulus_and_spectrogram(tbl_impale, ...
     'spectrogram_type', spectrogram_type, ...
-    'neurons', neurons, ...
+    'duration_to_load', duration_to_load, ...
     'binwidth', binwidth,...
     'lowfreq', lowfreq, ...         % (Hz)
     'highfreq', highfreq, ...       % (Hz)

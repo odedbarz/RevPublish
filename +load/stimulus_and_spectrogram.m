@@ -21,7 +21,7 @@ addRequired(p, 'T', @istable);
 % (1xn) neuron(s) to load. The type of the loaded stimuli is defined by the
 % required neurons. If NEURONS are not defined empty, all available 
 % (usually 2, 36 & 40 sec) STIMULI durations will be loaded 
-addOptional(p, 'neurons', [], @isnumeric);
+addOptional(p, 'duration_to_load', 36, @isnumeric);     % {36sec or 40sec}
 
 % only for spectrogram_type== MULTITAPER
 addOptional(p, 'nw', 2, @isnumeric);         
@@ -73,7 +73,7 @@ addOptional(p, 'fignum', [], @isnumeric);       % (1x1) if not empty, plot stuff
 parse(p, T, varargin{:});
 
 
-neurons         = p.Results.neurons;  
+duration_to_load= p.Results.duration_to_load;  
 nw              = p.Results.nw;  
 n_bands         = p.Results.n_bands;
 stim_fs         = p.Results.stim_fs;
@@ -89,40 +89,37 @@ hpf_pole        = p.Results.hpf_pole;
 verbose         = p.Results.verbose;       
 fignum          = p.Results.fignum;       
 
-
 if isempty(hpf_pole), hpf_pole = nan; end
 
-%% Init. output parameters
-if isempty(neurons)
-    % Find all stimulus DURATIONs available in the table T
-    durations_all = unique(T.duration_sec);
-    assert(~any(isnan(durations_all)), '--> [+load.stimulus_and_spectrogram]: check out your table (excel file)!');
-    
-    neurons = nan(1, length(durations_all));
-    for k = 1:length(durations_all)
-        duration_k = durations_all(k);
-        neurons(k) = find(T.duration_sec == duration_k, 1, 'first');        
-    end    
+
+%% Select duration to load
+% The information about each duration is in the Impale's data structure of the measurements
+%   duration_to_load==36 --> neuron #1 
+%   duration_to_load==36 --> neuron #115 
+if 36 == duration_to_load
+    neuron_k = 1;
+elseif 40 == duration_to_load
+    neuron_k = 115;
+else
+    error('WRONG DURATION!');
 end
-n_neurons = length(neurons);
-stim_list = cell(1, n_neurons);
-spec_list = cell(1, n_neurons);
-meas_list = cell(1, n_neurons);
+
+
+%% Init. output parameters
+stim_list = cell(1);
+spec_list = cell(1);
+meas_list = cell(1);
 data_st   = struct();
 
-
-for kk = 1:n_neurons
-    neuron_k = neurons(kk);
-
     % Set the k'th desired measurement to load
-    meas.ID         = T.ID{neuron_k};   
-    meas.measType   = T.measType{neuron_k};   
-    meas.session    = T.session(neuron_k);    
-    meas.unit       = T.unit(neuron_k);       
-    meas.measNum    = T.measNum(neuron_k);    
+    meas.ID         = T.ID{1};   
+    meas.measType   = T.measType{1};   
+    meas.session    = T.session(1);    
+    meas.unit       = T.unit(1);       
+    meas.measNum    = T.measNum(1);    
     meas.syncchan   = 0;
-    meas.spikechan  = T.spikechan(neuron_k);  
-    meas.CF         = T.CF(neuron_k);          % (Hz)
+    meas.spikechan  = T.spikechan(1);  
+    meas.CF         = T.CF(1);          % (Hz)
     
     
     %% Load measurement
@@ -140,22 +137,30 @@ for kk = 1:n_neurons
     end
 
     stim.fs = stim_fs;     % (Hz)
+    
     stim = load.stimuli(stim.fs, fn.path, fn.template);
+    stim_right = load.stimuli(stim.fs, fn.path, fn.template_right);
 
     % keep record of the WAV file
     stim.fn_template = fn.template;   
+    stim_right.fn_template = fn.template;   
+    
     stim.fn_path = fn.path;   
+    stim_right.fn_path = fn.path;   
 
     % Duration of the stimulus, in mili-seconds
     duration_ms = units.sec2ms( stim.info.Duration );
     stim.duration_ms = duration_ms;
+    stim_right.duration_ms = duration_ms;
 
     % Measurement's labels
     labels = stim.labels;
     stim.labels = labels;
+    stim_right.labels = labels;
 
     % (cell --> matrix)
     stim.Y = [stim.Y{:}];
+    stim_right.Y = [stim_right.Y{:}];
 
     if verbose
         fprintf('\n');    
@@ -175,7 +180,10 @@ for kk = 1:n_neurons
     %% ** Spectrogram ** 
     % Calc. spectrograms for all columns\measurements
     Sft = cell(1, size(stim.Y, 2));
+    Sft_right = cell(1, size(stim_right.Y, 2));
+    
     for k = 1:size(stim.Y, 2)
+        % LEFT side stimulus
         [Sft{k}, spec_st] = spec.spectrogram(stim.Y(:,k), stim.fs, ...
             'n_bands', n_bands,...
             'lowfreq', lowfreq,...
@@ -191,35 +199,49 @@ for kk = 1:n_neurons
             'fignum', k+fignum ...
          );
      
+        % RIGHT side stimulus
+        [Sft_right{k}, spec_right_st] = spec.spectrogram(stim_right.Y(:,k), stim.fs, ...
+            'n_bands', spec_st.n_bands,...
+            'lowfreq', spec_st.lowfreq,...
+            'highfreq', spec_st.highfreq,...
+            'overlap_ratio', spec_st.overlap_ratio,...
+            'binwidth', spec_st.binwidth,...
+            'win_size_ms', spec_st.win_size_ms, ...
+            'nw', spec_st.nw,...                only for spectrogram_type== MULTITAPER
+            'f_scale', spec_st.f_scale,...
+            'db_floor', spec_st.db_floor, ...  % (dB)
+            'duration_ms', spec_st.duration_ms,...
+            'method', spec_st.method, ...
+            'fignum', 1+k+fignum ...
+         );     
+     
         % Perform derivitive along the frequency domain
         if 1 == spectral_diff
             Sft{k} = diff([Sft{k}; Sft{k}(end,:)], [], 1);
+            Sft_right{k} = diff([Sft_right{k}; Sft_right{k}(end,:)], [], 1);
         end
      
         % Performs high-pass filtering along the time domain
         if ~isnan(hpf_pole)
             Sft{k} = filter([1 -1], [1 -hpf_pole], Sft{k}')';
+            Sft_right{k} = filter([1 -1], [1 -hpf_pole], Sft_right{k}')';
         end
     end
 
     % Add the labels of the spectrograms for later reference
-    spec_st.labels = labels(:);
-    
+    spec_st.labels = labels(:);    
     spec_st.Sft = Sft;
+    spec_st.Sft_right = Sft_right;
     
 
     %% Save in the lists
-    if 1 < n_neurons
-        stim_list{kk} = stim;    
-        meas_list{kk} = meas;
-        spec_list{kk} = spec_st;
-    else
-        stim_list = stim;    
-        meas_list = meas;
-        spec_list = spec_st;
-    end
+    stim_list = stim;    
+    meas_list = meas;
+    spec_list = spec_st;
+    
+    % Add the right stimulus too:
+    stim_list.Yright = stim_right.Y;    
 
-end
 
 %% Information about the loaded measurements
 valid_table_entries = 1:size(T,1);

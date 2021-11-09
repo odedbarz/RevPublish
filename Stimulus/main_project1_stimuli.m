@@ -134,16 +134,7 @@ y_rir = ConvRIR(y_cat, Trir.rir);
 
 
 
-
-
 %% Split & SAVE the WAV files for Impale
-% fn_generic = 'spch';
-% max_seg_time = 1;   % (sec)
-
-
-% % Choose the columns for the outer and inner loops in Impale:
-% outer_inner_cols = [2, 1];
-
 opts.Fs             = Fs;
 opts.fn_generic   	= 'spch';
 opts.rms          	= 'win';  

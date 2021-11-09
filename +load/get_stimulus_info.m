@@ -37,7 +37,7 @@ switch lower(suffix)
         end
 
         fn.template = 'BRIR_L_-Dist%d_-Rev%d.wav';
-        %fn.template = 'BRIR_R_-Dist%d_-Rev%d.wav';
+        fn.template_right = 'BRIR_R_-Dist%d_-Rev%d.wav';
 
     
     case 'ns_spch_fc4khz'

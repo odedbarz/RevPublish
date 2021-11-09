@@ -41,7 +41,7 @@ for kk = 1:length(dist_list)
     T = [T; table(revb_list(:), dist_list(kk)*ones(size(revb_list(:))), 'VariableNames', {'Revb', 'Dist'})];
 end
 stim_st.table_meas = T;
-
+stim_st.fn_template = fn_template;
 
 
 %%
