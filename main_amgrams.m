@@ -21,38 +21,22 @@ dt = diff(data.spec_st.t(1:2));     % temporal sampling rate of the spectrogram
 spec.plot_spectrogram(t, f, Sstim_dry);
 % title(sprintf('Label: %s\\%%', data.spec_st.labels{k}(1:end-1)));
 
-
-
-%% Create the AM-gram for one selected frequency
-am_nf = 200;
-fband = 26;
-[am_dry, ~, am_f] = am_one_freq_band(Sstim_dry(fband,:), dt, am_nf);
-
-%
-drr_2_use = 5
-Sdrr = data.Sest(:,:,drr_2_use);
-am_est = am_one_freq_band(Sdrr(fband,:), dt, am_nf);
-
-%
-figure(10);
-plot(am_f, [am_dry, am_est]);
-% xlim([0, 0.5*1/dt]);
-xlabel('Frequency (Hz)');
-legend('Dry-stimulus AM', 'Est AM');
-
+drr = get_DRR_list_and_indices; 
 
 
 %% Calculate AMs for all frequency bands
-am_nf = 200;
+am_nf = 25;
 nf = size(Sstim_dry,1);
 n_splits = data.splits.n_splits;
 
 Sam_dry = zeros(n_splits, nf, am_nf);
 Sam_drr = zeros(n_splits, nf, am_nf);
 Xam_dry = zeros(n_splits, nf, am_nf);
-Xam_est = zeros(n_splits, nf, am_nf);
+Xam_drr = zeros(n_splits, nf, am_nf);
 
 drr_2_use = 5
+drr_label   = drr.labels{drr.ordered(drr_2_use)};
+
 Sdry = data.Sest(:,:,1);
 Sdrr = data.Sest(:,:,drr_2_use);
 
@@ -76,39 +60,129 @@ Xam_drr_mean = squeeze(mean(Xam_drr,1));
 Xam_drr_std  = squeeze(std (Xam_drr,1));
 
 
+
+%% Create the AM-gram for one selected frequency
+am_nf = 200;
+fband = 16;     % frequency band to analyze/plot
+
+am_stim_avg_dry = squeeze(mean(Sam_dry(:,fband,:),1));   % estimated averaged DRY
+am_est_avg_dry = squeeze(mean(Xam_dry(:,fband,:),1));   % estimated averaged DRY
+am_est_avg_drr = squeeze(mean(Xam_drr(:,fband,:),1));   % estimated averaged DRR
+am_est_std_dry = squeeze(std(Xam_dry(:,fband,:),1));   % estimated averaged DRY
+am_est_std_drr = squeeze(std(Xam_drr(:,fband,:),1));   % estimated averaged DRR
+
+
+figure(10);
+errorbar([am_f, am_f], [am_est_avg_dry, am_est_avg_drr], [am_est_std_dry, am_est_std_drr]);
+% plot(am_f, [am_est_avg_dry, am_est_avg_drr]);
+xlabel('AM Frequency (Hz)');
+legend('Reconstructed Dry AMs', sprintf('Reconstructed Reverberant AMs (DRR: %s)', drr_label));
+hold on
+plot(am_f, am_stim_avg_dry, ':k', 'displayname', 'Avg. Dry-Stimulus AMs')
+hold off
+title(sprintf('FFT of AMs (frequency band: %.1f Hz)', ...
+    data.spec_st.f(fband)));
+
+
+
+
+%%
+%{
+figure(20);
+
+ax = subplot(1,3,1);
+% y1 = max(-100,Xam_dry_mean-Sam_dry_mean);
+y1 = Xam_dry_mean./Sam_dry_mean;
+spec.plot_spectrogram(am_f, f, y1, 'ax', gca);
+xlabel('AM Frequency (Hz)');
+colorbar;
+title('$\hat{S}_{DRY}/S_{DRY}$');
+caxis([0.6, 2.2]);
+
+ax(2) = subplot(1,3,2);
+% y2 = max(-100,Xam_drr_mean-Sam_drr_mean);
+y2 = Xam_drr_mean./Sam_drr_mean;
+spec.plot_spectrogram(am_f, f, y2, 'ax', gca);
+xlabel('AM Frequency (Hz)');
+colorbar;
+title(sprintf('$\\hat{S}_{%s}/S_{%s}$', drr_label, drr_label));
+caxis([0.6, 2.2]);
+
+ax(3) = subplot(1,3,3);
+% y3 = y1 - y2;
+y3 = y2./y1;
+spec.plot_spectrogram(am_f, f, y3, 'ax', gca);
+xlabel('AM Frequency (Hz)');
+colorbar;
+title(sprintf('$\\frac{\\hat{S}_{%s}/S_{%s}}{\\hat{S}_{DRY}/S_{DRY}}$',...
+    drr_label, drr_label));
+caxis([0.6, 2.2]);
+
+linkaxes(ax);
+%}
+
+
+
 %%
 figure(20);
-% ax = subplot(1,2,1);
-% % imagesc(log10(Xam_dry));
-% spec.plot_spectrogram(am_f, f, Xam_dry_mean, 'ax', gca);
-% xlabel('AM Frequency (Hz)');
-% colorbar;
-% % xlim([1, 0.5*1/dt]);
+clf;
 
-ax = subplot(1,2,1);
-% imagesc(log10(Xam_est));
-spec.plot_spectrogram(am_f, f, max(0,Xam_dry_mean-Sam_dry_mean), 'ax', gca);
+ax = subplot(1,3,1);
+% y1 = max(-100,Xam_dry_mean-Sam_dry_mean);
+y1 = Xam_drr_mean./Xam_dry_mean;
+spec.plot_spectrogram(am_f, f, y1, 'ax', gca);
 xlabel('AM Frequency (Hz)');
 colorbar;
-% xlim([1, 0.5*1/dt]);
+title(sprintf('$RMD_{%s}/RMD_{DRY}$', drr_label));
 
-ax(2) = subplot(1,2,2);
-% imagesc(max(0, log10(Xam_est)-log10(Xam_dry)));
-spec.plot_spectrogram(am_f, f, max(0,Xam_drr_mean-Sam_drr_mean), 'ax', gca);
+caxis([0.6, 2.2]);
+
+ax(2) = subplot(1,3,2);
+% y2 = max(-100,Xam_drr_mean-Sam_drr_mean);
+y2 = Sam_drr_mean./Sam_dry_mean;
+spec.plot_spectrogram(am_f, f, y2, 'ax', gca);
 xlabel('AM Frequency (Hz)');
 colorbar;
-% xlim([1, 0.5*1/dt]);
+title(sprintf('$m_{%s}/m_{DRY}$', drr_label));
+caxis([0.6, 2.2]);
+
+ax(3) = subplot(1,3,3);
+y3 = y1./y2;
+spec.plot_spectrogram(am_f, f, y3, 'ax', gca);
+xlabel('AM Frequency (Hz)');
+colorbar;
+title(sprintf('$\\frac {RMD_{%s}/RMD_{DRY}} {m_{%s}/m_{DRY}} $',...
+    drr_label, drr_label));
+caxis([0.6, 2.2]);
 
 linkaxes(ax);
 
 
 %%
-k = 23;
-xdry = Xam_dry_mean(k,:)' - Sam_dry_mean(k,:)';
-xdry_std = Xam_dry_std(k,:)' - Sam_dry_std(k,:)';
+figure(25);
+clf;
+freqk = 20;
 
-xdrr = Xam_drr_mean(k,:)' - Sam_drr_mean(k,:)';
-xdrr_std = Xam_drr_std(k,:)' - Sam_drr_std(k,:)';
+plot(am_f, [y1(freqk,:)', y2(freqk,:)']);
+xlabel('AM Frequency (Hz)');
+title(sprintf('AM Ratios (frequency band: %.1f Hz)', ...
+    data.spec_st.f(freqk)));
+h = legend(sprintf('$RMD_{%s}/RMD_{DRY}$', drr_label),...
+    sprintf('$m_{%s}/m_{DRY}$', drr_label));
+h.FontSize = 20;
+h.Location = 'best';
+
+
+
+
+
+%%
+freqk = 16;
+xdry = Xam_dry_mean(freqk,:)' - Sam_dry_mean(freqk,:)';
+xdry_std = Xam_dry_std(freqk,:)' - Sam_dry_std(freqk,:)';
+
+xdrr = Xam_drr_mean(freqk,:)' - Sam_drr_mean(freqk,:)';
+xdrr_std = Xam_drr_std(freqk,:)' - Sam_drr_std(freqk,:)';
 
 figure(30);
 plot(am_f, [xdry, xdrr]);
@@ -119,7 +193,7 @@ hold on
 h2 = errorbar([am_f, am_f], [xdry, xdrr], [xdry_std, xdrr_std]);
 h2(1).Color = h1(1).Color;
 h2(2).Color = h1(2).Color;
-plot(am_f, Sam_dry_mean(k,:)', 'k')
+% plot(am_f, Sam_dry_mean(freqk,:)', 'k')
 hold off
 
 

@@ -37,25 +37,6 @@ mse2 = @(a,b) mean(abs( a - b ).^2);
 
 gof.mse = mse2(x, y);
 gof.nmse = gof.mse/SS(x);
-% gof.nmse= gof.mse/sqrt(mse1(x).*mse1(y));
-% gof.nmse= gof.mse/sqrt( max(x.^2) - min(x.^2) );
-%}
-
-
-%{
-rmsd = @(a,b) sqrt(mean(( a - b ).^2));   % root-mean-square deviation
-nrmsd= @(a,b) rmsd(a,b) ./ ( max(abs(a)) - min(abs(a)) );
-
-gof.mse = rmsd(x, y);
-gof.nmse= nrmsd(x, y);
-if strcmpi('mse', type_out)
-    gof = gof.mse;
-    return;
-elseif strcmpi('nmse', type_out)
-    gof = gof.nmse;
-    return;    
-end
-%}
 
 
 
@@ -64,8 +45,7 @@ end
 % Hearing the Song in Noise; Moore, Theunissen et al., 2013.
 X_minus_mu = X - mean(X,2);
 Y_minus_mu = Y - mean(Y,2);
-% X_minus_mu = zca(X')';
-% Y_minus_mu = zca(Y')';
+
 num = mean(X_minus_mu .* Y_minus_mu, 2);
 den = sqrt( var(X_minus_mu,[],2) .* var(Y_minus_mu,[],2) );     % den ~ 1.0 due to the zca()
 gof.CCf = num ./ den;
