@@ -43,7 +43,8 @@ switch data_type
         %         stim_st: [1×1 struct]
         %      tbl_impale: [437×20 table]        
         %fn.load.file = 'data_MUA_(08-Jan-2021)_bw(5)_fbands(30)_win(NaN)ms_spec(gammatone).mat';   
-        fn.load.file = 'data_MUA_(01-Nov-2021)_bw(1)_fbands(30)_win(NaN)ms_spec(gammatone).mat'; 
+        %fn.load.file = 'data_MUA_(01-Nov-2021)_bw(1)_fbands(30)_win(NaN)ms_spec(gammatone).mat'; 
+        fn.load.file = 'data_MUA_(08-Nov-2021)_bw(5)_fbands(30)_win(NaN)ms_spec(gammatone).mat'; 
         
     otherwise
         error('--> Unrecognized DATA_TYPE!');
