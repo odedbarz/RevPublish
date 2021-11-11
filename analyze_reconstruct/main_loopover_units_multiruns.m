@@ -140,7 +140,7 @@ end
 
     
 
-for q = 1 %1:n_drr 
+for q = 1    %1:n_drr 
     % The training (i.e., truth-level) DRR case
     train_drr = drr.sortby(q); %drr.dry;         
     %train_drr = [3, 4, 5];  '########## Training for more than one DRR #########'
@@ -148,6 +148,10 @@ for q = 1 %1:n_drr
         fprintf('--> TRAIN DRR: %d, %s\n', train_drr, drr.labels{train_drr});
     end    
     
+    [sorted_list, tbl_BFcc] = find_best_unit_set('RND', 'N', 103);
+    unit_list = 25*ones(1,10);
+    len_unit_list = length(unit_list);
+
     % Loop over UNITS
     for m = 1:len_unit_list
         % Set the # of neurons for the reconstruction
@@ -171,7 +175,8 @@ for q = 1 %1:n_drr
         y1 = squeeze( H_sorted(:, train_drr, :) );
 
         % Split the TRAINING set
-        X1 = [spec_st.Sft{train_drr}; spec_st.Sft_right{train_drr}];
+        X1 = spec_st.Sft{train_drr};
+        %X1 = [spec_st.Sft{train_drr}; spec_st.Sft_right{train_drr}];
         
         % Loop over SPLITS
         for n = 1:n_splits
@@ -213,8 +218,8 @@ for q = 1 %1:n_drr
                 test_drr = drr.ordered(k);                                               
                 
                 % Split for the TESTING data
-                %X2 = spec_st.Sft{test_drr};
-                X2 = [spec_st.Sft{test_drr}; spec_st.Sft_right{test_drr}];
+                X2 = spec_st.Sft{test_drr};
+                %X2 = [spec_st.Sft{test_drr}; spec_st.Sft_right{test_drr}];
 
                 y2 = squeeze( H_sorted(:, test_drr, :) );                
                 
@@ -271,14 +276,12 @@ for q = 1 %1:n_drr
     
     
     
-    
-    
     %% Save the reconstruction results
     % %{
         fprintf('SAVE the analysis data!\n');
         fn.save.path    = '../_data/Reconstruct/';
-        fn.save.file    = sprintf('reconstruct_%s_(%s)_units(%d)_bw(%g)ms_algo(%s)_fbands(%d)_splits(%d)_lags(%g)ms_cau(%d)_trainDRR(%s)',...
-            data_type, date, m_units, binwidth, algo_type, n_bands, n_splits, lags_ms, iscausal, num2str(train_drr, '%d '));
+        fn.save.file    = sprintf('%d_reconstruct_%s_(%s)_units(%d)_bw(%g)ms_algo(%s)_fbands(%d)_splits(%d)_lags(%g)ms_cau(%d)_trainDRR(%s)',...
+            m, data_type, date, m_units, binwidth, algo_type, n_bands, n_splits, lags_ms, iscausal, num2str(train_drr, '%d '));
         fn.save.fullfile= fullfile( fn.save.path, fn.save.file );
                 
         stim_st = data.stim_st;
@@ -295,8 +298,7 @@ for q = 1 %1:n_drr
             'H_sorted',...      sorted units used for the analysis
             'sorted_list',...    the list of sorted unit used to create H_sorted from data.H
             'sort_type' ...
-            ); 
-        
+         );         
     %}
     end
 
