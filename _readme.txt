@@ -34,7 +34,15 @@ ROOT: the project root directory.
 	(5) ANALYZE_RECONSTRUCT/MAIN_LOOPOVER_STATS.m: used to check effect of dependence between reconstructions.
 		The analysis is done in _FIGS4PAPER\ADDITIONALS.m. This file uses data from,
 		_DATA\STATS\CCUNITS_(09-JUN-2021)_FOR_VALID_STATS_TEST.m.
-
+		
+	MULTI-RUNs to compare between BEF sorting and random sorting
+		(6) ANALYZE_RECONSTRUCT/MAIN_LOOPOVER_UNITS_MULTIRUNS.M: 
+			* Repeats analysis for a given number of units; 
+			* The units are selected at random in each run;
+			* The results are saved at _DATA/RECONSTRUCT/.
+		
+		(7) ANALYZE_RECONSTRUCT/MAIN_CREATE_CC_DATABASE_MULTIRUNS.M:
+			* Analyze all the runs into one cell and saves it at the _DATA\ANALYSIS folder.
 
 (C) Plots:
 	(1) FIGS4PAPER/RESULTS - SINGLE UNIT - CC & RMD MG/MAIN_ANALYZE_CCRESPONSE.M:

@@ -1,5 +1,5 @@
 %
-% main_loopover_units_binaural.m
+% main_loopover_units_multiruns.m
 %
 % Description:
 % This script loops over all loaded measurements and reconstruct the
@@ -26,7 +26,7 @@ idx_dry = drr.ordered(1);
 %% Load data
 %   Run [main_aggregate_MUA_data.m] again to update this file if needed
 % 
-data_type   = 'MUA';       % {'SU', MUA'}
+data_type   = 'SU';       % {'SU', MUA'}
 fn.load.path= load.path_to_data('_data');
 data_type   = upper(data_type);
 
@@ -34,32 +34,6 @@ fn.load.file_template = 'data_%s_(08-Jan-2021)_bw(5)_fbands(30)_win(NaN)ms_spec(
 % fn.load.file_template = 'data_%s_(01-Nov-2021)_bw(1)_fbands(30)_win(NaN)ms_spec(gammatone).mat';
 % fn.load.file_template = 'data_%s_(08-Nov-2021)_bw(5)_fbands(30)_win(NaN)ms_spec(gammatone).mat';
 
-switch data_type
-    case 'SU'
-        % Loads a struct with fields:
-        %               H: [3600×6×150 double]
-        %          S_list: {1×150 cell}
-        %     neuron_list: [150×1 double]
-        %         spec_st: [1×1 struct]
-        %      tbl_impale: [437×20 table]
-        %fn.load.file = 'data_SU_(08-Jan-2021)_bw(5)_fbands(30)_win(NaN)ms_spec(gammatone).mat';       
-        unit_list = [10, 25, 50, 103];
-
-    case 'MUA'
-        %Loads a struct with fields:
-        %               H: [7200×6×356 double]
-        %        H_labels: [356×6 double]
-        %     neuron_list: [356×1 double]
-        %         spec_st: [1×1 struct]
-        %         stim_st: [1×1 struct]
-        %      tbl_impale: [437×20 table]        
-        %fn.load.file = 'data_MUA_(08-Jan-2021)_bw(5)_fbands(30)_win(NaN)ms_spec(gammatone).mat';  
-        unit_list = [10, 25, 50, 103]; %[10, 25, 50, 103, 241];
-
-    otherwise
-        error('--> Unrecognized DATA_TYPE!');
-        
-end
 fn.load.file = sprintf(fn.load.file_template, data_type);
 fn.load.fullfile = fullfile( fn.load.path, fn.load.file );
 data      = load(fn.load.fullfile);
@@ -67,27 +41,11 @@ data      = load(fn.load.fullfile);
 spec_st   = data.spec_st;
 tbl_data  = data.(sprintf('tbl_%s', data_type));
 n_units   = height(tbl_data);     % total available units
-len_unit_list = length(unit_list);
 duration_sec = 36;      % (sec) 
 assert(duration_sec == spec_st.duration_ms * 1e-3,...
     '--> ERROR: You are using the wrong stimulus duration!');
 
 aux.vprint(verbose, '--> [main_loopover_units.m] Loading file:\n\t...<%s>\n', fn.load.file);
-
-
-
-%% Order the units
-% [sorted_list, tbl_BF] = find_best_unit_set('CC', 'fn', fn.load.fullfile);
-
-sort_type = 'CC';  % {'CC', 'RND', 'SVD', 'FILE', 'SPK', 'NOSPK'}
-% Hdry = squeeze( data.H(:,drr.ordered(1),:) ); 
-% sorted_list = find_best_unit_set(sort_type, 'Y', Hdry);                 % {'RND'}
-% sorted_list = find_best_unit_set(sort_type, 'Y', Hdry, 'n_svd', 10);    % {'RND'}
-[sorted_list, tbl_BFcc] = find_best_unit_set(sort_type, 'fn', fn.load.fullfile);  % {'CC'}
-% sorted_list = find_best_unit_set(sort_type, 'fn', 'unit_list_MUA_drr(5).mat');  % {'FILE'}
-% find_best_unit_set('FILE', 'fn', 'idx_MUA_good_sorted_unit_thr(0-7).mat'); % {'FILE'}
-% sorted_list = find_best_unit_set(sort_type, 'fn_template', ...
-%     {fn.load.path, fn.load.file_template, data_type});    % {'SPK', 'NOSPK'}
 
 
 %% Reconstruction parameters
@@ -102,7 +60,6 @@ algo_type      = 'regression';    % {'regression', 'asd', 'svd'}
 if verbose
     aux.cprintf('UnterminatedStrings', '\n    Data:\n');
     aux.cprintf('UnterminatedStrings', '--> data_type   : %s\n', data_type);
-    aux.cprintf('UnterminatedStrings', '--> unit_list   : [%s]\n', num2str(unit_list));
     aux.cprintf('UnterminatedStrings', '--> n_units     : %g (all available units)\n', n_units);
     aux.cprintf('UnterminatedStrings', '--> duration_sec: %g ms\n', duration_sec);
     aux.cprintf('UnterminatedStrings', '    Reconstruction:\n');
@@ -125,12 +82,6 @@ end
 assert(spec_st.n_time == split_time_idx(end));
 
 
-% % Use these 2 lines to override the split by speakers:
-% split_time_idx = [];
-% n_splits = 200
-
-
-
 
 %%
 if verbose
@@ -138,7 +89,8 @@ if verbose
     fprintf('========================\n');    
 end
 
-    
+n_random_runs = 10;     % ************************* <<<<<<<<<<<< ========   
+sort_type = 'RND';
 
 for q = 1    %1:n_drr 
     % The training (i.e., truth-level) DRR case
@@ -147,20 +99,15 @@ for q = 1    %1:n_drr
     if verbose
         fprintf('--> TRAIN DRR: %d, %s\n', train_drr, drr.labels{train_drr});
     end    
-    
-    [sorted_list, tbl_BFcc] = find_best_unit_set('RND', 'N', 103);
-    unit_list = 25*ones(1,10);
-    len_unit_list = length(unit_list);
 
     % Loop over UNITS
-    for m = 1:len_unit_list
-        % Set the # of neurons for the reconstruction
-        m_units = unit_list(m);
-        if verbose
-        end
+    for m = 1:n_random_runs
+        fprintf('%d Starting a new random run...\n', m);
 
-        % Select M_UNITS to reconstruct        
-        H_sorted = data.H( :, 1:n_drr, sorted_list(1:m_units) );        
+        [sorted_list, tbl_BFcc] = find_best_unit_set(sort_type, 'N', n_units);
+        units = 25;
+
+        H_sorted = data.H( :, 1:n_drr, sorted_list(1:units) );        
         
         % >> analyze_units;
         obj_list = cell(n_drr, n_splits);
@@ -281,7 +228,7 @@ for q = 1    %1:n_drr
         fprintf('SAVE the analysis data!\n');
         fn.save.path    = '../_data/Reconstruct/';
         fn.save.file    = sprintf('%d_reconstruct_%s_(%s)_units(%d)_bw(%g)ms_algo(%s)_fbands(%d)_splits(%d)_lags(%g)ms_cau(%d)_trainDRR(%s)',...
-            m, data_type, date, m_units, binwidth, algo_type, n_bands, n_splits, lags_ms, iscausal, num2str(train_drr, '%d '));
+            m, data_type, date, units, binwidth, algo_type, n_bands, n_splits, lags_ms, iscausal, num2str(train_drr, '%d '));
         fn.save.fullfile= fullfile( fn.save.path, fn.save.file );
                 
         stim_st = data.stim_st;
