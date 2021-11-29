@@ -14,17 +14,17 @@ ROOT: the project root directory.
 
 (B) Analyze:
 	(1) ANALYZE_RECONSTRUCT/CREATE_BF_TABLE.M:
-		* Use it to create a file with the best-frequencies (BFs). 
-		* This procedure creates a table of BFs that is	saved in the _DATA directory. 
-		* This new file ends with _BF. 
+		* Use it to create a file with the best-frequencies (BFs).
+		* This procedure creates a table of BFs that is	saved in the _DATA directory.
+		* This new file ends with _BF.
 		* The software will use this file to sort neurons according to their "quality". Creates a	DATA_MUA_XXX_BF.MAT file.
 
 	(2) ANALYZE_RECONSTRUCT/MAIN_LOOPOVER_UNITS.M:
-		* Use it to perform the	reconstruction on various number of units. 
+		* Use it to perform the	reconstruction on various number of units.
 		*Each such case is save seperately (at _DATA/_RECONSTRUC. Creates the RECONSTRUCT_(MUA)_XXX.MAT or(RECONSTRUCT_(MUA)_XXX.MAT files.
 
 	(3) ANALYZE_RAW/MAIN_RAW_MUA_STATS.M:
-		* Use it to get statistics on RAW measurements, before averaging. 
+		* Use it to get statistics on RAW measurements, before averaging.
 		* This will creates the CCSTATS_(MUA)_XXX.MAT files.
 
 	(4) ANALYZE_RECONSTRUCT/MAIN_CREATE_CC_DATABASE.M:
@@ -34,19 +34,22 @@ ROOT: the project root directory.
 	(5) ANALYZE_RECONSTRUCT/MAIN_LOOPOVER_STATS.m: used to check effect of dependence between reconstructions.
 		The analysis is done in _FIGS4PAPER\ADDITIONALS.m. This file uses data from,
 		_DATA\STATS\CCUNITS_(09-JUN-2021)_FOR_VALID_STATS_TEST.m.
-		
+
 	MULTI-RUNs to compare between BEF sorting and random sorting
-		(6) ANALYZE_RECONSTRUCT/MAIN_LOOPOVER_UNITS_MULTIRUNS.M: 
-			* Repeats analysis for a given number of units; 
+		(6) ANALYZE_RECONSTRUCT/MAIN_LOOPOVER_UNITS_MULTIRUNS.M:
+			* Repeats analysis for a given number of units;
 			* The units are selected at random in each run;
 			* The results are saved at _DATA/RECONSTRUCT/.
-		
+
 		(7) ANALYZE_RECONSTRUCT/MAIN_CREATE_CC_DATABASE_MULTIRUNS.M:
 			* Analyze all the runs into one cell and saves it at the _DATA\ANALYSIS folder.
 
+	(8) _REVERB_PAPER/INTRO/MAIN_ANALYZE_DRR_AND_T60.M:
+			* Calculates the reverberation time RT60 for the stimuli.
+
 (C) Plots:
 	(1) FIGS4PAPER/RESULTS - SINGLE UNIT - CC & RMD MG/MAIN_ANALYZE_CCRESPONSE.M:
-		Plots the CC between each response (SU or MU) and the "best envelope". The best envelope is taken from CREATE_BF_TABLE.M (see above). It's the frequency with the highest Pearson correlation (CC) between one of the spectrogram frequency bands and the response. 
+		Plots the CC between each response (SU or MU) and the "best envelope". The best envelope is taken from CREATE_BF_TABLE.M (see above). It's the frequency with the highest Pearson correlation (CC) between one of the spectrogram frequency bands and the response.
 
 	(2) _Figs4Paper/RESULTS - POPULATION RESPONSE/RESULTS_CC_ANALYSIS.M:
 		(a) Two plots of SU & MUA reconstructions. Each plot shows CC as a function of DRRs for various number
@@ -59,7 +62,7 @@ ROOT: the project root directory.
 
 	(3) _FIGS4PAPER/RESULTS - CCT/MAIN_PLOT_CCT.M:
 		(a) Voice vs. Unvoiced histograms.
-		(b) 
+		(b)
 
 
 	(?) _Figs4Paper/RESULTS_CC_ERRORBAR_ANALYSIS.M: plots 2 bar plots with error bars, one for SU and another for MUA. In each figure the bars compare spectrogram reconstructions of Sdry-to-Sest (blue bars) and Sdrr-to-Sest (red bars).

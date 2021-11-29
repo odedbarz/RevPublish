@@ -47,7 +47,7 @@ Trir = Trir(:,[1:4, 8:9, 5:7, 10:end]);
 % '*** SAVE !! ***'
 % save('./.stim2Impal/tbl_RIR_Dist(3m).mat', 'Trir')
 
-
+% round(10*mean([Trir.drrL, Trir.drrR],2))/10
 
 %% Plot
 fignum = 1

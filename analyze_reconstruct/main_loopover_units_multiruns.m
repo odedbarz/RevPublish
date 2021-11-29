@@ -89,9 +89,10 @@ if verbose
     fprintf('========================\n');    
 end
 
-n_random_runs = 10;     % ************************* <<<<<<<<<<<< ========   
+n_random_runs = 11;     % ************************* <<<<<<<<<<<< ========   
 sort_type = 'RND';
-
+units = 50;             % ************************* <<<<<<<<<<<< ========   
+        
 for q = 1    %1:n_drr 
     % The training (i.e., truth-level) DRR case
     train_drr = drr.sortby(q); %drr.dry;         
@@ -105,8 +106,6 @@ for q = 1    %1:n_drr
         fprintf('%d Starting a new random run...\n', m);
 
         [sorted_list, tbl_BFcc] = find_best_unit_set(sort_type, 'N', n_units);
-        units = 25;
-
         H_sorted = data.H( :, 1:n_drr, sorted_list(1:units) );        
         
         % >> analyze_units;
