@@ -35,16 +35,20 @@ ROOT: the project root directory.
 		The analysis is done in _FIGS4PAPER\ADDITIONALS.m. This file uses data from,
 		_DATA\STATS\CCUNITS_(09-JUN-2021)_FOR_VALID_STATS_TEST.m.
 
-	MULTI-RUNs to compare between BEF sorting and random sorting
-		(6) ANALYZE_RECONSTRUCT/MAIN_LOOPOVER_UNITS_MULTIRUNS.M:
+	(5) MULTI-RUNs to compare between BEF sorting and random sorting
+		(5.1) ANALYZE_RECONSTRUCT/MAIN_LOOPOVER_UNITS_MULTIRUNS.M:
 			* Repeats analysis for a given number of units;
 			* The units are selected at random in each run;
 			* The results are saved at _DATA/RECONSTRUCT/.
 
-		(7) ANALYZE_RECONSTRUCT/MAIN_CREATE_CC_DATABASE_MULTIRUNS.M:
-			* Analyze all the runs into one cell and saves it at the _DATA\ANALYSIS folder.
+		(5.2) ANALYZE_RECONSTRUCT\MAIN_CREATE_CC_DATABASE_MULTIRUNS.M:
+			* Analyze the CC/CC2/CC3 into one table for and saves it at
+			  _DATA\ANALYSIS\Reconstruct_sortType(RND)_units(%units%)_(%date%)_multi_runs.
 
-	(8) _REVERB_PAPER/INTRO/MAIN_ANALYZE_DRR_AND_T60.M:
+		(5.3) \_REVERB_PAPER\RESULTS - POPULATION RESPONSE\MAIN_CC_ANALYSIS_MULTIRUN.M:
+			* Analyze and plot.
+
+	(6) _REVERB_PAPER/INTRO/MAIN_ANALYZE_DRR_AND_T60.M:
 			* Calculates the reverberation time RT60 for the stimuli.
 
 (C) Plots:

@@ -18,32 +18,42 @@ debug_flag = 0;
 
 
 %% Load data
-data_type   = upper('SU');      % {'SU', MUA'}
-n_runs = 10;
-units = 25;
+data_type   = upper('MUA');      % {'SU', MUA'}
+% n_runs = 10;
+units = 103;
 
-fn_path     = load.path_to_data('Reconstruct'); 
-fn_path     = fullfile(fn_path, 'Reconstruct_sortType(RND)_(11-Nov-2021)_multi_runs');
+fn_path = [load.path_to_data('Reconstruct'), filesep, ...
+    sprintf('Reconstruct_sortType(RND)_units(%d)_(11-Nov-2021)_multiruns', units)];
 % fn_template = 'reconstruct_%s_(01-Nov-2021)_units(%d)_bw(1)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(0)_trainDRR(3).mat';       
-fn_template = '%d_reconstruct_%s_(11-Nov-2021)_units(%d)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(0)_trainDRR(3).mat';
+% fn_template = '%d_reconstruct_%s_(11-Nov-2021)_units(%d)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(0)_trainDRR(3).mat';
 
+fn = dir(fullfile(fn_path, '*.mat'));
+fn = {fn.name};
+fn = fn( contains(fn, data_type) );
+n_runs = length(fn);
+
+
+
+
+%%
 drr = get_DRR_list_and_indices; 
 n_drr = drr.n_drr;
 drr_idx = drr.sortby(1:n_drr);
 
-multi_runs = {};
+multi_runs = cell(1,n_runs);
+
+
 
 %% Start Looping over all unit_list
-for un = 1:n_runs
+for nn = 1:n_runs
     % Loading first file to get preliminary metadata
     %       splits: [1×1 struct]
     %      spec_st: [1×1 struct]
     %      stim_st: [1×1 struct]
     %     tbl_data: [241×20 table]
-    fn_n = sprintf(fn_template, un, data_type, units);
+    fn_n = fn{nn};
     aux.cprintf('String', '\n-> Loading FIRST file to get preliminary data <%s>...\n', fn_n);
     warning off
-%     data = load( fullfile(fn_path, fn_n), 'splits', 'spec_st', 'stim_st', 'tbl_data' );
     data = load(fullfile(fn_path, fn_n));
     warning on
 
@@ -184,7 +194,7 @@ for un = 1:n_runs
     ];
 
     % Quick and dirty... I'm grabing just the CC
-    multi_runs{un} = tbl;
+    multi_runs{nn} = tbl;
 
 end
 
