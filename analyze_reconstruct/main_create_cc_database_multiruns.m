@@ -18,14 +18,14 @@ debug_flag = 0;
 
 
 %% Load data
-data_type   = upper('MUA');      % {'SU', MUA'}
+data_type   = upper('SU');      % {'SU', MUA'}
 % n_runs = 10;
-units = 103;
+units = 100;
 
+% fn_path = [load.path_to_data('Reconstruct'), filesep, ...
+%     sprintf('Reconstruct_sortType(RND)_units(%d)_(11-Nov-2021)_multiruns', units)];
 fn_path = [load.path_to_data('Reconstruct'), filesep, ...
-    sprintf('Reconstruct_sortType(RND)_units(%d)_(11-Nov-2021)_multiruns', units)];
-% fn_template = 'reconstruct_%s_(01-Nov-2021)_units(%d)_bw(1)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(0)_trainDRR(3).mat';       
-% fn_template = '%d_reconstruct_%s_(11-Nov-2021)_units(%d)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(0)_trainDRR(3).mat';
+    sprintf('Reconstruct_sortType(SPK-RND)_units(%d)_(11-Nov-2021)_multiruns', units)];    
 
 fn = dir(fullfile(fn_path, '*.mat'));
 fn = {fn.name};
@@ -204,7 +204,7 @@ end
 % %{
 fprintf('\n- About to save the analysis results...\n');
 FN_PATH = load.path_to_data('Analysis');
-fn_name = sprintf('analyzed_%s_RND(%d_runs)_(%s)_units(%d).mat',...
+fn_name = sprintf('analyzed_%s_SPK-RND(%d_runs)_(%s)_units(%d).mat',...
     data_type, n_runs, date, units);
 fn_fullfile = fullfile( FN_PATH, fn_name );
 

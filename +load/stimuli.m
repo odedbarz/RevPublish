@@ -60,7 +60,7 @@ for jj = 1:len_dist
         assert(~isempty(Dist_ij), '--> ERROR @ [load_stimuli.m]: can''t find a Dist!!');
         Dist_ij = str2double(Dist_ij);
         
-        Rev_ij = regexp(fn_mtx{ii,jj},  '(?<=Rev)\d+','once','match');
+        Rev_ij = regexp(fn_mtx{ii,jj}, '(?<=Rev)\d+','once','match');
         assert(~isempty(Rev_ij), '--> ERROR @ [load_stimuli.m]: can''t find a Dist!!');
         Rev_ij = str2double(Rev_ij);
            

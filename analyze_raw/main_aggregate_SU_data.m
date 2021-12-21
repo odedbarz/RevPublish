@@ -50,9 +50,9 @@ binwidth    = 5         % (ms) binwidth of the resulted spectrogram
 win_size_ms = nan       % (ms) temporal window size over which to calc the spectrogram; 
                         %      'gammatone' filterbanks do not use it!
 lowfreq     = 250;      % (Hz)
-highfreq    = 8000;     % (Hz) %8800;     
+highfreq    = 8900;     % (Hz) %8800;     
 nw          = [];       % applies only for SPECTROGRAM_TYPE = 'multitaper'
-neurons     = 1;        % neuron #1 (#115) is for stimulus of 36 sec (40 sec)
+duration_to_load = 36;   % neuron #1 (#115) is for stimulus of 36 sec (40 sec)
 spectral_diff= 0;       % (logical) perform derivative (DIFF) along the frequency domain
 hpf_pole    = nan;
 
@@ -60,7 +60,7 @@ hpf_pole    = nan;
 % 40 s stimuli)
 [stim_st, spec_st] = load.stimulus_and_spectrogram(tbl_impale, ...
     'spectrogram_type', spectrogram_type, ...
-    'neurons', neurons, ...
+    'duration_to_load', duration_to_load, ...
     'binwidth', binwidth,...
     'lowfreq', lowfreq, ...         % (Hz)
     'highfreq', highfreq, ...       % (Hz)
@@ -71,8 +71,7 @@ hpf_pole    = nan;
     'spectral_diff', spectral_diff, ...
     'hpf_pole', hpf_pole, ...
     'fignum', [] ...
-    );
-            
+    );            
 
 fs = 1/(1e-3*binwidth);         % (Hz)
 
@@ -125,8 +124,7 @@ aux.vprint(verbose, '--> Finished\n');
 
 %% Get all rows (measurements) that have full session (all DRR conditions)
 H_labels = zeros(size(H,3), size(H,2));
-% for unit = 1:size(H,3)     % # of measurement
-for unit = 52:54
+for unit = 1:size(H,3)     % # of measurement
     for ndrr = 1:size(H,2)     % DRR case
         H_labels(unit, ndrr) = any(~isnan( H(:,ndrr,unit) ));
     end

@@ -33,6 +33,7 @@ data_type   = upper(data_type);
 fn.load.file_template = 'data_%s_(08-Jan-2021)_bw(5)_fbands(30)_win(NaN)ms_spec(gammatone).mat';
 % fn.load.file_template = 'data_%s_(01-Nov-2021)_bw(1)_fbands(30)_win(NaN)ms_spec(gammatone).mat';
 % fn.load.file_template = 'data_%s_(08-Nov-2021)_bw(5)_fbands(30)_win(NaN)ms_spec(gammatone).mat';
+% fn.load.file_template = 'data_%s_(10-Dec-2021)_bw(100)_fbands(30)_win(NaN)ms_spec(gammatone).mat'
 
 fn.load.file = sprintf(fn.load.file_template, data_type);
 fn.load.fullfile = fullfile( fn.load.path, fn.load.file );
@@ -90,9 +91,13 @@ if verbose
 end
 
 n_random_runs = 11;     % ************************* <<<<<<<<<<<< ========   
-sort_type = 'RND';
-units = 50;             % ************************* <<<<<<<<<<<< ========   
-        
+sort_type = 'SPK';
+units = 10;             % ************************* <<<<<<<<<<<< ========   
+
+sorted_list = find_best_unit_set(sort_type, 'fn_template', ...
+    {fn.load.path, fn.load.file_template, data_type});
+sort_type = 'SPK-RND'   % quick and dirty!
+
 for q = 1    %1:n_drr 
     % The training (i.e., truth-level) DRR case
     train_drr = drr.sortby(q); %drr.dry;         
@@ -105,8 +110,10 @@ for q = 1    %1:n_drr
     for m = 1:n_random_runs
         fprintf('%d Starting a new random run...\n', m);
 
-        [sorted_list, tbl_BFcc] = find_best_unit_set(sort_type, 'N', n_units);
-        H_sorted = data.H( :, 1:n_drr, sorted_list(1:units) );        
+        %[sorted_list, ~] = find_best_unit_set(sort_type, 'N', n_units);
+        % Randomize:
+        rand_idx = randperm(length(sorted_list), units);
+        H_sorted = data.H( :, 1:n_drr, sorted_list(rand_idx) );        
         
         % >> analyze_units;
         obj_list = cell(n_drr, n_splits);
@@ -226,8 +233,8 @@ for q = 1    %1:n_drr
     % %{
         fprintf('SAVE the analysis data!\n');
         fn.save.path    = '../_data/Reconstruct/';
-        fn.save.file    = sprintf('%d_reconstruct_%s_(%s)_units(%d)_bw(%g)ms_algo(%s)_fbands(%d)_splits(%d)_lags(%g)ms_cau(%d)_trainDRR(%s)',...
-            m, data_type, date, units, binwidth, algo_type, n_bands, n_splits, lags_ms, iscausal, num2str(train_drr, '%d '));
+        fn.save.file    = sprintf('%d_reconstruct_%s_(%s)_units(%d)_bw(%g)ms_type(%s)_fbands(%d)_lags(%g)ms_cau(%d)',...
+            m, data_type, date, units, binwidth, sort_type, n_bands, lags_ms, iscausal);
         fn.save.fullfile= fullfile( fn.save.path, fn.save.file );
                 
         stim_st = data.stim_st;

@@ -94,11 +94,12 @@ switch lower(spec_st.method)
         %assert(isequal(spec_st.f,f));
         
     case 'gammatone'
+        assert(strcmpi('erb', spec_st.f_scale), 'For gammatone filters set scale to log scale!')
+        
         fs_new = 1/(1e-3*spec_st.binwidth);     % (Hz)
         [N, downsample] = rat(fs_new/spec_st.fs);
         assert(1 == N);
         
-        '### [sgram.m]: using Stim2ANF cochleogram!! ###'
         [Sx, spec_st.f, spec_st.t] = Stim2ANF( y,...
             'method', spec_st.method, ...
             'calc_envelope', true, ...
@@ -142,18 +143,14 @@ if isempty(spec_st.duration_ms)
     % truncate) to the desired duration time
     spec_st.duration_ms = size(Sx, 2)*spec_st.binwidth;
 end
-duration_len = spec_st.duration_ms / spec_st.binwidth;  % (samples)
 
-% Check that the final length is valid
-assert( size(Sx,2) >= duration_len );
-% if size(Sx,2) < duration_len
-%     % Sometimes there is a lack of samples due to rounding, so pad with
-%     % zeros
-%     smp_to_add = round(duration_len-size(Sx,2));
-%     Sx = [Sx, zeros(size(Sx,1), smp_to_add)];
-% else
-%     Sx = Sx(:,1:duration_len);
+% if binwidth_ >= 1
+%     duration_len = spec_st.duration_ms / spec_st.binwidth;  % (samples)
+% 
+%     % Check that the final length is valid
+%     assert( size(Sx,2) >= duration_len );
 % end
+
 spec_st.t = (0:(size(Sx,2)-1)) * (1e-3*spec_st.binwidth);
 spec_st.n_time = length(spec_st.t);           % (samples)     
 
