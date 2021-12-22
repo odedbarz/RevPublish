@@ -79,20 +79,9 @@ switch lower(data_type)
         p = fullfile(p_stimulus, 'TIMIT_Males_Fs(16kHz)_ShortLength');           
         
         
-    case 'raw'  % not on the HD, so it's "Hard-coded"
-        %computer_name = getenv('computername');
-        computer_name = computer;        
-        if strcmpi('PCWIN64', computer_name)    %if strcmpi('OdedAlienware', computer_name)
-            % OdedAlienware
-            p = 'D:\Dropbox (Partners HealthCare)\DataBases\myMeas\Rabbits\!RAW';
-        elseif strcmpi('MACI64', computer_name)  % elseif strcmpi('ODEDSDELL', computer_name)
-            % Oded's external HD
-            p = '/Users/ob993/Dropbox (Partners HealthCare)/DataBases/myMeas/Rabbits/!RAW';        
-        else        
-            % Apollo drive
-            warning('--> Can''t find this COMPUTER! Trying to get the RAW path from APOLLO!');
-            p = '//apollo/ent_archive/Delgutte_Archive/obz/Rabbits/C74/!RAW/';
-        end                
+    case 'raw'  % raw data folder 
+        [above_rootpath, ~, ~] = fileparts( rootpath );
+        p = fullfile(above_rootpath, '.data');
         
     otherwise
         error('--> ERROR in [path_to_data.m]: Unrecognized DATA_TYPE option! (data_type = %s)',...
