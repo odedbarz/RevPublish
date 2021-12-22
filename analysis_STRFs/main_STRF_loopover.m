@@ -22,36 +22,22 @@ idx_dry = drr.ordered(1);
 %% Load data
 %   Run [main_aggregate_MUA_data.m] again to update this file if needed
 % 
-data_type   = 'SU';       % {'SU', MUA'}
-fn.load.path= '../_data';
+data_type   = 'MUA';       % {'SU', MUA'}
+fn.load.path= load.path_to_data('_data');
 data_type   = upper(data_type);
 
-switch data_type
-    case 'SU'
-        % Loads a struct with fields:
-        %               H: [3600×6×150 double]
-        %          S_list: {1×150 cell}
-        %     neuron_list: [150×1 double]
-        %         spec_st: [1×1 struct]
-        %      tbl_impale: [437×20 table]
-        fn.load.file = 'data_SU_(08-Jan-2021)_bw(5)_fbands(30)_win(NaN)ms_spec(gammatone).mat';       
+fn.load.file_template = 'data_%s_(08-Jan-2021)_bw(5)_fbands(30)_win(NaN)ms_spec(gammatone).mat';
+% fn.load.file_template = 'data_%s_(01-Nov-2021)_bw(1)_fbands(30)_win(NaN)ms_spec(gammatone).mat';
+% fn.load.file_template = 'data_%s_(08-Nov-2021)_bw(5)_fbands(30)_win(NaN)ms_spec(gammatone).mat';
+% fn.load.file_template = 'data_%s_(10-Dec-2021)_bw(100)_fbands(30)_win(NaN)ms_spec(gammatone).mat'
 
-    case 'MUA'
-        %Loads a struct with fields:
-        %               H: [7200×6×356 double]
-        %        H_labels: [356×6 double]
-        %     neuron_list: [356×1 double]
-        %         spec_st: [1×1 struct]
-        %         stim_st: [1×1 struct]
-        %      tbl_impale: [437×20 table]        
-        fn.load.file = 'data_MUA_(08-Jan-2021)_bw(5)_fbands(30)_win(NaN)ms_spec(gammatone).mat';        
-
-    otherwise
-        error('--> Unrecognized DATA_TYPE!');
-        
-end
+fn.load.file = sprintf(fn.load.file_template, data_type);
 fn.load.fullfile = fullfile( fn.load.path, fn.load.file );
-data            = load(fn.load.fullfile);
+data      = load(fn.load.fullfile);
+
+
+
+%%
 n_units         = size(data.H,3); 
 spec_st         = data.spec_st;
 tbl_data        = data.(sprintf('tbl_%s', data_type));

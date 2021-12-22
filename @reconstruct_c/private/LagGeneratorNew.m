@@ -6,7 +6,7 @@ function [out]=LagGeneratorNew(R,Lag)
 %
 out=zeros(size(R,1),size(R,2)*length(Lag),'like',R);
 ind2=1;
-R(end+1:end+13,:) = 0;
+R(end+1:end+13,:) = 0;  % padding with zeros (not necessary...)
 for cnt1 = 1:length(Lag)
     t1 = circshift(R,Lag(cnt1));
     if Lag(cnt1)<0
