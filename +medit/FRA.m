@@ -17,10 +17,13 @@ function fra = FRA(S, spikechan, syncchan)
 
 if 3 > nargin, syncchan = 0; end
 
-t_raisefall = S.stimChans{1}.Gate.RiseFallTime;     % (ms)
-t_delay     = S.stimChans{1}.Gate.Delay;            % (ms) usually 0 for FRA
+gate        = find( arrayfun(@(ix) S.stimChans{ix}.IsActive, 1:length(S.stimChans)) );
+assert(1 == length(gate), 'ERROR in [medit.FRA]: there are MORE THEN ONE one active gates!');
+
+t_raisefall = S.stimChans{gate}.Gate.RiseFallTime;     % (ms)
+t_delay     = S.stimChans{gate}.Gate.Delay;            % (ms) usually 0 for FRA
 t_start     = t_delay + t_raisefall;                % (ms)
-t_end       = S.stimChans{1}.Gate.Width;            % (ms)
+t_end       = S.stimChans{gate}.Gate.Width;            % (ms)
 
 
 
