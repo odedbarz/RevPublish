@@ -41,7 +41,7 @@ end
 %% Load stimuli & measurement data
 fprintf('--> Load stimuli & spectrograms\n');
 spectrogram_type = 'gammatone';      % {['matlab'], 'stft', 'multitaper', 'gammatone'}
-f_scale     = 'log';	% {['lin'], 'log', 'erb'}
+f_scale     = 'erb';	% {['lin'], 'log', 'erb'}
 n_bands     = 30        % (1x1) # of bins along the frequency domain of the spectrogram
 binwidth    = 5         % (ms) binwidth of the resulted spectrogram 
 win_size_ms = nan       % (ms) temporal window size over which to calc the spectrogram; 
@@ -139,7 +139,7 @@ for k = 1:n_rows
 
     % Loads the raw data
     fn.raw = fullfile(path_root_raw, S.info.rawDataDir, S.info.rawFileName);
-    assert(~isempty(dir(fn.raw)), '--> ERROR: can''t find this file!!\n');
+    assert(~isempty(dir(fn.raw)), '--> ERROR: can''t find this file: \n\t %s !!\n', fn.raw);
     raw_st = load(fn.raw, '-mat');
     assert(fs_raw == raw_st.sr);
 

@@ -89,67 +89,6 @@ sort_type = 'CC';  % {'CC', 'RND', 'SVD', 'FILE', 'SPK', 'NOSPK'}
 %     {fn.load.path, fn.load.file_template, data_type});    % {'SPK', 'NOSPK'}
 
 
-%% Get best measurement (CC) for each frequency group (sort by CC(BF) AND frequency 
-%{
-T = tbl_BFcc;
-%         dummy = load('/Users/ob993/Dropbox (Partners HealthCare)/codeOnCloud/RevPublish/_data/Analysis/STRF_SU_(22-Apr-2021)_units(103)_bw(5)ms_algo(regression)_fbands(30)_splits(12)_lags(30)ms_cau(1)_trainDRR(3).mat');
-%         tbl_strf = dummy.tbl_strf;
-%         tbl_strf.BF = tbl_strf.bf;
-%         tbl_strf.neuron = tbl_strf.index;
-%         tbl_strf.R = log10(1./(tbl_strf.bf_std + eps));
-%         T = tbl_strf;
-n_grps = 10;
-frange = linspace(min(spec_st.f), max(spec_st.f), n_grps);
-
-% divide units into frequency groups
-bf_grps = cell(1, n_grps);
-I1 = T.BF >= frange;
-Igrp = sum(I1, 2);
-for k = 1:n_grps
-    idx_neurons = find(k==Igrp);
-
-    % Order such that best CC are at the top of the list
-    cc_neurons_k = T.R(idx_neurons);
-    [~, idx_neurons_sort_k] = sort(cc_neurons_k, 'descend'); 
-    bf_grps{k} = idx_neurons(idx_neurons_sort_k);
-
-    %'### DEBUG : DONT SORT ###'
-    %bf_grps{k} = idx_neurons;
-end
-assert(sum( arrayfun(@(X) length(bf_grps{X}), 1:n_grps) ) == n_units);
-
-
-% Sort the neurons; assuming the all groups are non-empty at the beginning
-sorted_list = nan(1, n_units);
-klist = 1;     % the sorted_list counter
-J = 1;  % counter
-while klist <= n_units
-    idx_grp = mod(J-1, n_grps)+1;        
-    neuron = bf_grps{idx_grp};
-    if ~isempty(neuron)
-        sorted_list(klist) = neuron(1);
-        klist = klist + 1;
-        bf_grps{idx_grp} = neuron(2:end);            
-    end
-    J = J + 1;        
-end
-assert(length(sorted_list) == n_units);
-%}
-
-% *** SAVE sorted list ***
-%{
-fn_sorted_list = sprintf('sorted(freq,CC)_(%s)_unitList_data(%s)_units(%d).mat', date, data_type, n_units);
-save( fullfile(load.path_to_data('_data'), fn_sorted_list), 'sorted_list' );   
-%}
-
-% Randomize units
-% sorted_list = sorted_list(randperm(length(sorted_list)));
-
-% Loaded selected list
-% dummy = load('almost_flat_response_type(SU)_units(10).mat');
-% sorted_list = dummy.sorted_list;
-
-
 
 %% Reconstruction parameters
 iscausal       = 0;                    % use reconstructed causal filters?
@@ -184,11 +123,6 @@ end
 
 % Make sure that the split indices have a valid length
 assert(spec_st.n_time == split_time_idx(end));
-
-
-% % Use these 2 lines to override the split by speakers:
-% split_time_idx = [];
-% n_splits = 200
 
 
 

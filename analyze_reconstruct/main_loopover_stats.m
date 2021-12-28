@@ -220,10 +220,10 @@ for q = 1:n_rep
         % Split the TRAINING set
         X1 = spec_st.Sft{train_drr};
         
-    '### DEBUG ###'
-    y1 = y1(split_time_idx(1,1):split_time_idx(end,2),:);
-    X1 = X1(:, split_time_idx(1,1):split_time_idx(end,2));
-    '### DEBUG ###'
+%     '### DEBUG ###'
+%     y1 = y1(split_time_idx(1,1):split_time_idx(end,2),:);
+%     X1 = X1(:, split_time_idx(1,1):split_time_idx(end,2));
+%     '### DEBUG ###'
 
         [X_train, X_test0, y_train, y_test0, splits] = train_test_split(X1, y1, ...
            'n_splits', n_splits, ...

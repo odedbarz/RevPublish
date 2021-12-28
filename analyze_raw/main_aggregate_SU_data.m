@@ -44,7 +44,7 @@ end
 %% Load stimuli & measurement data
 fprintf('--> Load stimuli & spectrograms\n');
 spectrogram_type = 'gammatone';      % {['matlab'], 'stft', 'multitaper', 'gammatone'}
-f_scale     = 'log';	% {['lin'], 'log', 'erb'}
+f_scale     = 'erb';	% {['lin'], 'log', 'erb'}
 n_bands     = 30        % (1x1) # of bins along the frequency domain of the spectrogram
 binwidth    = 5         % (ms) binwidth of the resulted spectrogram 
 win_size_ms = nan       % (ms) temporal window size over which to calc the spectrogram; 

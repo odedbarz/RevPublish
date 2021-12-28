@@ -4,11 +4,11 @@ function data = tdata_to_1Dhist(h, tdata)
 % the 1D histogram H
 % Spike and sync counts are not updated
 %
-if min(size(h.data)) > 1,
+if min(size(h.data)) > 1
     error('Histogram must be 1-D')
 end
 
-if isempty(tdata),
+if isempty(tdata)
     data = zeros(size(h.data));
     return;
 end
