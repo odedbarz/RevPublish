@@ -19,8 +19,7 @@ debug_flag = 0;
 
 %% Load data
 data_type   = upper('SU');      % {'SU', MUA'}
-% n_runs = 10;
-units = 100;
+units = 25;
 
 % fn_path = [load.path_to_data('Reconstruct'), filesep, ...
 %     sprintf('Reconstruct_sortType(RND)_units(%d)_(11-Nov-2021)_multiruns', units)];

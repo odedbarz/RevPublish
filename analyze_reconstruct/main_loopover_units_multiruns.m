@@ -26,12 +26,12 @@ idx_dry = drr.ordered(1);
 %% Load data
 %   Run [main_aggregate_MUA_data.m] again to update this file if needed
 % 
-data_type   = 'SU';       % {'SU', MUA'}
+data_type   = 'MUA';       % {'SU', MUA'}
 fn.load.path= load.path_to_data('_data');
 data_type   = upper(data_type);
 
-fn.load.file_template = 'data_%s_(08-Jan-2021)_bw(5)_fbands(30)_win(NaN)ms_spec(gammatone).mat';
-% fn.load.file_template = 'data_%s_(01-Nov-2021)_bw(1)_fbands(30)_win(NaN)ms_spec(gammatone).mat';
+% fn.load.file_template = 'data_%s_(08-Jan-2021)_bw(5)_fbands(30)_win(NaN)ms_spec(gammatone).mat';
+fn.load.file_template = 'data_%s_(01-Nov-2021)_bw(1)_fbands(30)_win(NaN)ms_spec(gammatone).mat';
 % fn.load.file_template = 'data_%s_(08-Nov-2021)_bw(5)_fbands(30)_win(NaN)ms_spec(gammatone).mat';
 % fn.load.file_template = 'data_%s_(10-Dec-2021)_bw(100)_fbands(30)_win(NaN)ms_spec(gammatone).mat'
 
@@ -130,6 +130,7 @@ for q = 1    %1:n_drr
         % Split the TRAINING set
         X1 = spec_st.Sft{train_drr};
         %X1 = [spec_st.Sft{train_drr}; spec_st.Sft_right{train_drr}];
+        %X1 = [spec_st.Sft{train_drr} - spec_st.Sft_right{train_drr}];
         
         % Loop over SPLITS
         for n = 1:n_splits
