@@ -1,6 +1,6 @@
-function plot_FRA(S, figh, syncchan)
+function plot_FRA(S, varargin)
 %
-%   function plot_FRA(S, [figh], [syncchan])
+%   function plot_FRA(S, [figh], [syncchan], [spikechan])
 %
 % Input:
 %   S         : (struct) An Impale's data structure of the FRA measurement.
@@ -13,28 +13,40 @@ function plot_FRA(S, figh, syncchan)
 %   in this(these) area(s).
 %
 
+%% Set the inputs
+p = inputParser;
 
+addRequired(p, 'S', @(x) isstruct(x));           
+
+addOptional(p, 'figh', [], @ishandle);     
+addOptional(p, 'syncchan', 0, @isnumeric);     
+addOptional(p, 'spikechan', -1, @isnumeric);     
+
+parse(p, S, varargin{:});
+
+syncchan = p.Results.syncchan;
+spikechan = p.Results.spikechan;
+if isempty(p.Results.figh), figh = figure(99); else, figh = p.Results.figh; end
+
+
+
+%%
 fonts.title   = 16;
 fonts.axes    = 14;
 fonts.text    = 18;
-
-% lines.ctext  = 2;   % contour's text
-% lines.cmarker= 3;
-
 xtick_precision = 2;
-
-if 2 > nargin, figh = figure(99); end   % figure's handle
-if 3 > nargin, syncchan = 0; end        % Impale's syncchan
 
 figure(figh);
 clf;
 
 % Get all recorded spikechan 
-all_spikechan = spiketools.get_all_spikechan(S, syncchan);
-if iscell(all_spikechan), all_spikechan = all_spikechan{:}; end
+if -1 == spikechan
+    spikechan = spiketools.get_all_spikechan(S, syncchan);
+    if iscell(spikechan), spikechan = spikechan{:}; end
+end
 
 % Calc FRA for each of the available spikes
-fra = arrayfun(@(SPK) medit.FRA(S, SPK, syncchan), all_spikechan, 'UniformOutput', false) ;
+fra = arrayfun(@(SPK) medit.FRA(S, SPK, syncchan), spikechan, 'UniformOutput', false) ;
 
 % Set the subplot dimensions
 len_fra = length(fra);
@@ -71,7 +83,7 @@ for kk = 1:len_fra
     xtick = round(10^xtick_precision*exp([log(0.1):log(18)]))/10^xtick_precision;   % [kHz]
     set(gca, 'XTick', xtick);
 
-    spikechan_kk = all_spikechan(kk);
+    spikechan_kk = spikechan(kk);
     channel_number_kk = viewer.spikenum_to_Enum(spikechan_kk);
     title_kk = sprintf('FRA E$_{%d}$ (CF: %g Hz, spikechan: %d)', channel_number_kk, fra{kk}.CF, spikechan_kk);
     title_h = title(title_kk, 'Interpreter', 'latex');
@@ -88,6 +100,10 @@ for kk = 1:len_fra
     hold on
     plot3(xc, yc, zc, '--w', 'linewidth', 3);
     hold off
+    
+    if isempty(xc) || isempty(yc)
+        continue;
+    end
     
     % Add the CF TEXT
     CF = fra{kk}.CF;

@@ -31,8 +31,8 @@ fn.load.path= load.path_to_data('_data');
 data_type   = upper(data_type);
 
 % fn.load.file_template = 'data_%s_(08-Jan-2021)_bw(5)_fbands(30)_win(NaN)ms_spec(gammatone).mat';
-fn.load.file_template = 'data_%s_(01-Nov-2021)_bw(1)_fbands(30)_win(NaN)ms_spec(gammatone).mat';
-% fn.load.file_template = 'data_%s_(08-Nov-2021)_bw(5)_fbands(30)_win(NaN)ms_spec(gammatone).mat';
+% fn.load.file_template = 'data_%s_(01-Nov-2021)_bw(1)_fbands(30)_win(NaN)ms_spec(gammatone).mat';
+fn.load.file_template = 'data_%s_(08-Nov-2021)_bw(5)_fbands(30)_win(NaN)ms_spec(gammatone).mat';
 % fn.load.file_template = 'data_%s_(10-Dec-2021)_bw(100)_fbands(30)_win(NaN)ms_spec(gammatone).mat'
 
 fn.load.file = sprintf(fn.load.file_template, data_type);
@@ -92,10 +92,10 @@ end
 
 n_random_runs = 11;     % ************************* <<<<<<<<<<<< ========   
 sort_type = 'SPK';
-units = 10;             % ************************* <<<<<<<<<<<< ========   
+units = 50;             % ************************* <<<<<<<<<<<< ========   
 
 sorted_list = find_best_unit_set(sort_type, 'fn_template', ...
-    {fn.load.path, fn.load.file_template, data_type});
+    {fn.load.path, fn.load.file_template, data_type}, 'N', units);
 sort_type = 'SPK-RND'   % quick and dirty!
 
 for q = 1    %1:n_drr 
@@ -129,8 +129,6 @@ for q = 1    %1:n_drr
 
         % Split the TRAINING set
         X1 = spec_st.Sft{train_drr};
-        %X1 = [spec_st.Sft{train_drr}; spec_st.Sft_right{train_drr}];
-        %X1 = [spec_st.Sft{train_drr} - spec_st.Sft_right{train_drr}];
         
         % Loop over SPLITS
         for n = 1:n_splits
