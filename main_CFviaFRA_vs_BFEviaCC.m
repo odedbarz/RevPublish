@@ -41,13 +41,17 @@ tbl_SU = dummy.tbl_SU;
 n_units = height(tbl_SU);
 
 
+%% Get the BFcc:
+% dir([fn.load.fullfile(1:end-4), '*'])
+bfcc_filename = fullfile( fn.load.path, [fn.load.file, '_BFcc.mat'] );
+dummy = load(bfcc_filename);
+tbl_BFcc = dummy.tbl_BFcc;
+
+
+
 
 %% 
 syncchan = 0;   % Impale notation for syncronized break/new repetition.   
-
-
-
-%%
 max_repeated_trials = 4;   % max num of channels in this data (of LMAs)
 var_names = arrayfun(@(x) sprintf('cf%d', x), 1:max_repeated_trials, 'UniformOutput', false);
 tbl_fra = array2table(nan(n_units, max_repeated_trials), 'VariableNames', var_names);    
@@ -94,13 +98,11 @@ for k = 1:n_units
         fprintf(' (%d) spikechan: %.2f Hz\n', k, spikechan);
         fprintf(' (%d) cf       : %.2f Hz\n', k, cf_m);
 
-%         viewer.plot_FRA(S, 'spikechan', spikechan);
-
-%         if 1000 > cf_m
-% %             viewer.plot_FRA(S);
-%             viewer.plot_FRA(S, 'spikechan', spikechan);
-%             [];
-%         end
+        if 1000 > tbl_BFcc.BF(k)
+%             viewer.plot_FRA(S);
+            viewer.plot_FRA(S, 'spikechan', spikechan);
+            [];
+        end
         
         if isempty(cf_m), continue; end
         tbl_fra{k, c} = cf_m;
@@ -118,12 +120,6 @@ end
 % Add the neuron's numbers too
 tbl_fra = [tbl_SU(:,'neuron'), tbl_fra];
 
-
-%% Get the BFcc:
-% dir([fn.load.fullfile(1:end-4), '*'])
-bfcc_filename = fullfile( fn.load.path, [fn.load.file, '_BFcc.mat'] );
-dummy = load(bfcc_filename);
-tbl_BFcc = dummy.tbl_BFcc;
 
 
 
@@ -167,6 +163,7 @@ ax = gca;
 ax.FontSize = fontsize;
 set(xylabels, 'fontsize', fix(1.4*fontsize));
 title(sprintf('%d Units', sum(~isnan(cf))), 'fontsize', fix(1.8*fontsize))
+
 
 
 %% log-scale
