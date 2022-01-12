@@ -36,7 +36,10 @@ fn.load.file_template = 'data_%s_(08-Jan-2021)_bw(5)_fbands(30)_win(NaN)ms_spec(
 fn.load.file = sprintf(fn.load.file_template, data_type);
 fn.load.fullfile = fullfile( fn.load.path, [fn.load.file, '.mat'] );
 dummy = load(fn.load.fullfile, 'tbl_SU');
+
 tbl_SU = dummy.tbl_SU;
+% tbl_data  = data.(sprintf('tbl_%s', data_type));
+
 n_units = height(tbl_SU);
 
 
