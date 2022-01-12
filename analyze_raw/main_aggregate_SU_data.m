@@ -26,7 +26,7 @@ n_drr 	= drr.n_drr;
 path_root_mat = load.path_to_data('Impale_data');
 
 % Path to the RAW data
-path_root_raw = load.path_to_data('raw');
+path_root_raw = load.path_to_data('et_data_files');
 
 
 
@@ -49,12 +49,13 @@ n_bands     = 30        % (1x1) # of bins along the frequency domain of the spec
 binwidth    = 5         % (ms) binwidth of the resulted spectrogram 
 win_size_ms = nan       % (ms) temporal window size over which to calc the spectrogram; 
                         %      'gammatone' filterbanks do not use it!
-lowfreq     = 250;      % (Hz)
+lowfreq     = 100;      % (Hz)
 highfreq    = 8900;     % (Hz) %8800;     
 nw          = [];       % applies only for SPECTROGRAM_TYPE = 'multitaper'
 duration_to_load = 36;   % neuron #1 (#115) is for stimulus of 36 sec (40 sec)
-spectral_diff= 0;       % (logical) perform derivative (DIFF) along the frequency domain
-hpf_pole    = nan;
+
+spectral_diff     = 0;       % (logical) perform derivative (DIFF) along the frequency domain
+apply_sync_filter = true;
 
 % STIM_LIST & SPEC_LIST contains all stimuli duration (i.e., the 36 s &
 % 40 s stimuli)
@@ -69,7 +70,7 @@ hpf_pole    = nan;
     'f_scale', f_scale, ... {'lin', 'log'}
     'nw', nw, ...          (default: 1.4) only for spectrogram_type == MULTITAPER
     'spectral_diff', spectral_diff, ...
-    'hpf_pole', hpf_pole, ...
+    'apply_sync_filter', apply_sync_filter, ...
     'fignum', [] ...
     );            
 

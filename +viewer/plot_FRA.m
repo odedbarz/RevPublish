@@ -1,4 +1,4 @@
-function plot_FRA(S, varargin)
+function [ax_sub] = plot_FRA(S, varargin)
 %
 %   function plot_FRA(S, [figh], [syncchan], [spikechan])
 %
@@ -18,7 +18,8 @@ p = inputParser;
 
 addRequired(p, 'S', @(x) isstruct(x));           
 
-addOptional(p, 'figh', [], @ishandle);     
+addOptional(p, 'figh', [], @ishandle); 
+% addOptional(p, 'ax', [], @ishandle); 
 addOptional(p, 'syncchan', 0, @isnumeric);     
 addOptional(p, 'spikechan', -1, @isnumeric);     
 
@@ -53,9 +54,11 @@ len_fra = length(fra);
 sub_ratio = min(3, len_fra);
 subx = ceil(len_fra/sub_ratio);
 suby = sub_ratio;
+ax_sub = nan(1, len_fra);
+
 
 for kk = 1:len_fra
-    ax_kk = subplot(subx,suby,kk);
+    ax_sub(kk) = subplot(subx,suby,kk);
     
     % Frequency
     innerSeq.f0  = S.innerSeq.master.values;   
@@ -70,9 +73,9 @@ for kk = 1:len_fra
     z = fra{kk}.rates';
     
     % Set the image:
-    surf_h = surf(ax_kk, x, y, z);      % [kHz x SPL x FRA]; 
+    surf_h = surf(ax_sub(kk), x, y, z);      % [kHz x SPL x FRA]; 
 
-    view(ax_kk, 2);
+    view(ax_sub(kk), 2);
     set(gca, 'XScale', 'log');
     set(surf_h, 'LineStyle', 'none');
     colormap hot;
@@ -89,8 +92,8 @@ for kk = 1:len_fra
     title_h = title(title_kk, 'Interpreter', 'latex');
     set(title_h, 'Fontsize', fonts.title, 'FontWeight', 'bold');
 
-    xlabel(ax_kk, innerSeq.var, 'Interpreter', 'latex');
-    ylabel(ax_kk, outerSeq.var, 'Interpreter', 'latex');
+    xlabel(ax_sub(kk), innerSeq.var, 'Interpreter', 'latex');
+    ylabel(ax_sub(kk), outerSeq.var, 'Interpreter', 'latex');
     
     % Add the CF (kHz)
     xc = fra{kk}.graphics.xc;

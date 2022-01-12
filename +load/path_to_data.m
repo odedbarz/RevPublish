@@ -83,6 +83,9 @@ switch lower(data_type)
         [above_rootpath, ~, ~] = fileparts( rootpath );
         p = fullfile(above_rootpath, '.data');
         
+    case 'et_data_files'
+        p = 'D:\Dropbox (Partners HealthCare)\DataBases\myMeas\Rabbits\!RAW\';
+        
     otherwise
         error('--> ERROR in [path_to_data.m]: Unrecognized DATA_TYPE option! (data_type = %s)',...
             data_type);

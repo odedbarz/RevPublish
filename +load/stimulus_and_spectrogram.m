@@ -16,8 +16,6 @@ p = inputParser;
 %         the database.
 addRequired(p, 'T', @istable);            
 
-
-
 % (1xn) neuron(s) to load. The type of the loaded stimuli is defined by the
 % required neurons. If NEURONS are not defined empty, all available 
 % (usually 2, 36 & 40 sec) STIMULI durations will be loaded 
@@ -63,7 +61,7 @@ addOptional(p, 'spectral_diff', false, @(x) isnumeric(x) || islogical(x));
 %        slowly varying parts; a pole closer to -1.0 introduces
 %        increasingly extreme emphasis of rapid variations, which
 %        leads to more peaks initially.
-addOptional(p, 'hpf_pole', nan, @(x) isnumeric(x));    
+addOptional(p, 'apply_sync_filter', false, @(x) islogical(x) | isnumeric(x));    
 
 
 addOptional(p, 'verbose', [], @isnumeric);      % (1x1) write things to the command line?
@@ -84,12 +82,11 @@ lowfreq         = p.Results.lowfreq;
 highfreq        = p.Results.highfreq;       
 win_size_ms     = p.Results.win_size_ms;   
 spectral_diff   = p.Results.spectral_diff;  
-hpf_pole        = p.Results.hpf_pole;  
+apply_sync_filter = p.Results.apply_sync_filter;  
 
 verbose         = p.Results.verbose;       
 fignum          = p.Results.fignum;       
 
-if isempty(hpf_pole), hpf_pole = nan; end
 
 
 %% Select duration to load
@@ -111,136 +108,146 @@ spec_list = cell(1);
 meas_list = cell(1);
 data_st   = struct();
 
-    % Set the k'th desired measurement to load
-    meas.ID         = T.ID{1};   
-    meas.measType   = T.measType{1};   
-    meas.session    = T.session(1);    
-    meas.unit       = T.unit(1);       
-    meas.measNum    = T.measNum(1);    
-    meas.syncchan   = 0;
-    meas.spikechan  = T.spikechan(1);  
-    meas.CF         = T.CF(1);          % (Hz)
-    
-    
-    %% Load measurement
-    [S, n_sync, spikecount, session_fn] = load.session(meas);
-    meas.name = sprintf('%s (spikechan: %d)', session_fn, meas.spikechan);
+% Set the k'th desired measurement to load
+meas.ID         = T.ID{1};   
+meas.measType   = T.measType{1};   
+meas.session    = T.session(1);    
+meas.unit       = T.unit(1);       
+meas.measNum    = T.measNum(1);    
+meas.syncchan   = 0;
+meas.spikechan  = T.spikechan(1);  
+meas.CF         = T.CF(1);          % (Hz)
 
-    
-    %% Load the k'th STIMULUS 
-    clear stim
-    suffix       = S.measParam.Suffix;
-    duration_sec = S.stimChans{1}.Source.numTokens;
-    fn           = load.get_stimulus_info(suffix, duration_sec);
-    if isempty(fn.template)
-        return;
+
+%% Load measurement
+[S, n_sync, spikecount, session_fn] = load.session(meas);
+meas.name = sprintf('%s (spikechan: %d)', session_fn, meas.spikechan);
+
+
+%% Load the k'th STIMULUS 
+clear stim
+suffix       = S.measParam.Suffix;
+duration_sec = S.stimChans{1}.Source.numTokens;
+fn           = load.get_stimulus_info(suffix, duration_sec);
+if isempty(fn.template)
+    return;
+end
+
+stim.fs = stim_fs;     % (Hz)
+
+stim = load.stimuli(stim.fs, fn.path, fn.template);
+stim_right = load.stimuli(stim.fs, fn.path, fn.template_right);
+
+% keep record of the WAV file
+stim.fn_template = fn.template;   
+stim_right.fn_template = fn.template;   
+
+stim.fn_path = fn.path;   
+stim_right.fn_path = fn.path;   
+
+% Duration of the stimulus, in mili-seconds
+duration_ms = units.sec2ms( stim.info.Duration );
+stim.duration_ms = duration_ms;
+stim_right.duration_ms = duration_ms;
+
+% Measurement's labels
+labels = stim.labels;
+stim.labels = labels;
+stim_right.labels = labels;
+
+% (cell --> matrix)
+stim.Y = [stim.Y{:}];
+stim_right.Y = [stim_right.Y{:}];
+
+if verbose
+    fprintf('\n');    
+    fprintf('--> (%d) Analyzing SESSION: %s\n', kk, meas.name);
+    disp( table(n_sync, spikecount) );
+
+    fprintf('\n--> STIMULUS: %g\n', stim.fs);
+    fprintf('    ---------\n');
+    fprintf('--> * Sampling rate (fs): %g\n', stim.fs);
+    fprintf('--> * Duration: %g\n', stim.info.Duration);
+    fprintf('--> * Loaded indices\n');
+    fprintf('--> * Measurement labels:\n')
+    disp(labels);
+end
+
+
+% %% Apply low-frequency filter (phase-locking filter)
+% if ~isnan(apply_sync_filter)
+%     sync_filt.Fco = 1000;     % (Hz) cutoff frequency
+%     sync_filt.Fs = 1/(1e-3*binwidth);    % (Hz) spectrogram's temporal sampled frequency
+%     [sync_filt.b, sync_filt.a] = SynchronyFilter(sync_filt.Fco, sync_filt.Fs);
+% end
+
+
+%% ** Spectrogram ** 
+% Calc. spectrograms for all columns\measurements
+Sft = cell(1, size(stim.Y, 2));
+Sft_right = cell(1, size(stim_right.Y, 2));
+
+for k = 1:size(stim.Y, 2)
+    % LEFT side stimulus
+    [Sft{k}, spec_st] = spec.spectrogram(stim.Y(:,k), stim.fs, ...
+        'n_bands', n_bands,...
+        'lowfreq', lowfreq,...
+        'highfreq', highfreq,...
+        'overlap_ratio', 0.80,...
+        'binwidth', binwidth,...
+        'win_size_ms', win_size_ms, ...
+        'nw', nw,...                only for spectrogram_type== MULTITAPER
+        'f_scale', f_scale,...
+        'db_floor', -100, ...  % (dB)
+        'duration_ms', duration_ms,...
+        'method', spectrogram_type, ...
+        'apply_sync_filter', apply_sync_filter,...
+        'fignum', k+fignum ...
+     );
+
+    % RIGHT side stimulus
+    [Sft_right{k}, spec_right_st] = spec.spectrogram(stim_right.Y(:,k), stim.fs, ...
+        'n_bands', spec_st.n_bands,...
+        'lowfreq', spec_st.lowfreq,...
+        'highfreq', spec_st.highfreq,...
+        'overlap_ratio', spec_st.overlap_ratio,...
+        'binwidth', spec_st.binwidth,...    % (ms)
+        'win_size_ms', spec_st.win_size_ms, ...
+        'nw', spec_st.nw,...                only for spectrogram_type== MULTITAPER
+        'f_scale', spec_st.f_scale,...
+        'db_floor', spec_st.db_floor, ...  % (dB)
+        'duration_ms', spec_st.duration_ms,...
+        'method', spec_st.method, ...
+        'apply_sync_filter', apply_sync_filter,...    
+        'fignum', 1+k+fignum ...
+     );     
+
+    % Perform derivitive along the frequency domain
+    if 1 == spectral_diff
+        Sft{k} = diff([Sft{k}; Sft{k}(end,:)], [], 1);
+        Sft_right{k} = diff([Sft_right{k}; Sft_right{k}(end,:)], [], 1);
     end
 
-    stim.fs = stim_fs;     % (Hz)
-    
-    stim = load.stimuli(stim.fs, fn.path, fn.template);
-    stim_right = load.stimuli(stim.fs, fn.path, fn.template_right);
+%     % Performs high-pass filtering along the time domain
+%     if apply_sync_filter
+%         Sft{k}      = filtfilt(sync_filt.b, sync_filt.a, Sft{k}')';
+%         Sft_right{k}= filtfilt(sync_filt.b, sync_filt.a, Sft_right{k}')';
+%     end
+end
 
-    % keep record of the WAV file
-    stim.fn_template = fn.template;   
-    stim_right.fn_template = fn.template;   
-    
-    stim.fn_path = fn.path;   
-    stim_right.fn_path = fn.path;   
-
-    % Duration of the stimulus, in mili-seconds
-    duration_ms = units.sec2ms( stim.info.Duration );
-    stim.duration_ms = duration_ms;
-    stim_right.duration_ms = duration_ms;
-
-    % Measurement's labels
-    labels = stim.labels;
-    stim.labels = labels;
-    stim_right.labels = labels;
-
-    % (cell --> matrix)
-    stim.Y = [stim.Y{:}];
-    stim_right.Y = [stim_right.Y{:}];
-
-    if verbose
-        fprintf('\n');    
-        fprintf('--> (%d) Analyzing SESSION: %s\n', kk, meas.name);
-        disp( table(n_sync, spikecount) );
-
-        fprintf('\n--> STIMULUS: %g\n', stim.fs);
-        fprintf('    ---------\n');
-        fprintf('--> * Sampling rate (fs): %g\n', stim.fs);
-        fprintf('--> * Duration: %g\n', stim.info.Duration);
-        fprintf('--> * Loaded indices\n');
-        fprintf('--> * Measurement labels:\n')
-        disp(labels);
-    end
+% Add the labels of the spectrograms for later reference
+spec_st.labels = labels(:);    
+spec_st.Sft = Sft;
+spec_st.Sft_right = Sft_right;
 
 
-    %% ** Spectrogram ** 
-    % Calc. spectrograms for all columns\measurements
-    Sft = cell(1, size(stim.Y, 2));
-    Sft_right = cell(1, size(stim_right.Y, 2));
-    
-    for k = 1:size(stim.Y, 2)
-        % LEFT side stimulus
-        [Sft{k}, spec_st] = spec.spectrogram(stim.Y(:,k), stim.fs, ...
-            'n_bands', n_bands,...
-            'lowfreq', lowfreq,...
-            'highfreq', highfreq,...
-            'overlap_ratio', 0.80,...
-            'binwidth', binwidth,...
-            'win_size_ms', win_size_ms, ...
-            'nw', nw,...                only for spectrogram_type== MULTITAPER
-            'f_scale', f_scale,...
-            'db_floor', -100, ...  % (dB)
-            'duration_ms', duration_ms,...
-            'method', spectrogram_type, ...
-            'fignum', k+fignum ...
-         );
-     
-        % RIGHT side stimulus
-        [Sft_right{k}, spec_right_st] = spec.spectrogram(stim_right.Y(:,k), stim.fs, ...
-            'n_bands', spec_st.n_bands,...
-            'lowfreq', spec_st.lowfreq,...
-            'highfreq', spec_st.highfreq,...
-            'overlap_ratio', spec_st.overlap_ratio,...
-            'binwidth', spec_st.binwidth,...
-            'win_size_ms', spec_st.win_size_ms, ...
-            'nw', spec_st.nw,...                only for spectrogram_type== MULTITAPER
-            'f_scale', spec_st.f_scale,...
-            'db_floor', spec_st.db_floor, ...  % (dB)
-            'duration_ms', spec_st.duration_ms,...
-            'method', spec_st.method, ...
-            'fignum', 1+k+fignum ...
-         );     
-     
-        % Perform derivitive along the frequency domain
-        if 1 == spectral_diff
-            Sft{k} = diff([Sft{k}; Sft{k}(end,:)], [], 1);
-            Sft_right{k} = diff([Sft_right{k}; Sft_right{k}(end,:)], [], 1);
-        end
-     
-        % Performs high-pass filtering along the time domain
-        if ~isnan(hpf_pole)
-            Sft{k} = filter([1 -1], [1 -hpf_pole], Sft{k}')';
-            Sft_right{k} = filter([1 -1], [1 -hpf_pole], Sft_right{k}')';
-        end
-    end
+%% Save in the lists
+stim_list = stim;    
+meas_list = meas;
+spec_list = spec_st;
 
-    % Add the labels of the spectrograms for later reference
-    spec_st.labels = labels(:);    
-    spec_st.Sft = Sft;
-    spec_st.Sft_right = Sft_right;
-    
-
-    %% Save in the lists
-    stim_list = stim;    
-    meas_list = meas;
-    spec_list = spec_st;
-    
-    % Add the right stimulus too:
-    stim_list.Yright = stim_right.Y;    
+% Add the right stimulus too:
+stim_list.Yright = stim_right.Y;    
 
 
 %% Information about the loaded measurements

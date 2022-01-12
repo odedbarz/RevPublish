@@ -41,6 +41,7 @@ addOptional(p, 'downsmp', 0, @isnumeric);       % downsampling factor
 addOptional(p, 'lowfreq', 360.0, @isnumeric); 	% [Hz] lowest frequency (for rabbits)
 addOptional(p, 'highfreq', 42e3, @isnumeric); 	% [Hz] highest frequency (for rabbits)
 addOptional(p, 'align_cfs', 'ascend', @(s) any(strcmpi({'ascend', 'descend'}, s)) ); % arrange the CFs
+addOptional(p, 'apply_sync_filter', false, @(x) islogical(x) | isnumeric(x));    
 
 % gammatone
 addOptional(p, 'calc_envelope', false, @(x) islogical(x) || isscalar(x));
@@ -86,6 +87,15 @@ cfs = ERBSpace(lowfreq, highfreq, Nch, rabbit_flag);     % (also implemented in 
 
 
 
+%% Apply low-frequency filter (phase-locking filter)
+apply_sync_filter = p.Results.apply_sync_filter;  
+if apply_sync_filter
+    sync_filt.Fco = 1000;     % (Hz) cutoff frequency
+    sync_filt.Fs = Fs;    % (Hz) spectrogram's temporal sampled frequency
+    [sync_filt.b, sync_filt.a] = SynchronyFilter(sync_filt.Fco, sync_filt.Fs);
+end
+
+
 %%
 switch lower(method)
     case 'none'
@@ -111,7 +121,13 @@ switch lower(method)
         );
         coch = ERBFilterBank( stim, fcoefs );
 
-        if calc_envelope
+        % Performs high-pass filtering along the time domain
+        if apply_sync_filter
+            coch = max(0, coch);    % rectify
+            coch = filtfilt(sync_filt.b, sync_filt.a, coch')';       
+            np = Fs * 10e-3;    % 10 ms for the peak envelope
+            anf = envelope(coch', np, 'peak')';            
+        elseif calc_envelope
             anf = envelope(coch')';
         else
             anf = coch;
@@ -229,6 +245,7 @@ switch lower(method)
     otherwise
         error('--> [ERROR in Stim2ANF]: Your choice of <method> is not supported!!!');
 end
+
 
 %% Align the CFs
 % * 'reverse' is the default

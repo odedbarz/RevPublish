@@ -21,13 +21,14 @@ addOptional(p, 'db_floor', 80, @isnumeric);
 addOptional(p, 'f_scale', 'log', @isstr);           % {'lin', 'log', 'erb'}
 addOptional(p, 'method', 'matlab', @isstr);         % {'matlab', 'tfspec', 'multitaper', *'meddis'}          
 addOptional(p, 'rabbit_flag', false, @isstr);           
+addOptional(p, 'apply_sync_filter', false, @(x) islogical(x) | isnumeric(x));    
 addOptional(p, 'fignum', [], @isnumeric);           % (1x1) if not empty, plot stuff (for debug)
 
 parse(p, y, fs, varargin{:});
 
 spec_st    = p.Results;
 spec_st.fs = fs;            % (Hz)
-fignum     = p.Results.fignum;       
+fignum     = p.Results.fignum;      
 
 
 
@@ -106,6 +107,7 @@ switch lower(spec_st.method)
             'Fs', spec_st.fs, ...
             'downsmp', downsample, ...
             'Nch', spec_st.n_bands, ...
+            'apply_sync_filter', p.Results.apply_sync_filter,...
             'lowfreq', spec_st.lowfreq, ...
             'highfreq', spec_st.highfreq  ...
         );    
@@ -144,12 +146,6 @@ if isempty(spec_st.duration_ms)
     spec_st.duration_ms = size(Sx, 2)*spec_st.binwidth;
 end
 
-% if binwidth_ >= 1
-%     duration_len = spec_st.duration_ms / spec_st.binwidth;  % (samples)
-% 
-%     % Check that the final length is valid
-%     assert( size(Sx,2) >= duration_len );
-% end
 
 spec_st.t = (0:(size(Sx,2)-1)) * (1e-3*spec_st.binwidth);
 spec_st.n_time = length(spec_st.t);           % (samples)     
@@ -163,13 +159,6 @@ Sx_abs = abs(Sx);
 
 %% Normalize for the dB scale
 spec_st.max_Sft = max(Sx_abs(:));
-
-% if isempty( spec_st.db_floor )
-%     dummy = 20*log10( Sx_abs/spec_st.max_Sft );
-%     dummy = dummy(dummy ~= -Inf);
-%     spec_st.db_floor = min(dummy(:));
-%     spec_st.db_floor = sign(spec_st.db_floor) * spec_st.db_floor;
-% end
 
 % Apply a threshold to the spectrogram
 spec_st.Sft = 20*log10( (eps + Sx_abs)/(eps + spec_st.max_Sft) ) - spec_st.db_floor;
