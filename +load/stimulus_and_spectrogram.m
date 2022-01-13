@@ -49,7 +49,9 @@ addOptional(p, 'win_size_ms', 25, @isnumeric);
 addOptional(p, 'spectrogram_type', 'matlab', @isstr);    
 
 % If TRUE, performs spectral derivation (difference along the y-axis)
-addOptional(p, 'spectral_diff', false, @(x) isnumeric(x) || islogical(x));  
+addOptional(p, 'spectral_diff', false, @(x) isnumeric(x) || islogical(x)); 
+
+addOptional(p, 'calc_envelope', true, @(x) islogical(x) | isnumeric(x));    
 
 % If TRUE, performs high-pass filtering along the time domain of each 
 % frequency channel in the spectrogram.

@@ -43,7 +43,7 @@ end
 
 %% Load stimuli & measurement data
 fprintf('--> Load stimuli & spectrograms\n');
-spectrogram_type = 'gammatone';      % {['matlab'], 'stft', 'multitaper', 'gammatone', 'meddis', 'carney'}
+spectrogram_type = 'meddis';      % {['matlab'], 'stft', 'multitaper', 'gammatone', 'meddis', 'carney'}
 f_scale     = 'erb';	% {['lin'], 'log', 'erb'}
 n_bands     = 30      % (1x1) # of bins along the frequency domain of the spectrogram
 binwidth    = 5         % (ms) binwidth of the resulted spectrogram 
@@ -56,7 +56,8 @@ nw          = [];       % applies only for SPECTROGRAM_TYPE = 'multitaper'
 duration_to_load = 36;  % neuron #1 (#115) is for stimulus of 36 sec (40 sec)
 
 spectral_diff     = 0;       % (logical) perform derivative (DIFF) along the frequency domain
-apply_sync_filter = false;
+apply_sync_filter = false
+calc_envelope     = true
 
 % STIM_LIST & SPEC_LIST contains all stimuli duration (i.e., the 36 s &
 % 40 s stimuli)
@@ -72,6 +73,7 @@ apply_sync_filter = false;
     'nw', nw, ...          (default: 1.4) only for spectrogram_type == MULTITAPER
     'spectral_diff', spectral_diff, ...
     'apply_sync_filter', apply_sync_filter, ...
+    'calc_envelope', calc_envelope, ...
     'fignum', [] ...
     );            
 

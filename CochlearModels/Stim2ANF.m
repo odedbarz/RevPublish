@@ -125,8 +125,10 @@ switch lower(method)
         if apply_sync_filter
             coch    = max(0, coch);    % rectify
             coch    = filtfilt(sync_filt.b, sync_filt.a, coch')';       
-            np      = Fs * 10e-3;    % 10 ms for the peak envelope
-            anf     = envelope(coch', np, 'peak')';            
+            np      = Fs * 1e-3;    % 10 ms for the peak envelope
+            noise = 1e-4*min(coch(:))' * randn(size(coch));  % add a little bit of noise for the envelope-peak algorithm            
+            %noise = 1e-6*max(anf(:))' * randn(size(anf));  % add a little bit of noise for the envelope-peak algorithm            
+            anf     = envelope((coch+noise)', np, 'peak')';            
         elseif calc_envelope
             anf = envelope(coch')';
         else
@@ -175,7 +177,8 @@ switch lower(method)
 
         if calc_envelope
             np = Fs * 1e-3;    % 10 ms for the peak envelope
-            anf = envelope(anf', np, 'peak')';
+            noise = 1e-6*max(anf(:))' * randn(size(anf));  % add a little bit of noise for the envelope-peak algorithm
+            anf = envelope((anf + noise)', np, 'peak')';
         end        
 
     case 'carney'  	% see Zilany & Carney's (2014)Code_and_paper file
