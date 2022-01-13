@@ -123,10 +123,10 @@ switch lower(method)
 
         % Performs high-pass filtering along the time domain
         if apply_sync_filter
-            coch = max(0, coch);    % rectify
-            coch = filtfilt(sync_filt.b, sync_filt.a, coch')';       
-            np = Fs * 10e-3;    % 10 ms for the peak envelope
-            anf = envelope(coch', np, 'peak')';            
+            coch    = max(0, coch);    % rectify
+            coch    = filtfilt(sync_filt.b, sync_filt.a, coch')';       
+            np      = Fs * 10e-3;    % 10 ms for the peak envelope
+            anf     = envelope(coch', np, 'peak')';            
         elseif calc_envelope
             anf = envelope(coch')';
         else
@@ -155,7 +155,7 @@ switch lower(method)
         % (below is my implementation using MATLAB's vectorization)
         c = max(coch, 0);                   	% half-wave rectifier
         anf = filter(1, [1 -.99], c, [], 2); 	% low-pass filter
-
+        
 
     case 'meddis' 	% Ray Meddis� 1986 JASA paper hair cell model
                     % (see also AuditoryToolboxTechReport)
@@ -173,6 +173,10 @@ switch lower(method)
         coch = ERBFilterBank( s_filt, fcoefs );
         anf = MeddisHairCell( 80* coch/max(coch(:)), Fs);
 
+        if calc_envelope
+            np = Fs * 1e-3;    % 10 ms for the peak envelope
+            anf = envelope(anf', np, 'peak')';
+        end        
 
     case 'carney'  	% see Zilany & Carney's (2014)Code_and_paper file
         % Carney's model parameters:
@@ -192,16 +196,24 @@ switch lower(method)
             species = 1;
         end
 
+        
         % Note: For Carney's model:
         %   * CF must be between 125 Hz and 20 kHz for HUMAN model
         %   * CF must be between 125 Hz and 40 kHz for CAT model
         assert(lowfreq >= 125, 'lowfreq MUST be bigger or equal than 125!');
-        %lowfreq     = max(125, lowfreq);    % (Hz)
-        %highfreq    = min(40e3, highfreq);  % (Hz)
-
-        %cfs = ERBSpace( lowfreq, highfreq, Nch); 	% cochlear frequencies
-
-        assert(100e3 == Fs, '--> ERROR in [Stim2ANF.m]: For the Zilany & Carney model, Fs MUST be 100k Hz!');
+        if Fs < 100e3
+            Fs_old = 16e3;  % (Hz
+            applied_updample_filter = true;
+            %warning('ERROR in [Stim2ANF.m]: For the Zilany & Carney model, Fs MUST be 100k Hz!');
+            %warning('ERROR in [Stim2ANF.m]: signal STIM was upsampled to 100k Hz!');
+            [p, q] = rat(100e3/Fs);
+            stim = resample(stim, p, q);
+            Fs = 100e3;     % (Hz)
+        else
+            applied_updample_filter = false;
+        end        
+        
+        %assert(100e3 == Fs, '--> ERROR in [Stim2ANF.m]: For the Zilany & Carney model, Fs MUST be 100k Hz!');
         T  = length(stim)*(1/Fs);  % total stimulus' time
         Ts = 1/Fs;
         Ls = length(stim);         % (samples) stimulus' length
@@ -238,10 +250,21 @@ switch lower(method)
 
         end
 
-        % flip the CF axis (1 dim) so that the lowest CFs will be at
-        % the "lower" section of the anf matrix:
-        %anf = anf(end:-1:1,:);
-
+        if applied_updample_filter
+            % Back to the original sampling frequency            
+            anf = resample(anf', q, p)';
+            Fs = Fs_old;     % (Hz)
+            stim = resample(stim, q, p);            
+        end      
+        
+%         if 0 < downsmp
+            %binwidth = 1e3/(Fs/downsmp);
+%             np = 2*downsmp;
+%             anf = envelope(anf', np, 'peak')';  
+%             anf = max(0, anf);
+            %anf = envelope(anf')';
+%         end
+        
     otherwise
         error('--> [ERROR in Stim2ANF]: Your choice of <method> is not supported!!!');
 end

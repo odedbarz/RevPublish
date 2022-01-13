@@ -17,7 +17,7 @@ save_results = false
 %% Load data
 %   Run [main_aggregate_MUA_data.m] again to update this file if needed
 % 
-data_type   = 'SU';       % {'SU', MUA'}
+data_type   = 'MUA';       % {'SU', MUA'}
 fn.load.path= load.path_to_data('_data');
 data_type   = upper(data_type);
 
@@ -68,7 +68,8 @@ end
 
     
     
-%% Loop over all n_units
+%% Loop over all n_units for DRY condition only
+%{
 dry_idx = drr.ordered(1);
 Sdry    = spec_st.Sft{dry_idx};     % fry spectrogram
 n_freq  = size(Sdry, 1); 
@@ -88,13 +89,10 @@ for k = 1:n_units
     
     % Get the best frequency over all envelopes of the spectrogram
     BF(k)= spec_st.f(kbest);    % (Hz)
-    R(k) = Rn(kbest); %(1,2);             % correlation coefficient of the best frequency    
+    R(k) = Rn(kbest);           % correlation coefficient of the best frequency    
 end
 
-
-
-
-%% Add BF as columns into the measurement table
+% Add BF as columns into the measurement table
 % Create a new table with all the information of the measurements and save it
 neuron = tbl_data.neuron;
 tbl_BFcc = [table(neuron), table(BF), table(R)]; 
@@ -106,8 +104,67 @@ end
 
 
 
+%% Loop over all n_units for SELECTED DRR condition
+bfcc_st = {};
+tbl_BFcc = table();
+
+for ix = 1:drr.n_drr
+    %ix     = 1
+    drr_ix = drr.ordered( ix );
+    Sdrr   = spec_st.Sft{drr_ix};     % fry spectrogram
+    n_freq = size(Sdrr, 1); 
+
+    % Best-frequency correlation coefficient
+    BF = nan(n_units, 1);
+    R  = nan(n_units, 1);
+    N = size(Sdrr,2);
+
+    for k = 1:n_units    
+        [BF(k), R(k)] = BFcc(data.H(:,drr_ix,k), Sdrr, spec_st.f);      
+    end
+
+%     bfcc_st{ix}.drr_ix = drr_ix;
+%     bfcc_st{ix}.drr_label = drr.labels{drr.ordered( ix )};
+%     bfcc_st{ix}.T = [table(neuron), table(BF), table(R)]; 
+    
+    % Add BF as columns into the measurement table
+    % Create a new table with all the information of the measurements and save it
+    %neuron = tbl_data.neuron;
+    tbl_BFcc = [tbl_BFcc,...
+        table(BF, 'VariableNames', {sprintf('BF%d',ix)}), ...
+        table(R, 'VariableNames', {sprintf('R%d',ix)}) ...
+    ];     
+end
+
+% % Change the BF1 & R1 names for compatibility:
+% vnames = tbl_BFcc.Properties.VariableNames;
+% vnames(2) = {'BF'};
+% vnames(3) = {'R'};
+% tbl_BFcc.Properties.VariableNames = vnames
+
+neuron = tbl_data.neuron;
+tbl_BFcc = [table(neuron), tbl_BFcc];
+
+tbl_BFcc(1:5,:)
+
+if save_results
+    save([fn.load.fullfile(1:end-4), '_BFcc'], 'bfcc_st', 'tbl_BFcc', 'spec_st', 'stim_st');
+end
 
 
+
+%%
+figure(11);
+clf;
+nbins = 25;
+for k = 1:drr.n_drr
+    drr_ix = drr.n_drr-k+1;
+    subplot(drr.n_drr, 1, drr_ix);
+    h = histogram(tbl_BFcc.R1, nbins);
+    h.FaceColor = aux.rpalette(k);
+    ylabel(drr.labels{drr.ordered(k)});
+end
+title('Best Envelope Correlation');
 
 
 

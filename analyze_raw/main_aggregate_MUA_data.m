@@ -40,19 +40,20 @@ end
 
 %% Load stimuli & measurement data
 fprintf('--> Load stimuli & spectrograms\n');
-spectrogram_type = 'gammatone';      % {['matlab'], 'stft', 'multitaper', 'gammatone'}
+spectrogram_type = 'gammatone';      % {['matlab'], 'stft', 'multitaper', 'gammatone', 'meddis', 'carney'}
 f_scale     = 'erb';	% {['lin'], 'log', 'erb'}
 n_bands     = 30      % (1x1) # of bins along the frequency domain of the spectrogram
 binwidth    = 5         % (ms) binwidth of the resulted spectrogram 
+amp_to_db   = true
 win_size_ms = nan       % (ms) temporal window size over which to calc the spectrogram; 
                         %      'gammatone' filterbanks do not use it!
 lowfreq     = 100;      % (Hz)
-highfreq    = 8900;     % (Hz) 8900 Hz so that to get as high as possible to near 8k Hz with the 
+highfreq    = 8000;   % (Hz) 8900 Hz so that to get as high as possible to near 8k Hz with the 
 nw          = [];       % applies only for SPECTROGRAM_TYPE = 'multitaper'
-duration_to_load = 36;   % neuron #1 (#115) is for stimulus of 36 sec (40 sec)
+duration_to_load = 36;  % neuron #1 (#115) is for stimulus of 36 sec (40 sec)
 
 spectral_diff     = 0;       % (logical) perform derivative (DIFF) along the frequency domain
-apply_sync_filter = true;
+apply_sync_filter = false;
 
 % STIM_LIST & SPEC_LIST contains all stimuli duration (i.e., the 36 s &
 % 40 s stimuli)
@@ -65,6 +66,7 @@ apply_sync_filter = true;
     'win_size_ms', win_size_ms, ...
     'n_bands', n_bands, ...
     'f_scale', f_scale, ... {'lin', 'log'}
+    'amp_to_db', amp_to_db,...
     'nw', nw, ...          (default: 1.4) only for spectrogram_type == MULTITAPER
     'spectral_diff', spectral_diff, ...
     'apply_sync_filter', apply_sync_filter, ...

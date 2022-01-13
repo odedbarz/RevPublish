@@ -92,7 +92,7 @@ switch upper(pars.type)
         varargout{1} = {};
         
         
-    case 'SPK'     
+    case {'SPK', 'SPK-RND'}     
         data_type = pars.fn_template{3};
         fn_path = pars.fn_template{1};
         

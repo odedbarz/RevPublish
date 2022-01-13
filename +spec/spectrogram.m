@@ -19,6 +19,7 @@ addOptional(p, 'binwidth', 1, @isnumeric);
 addOptional(p, 'duration_ms', [], @isnumeric);             
 addOptional(p, 'db_floor', 80, @isnumeric);             
 addOptional(p, 'f_scale', 'log', @isstr);           % {'lin', 'log', 'erb'}
+addOptional(p, 'amp_to_db', true, @(x) isnumeric(x) | islogical(x));      % 
 addOptional(p, 'method', 'matlab', @isstr);         % {'matlab', 'tfspec', 'multitaper', *'meddis'}          
 addOptional(p, 'rabbit_flag', false, @isstr);           
 addOptional(p, 'apply_sync_filter', false, @(x) islogical(x) | isnumeric(x));    
@@ -94,7 +95,7 @@ switch lower(spec_st.method)
         );
         %assert(isequal(spec_st.f,f));
         
-    case 'gammatone'
+    case {'gammatone', 'meddis', 'carney'}
         assert(strcmpi('erb', spec_st.f_scale), 'For gammatone filters set scale to log scale!')
         
         fs_new = 1/(1e-3*spec_st.binwidth);     % (Hz)
@@ -152,19 +153,25 @@ spec_st.n_time = length(spec_st.t);           % (samples)
 
 
 
-%% Get the absolute value of the spectrogram
-Sx_abs = abs(Sx);
 
 
 
 %% Normalize for the dB scale
-spec_st.max_Sft = max(Sx_abs(:));
+if spec_st.amp_to_db
+    % Get the absolute value of the spectrogram
+    Sx_abs = abs(Sx);
 
-% Apply a threshold to the spectrogram
-spec_st.Sft = 20*log10( (eps + Sx_abs)/(eps + spec_st.max_Sft) ) - spec_st.db_floor;
-spec_st.thr = 0;
-spec_st.Sft = max(spec_st.thr, spec_st.Sft);
-Sft         = spec_st.Sft;
+    spec_st.max_Sft = max(Sx_abs(:));
+
+    % Apply a threshold to the spectrogram
+    spec_st.Sft = 20*log10( (eps + Sx_abs)/(eps + spec_st.max_Sft) ) - spec_st.db_floor;
+    spec_st.thr = 0;
+    spec_st.Sft = max(spec_st.thr, spec_st.Sft);
+    Sft         = spec_st.Sft;
+else
+    Sft = max(0, Sx);
+end
+
 
 if 1 < nargout
     t   = spec_st.t;
