@@ -43,14 +43,14 @@ end
 
 %% Load stimuli & measurement data
 fprintf('--> Load stimuli & spectrograms\n');
-spectrogram_type = 'meddis';      % {['matlab'], 'stft', 'multitaper', 'gammatone', 'meddis', 'carney'}
+spectrogram_type = 'gammatone';      % {['matlab'], 'stft', 'multitaper', 'gammatone', 'meddis', 'carney'}
 f_scale     = 'erb';	% {['lin'], 'log', 'erb'}
 n_bands     = 30      % (1x1) # of bins along the frequency domain of the spectrogram
 binwidth    = 5         % (ms) binwidth of the resulted spectrogram 
 amp_to_db   = true
 win_size_ms = nan       % (ms) temporal window size over which to calc the spectrogram; 
                         %      'gammatone' filterbanks do not use it!
-lowfreq     = 100;      % (Hz)
+lowfreq     = 125;      % (Hz)
 highfreq    = 8000;   % (Hz) 8900 Hz so that to get as high as possible to near 8k Hz with the 
 nw          = [];       % applies only for SPECTROGRAM_TYPE = 'multitaper'
 duration_to_load = 36;  % neuron #1 (#115) is for stimulus of 36 sec (40 sec)

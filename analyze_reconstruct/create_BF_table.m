@@ -11,25 +11,25 @@ verbose = 1;
 
 setup_environment('../');
 
-save_results = false
+save_results = true
 
 
 %% Load data
 %   Run [main_aggregate_MUA_data.m] again to update this file if needed
 % 
-data_type   = 'MUA';       % {'SU', MUA'}
+data_type   = 'SU';       % {'SU', MUA'}
 fn.load.path= load.path_to_data('_data');
 data_type   = upper(data_type);
 
-% fn.load.file_template = 'data_%s_(08-Jan-2021)_bw(5)_fbands(30)_win(NaN)ms_spec(gammatone).mat';
-% fn.load.file_template = 'data_%s_(01-Nov-2021)_bw(1)_fbands(30)_win(NaN)ms_spec(gammatone).mat';
-fn.load.file_template = 'data_%s_(08-Nov-2021)_bw(5)_fbands(30)_win(NaN)ms_spec(gammatone).mat';
-% fn.load.file_template = 'data_%s_(05-Jan-2022)_bw(5)_fbands(30)_win(NaN)ms_spec(gammatone-SYNC)';
-% fn.load.file_template = 'data_%s_(10-Jan-2022)_bw(5)_fbands(30)_win(NaN)ms_spec(gammatone-SYNC)';
+% fn.load.file_template = 'data_%s_(13-Jan-2022)_bw(5)_fbands(30)_win(NaN)ms_spec(gammatone-only)';
+% fn.load.file_template = 'data_%s_(13-Jan-2022)_bw(5)_fbands(30)_win(NaN)ms_spec(gammatone-SyncFilter)';
+% fn.load.file_template = 'data_%s_(13-Jan-2022)_bw(5)_fbands(30)_win(NaN)ms_spec(meddis)';
+fn.load.file_template = 'data_%s_(13-Jan-2022)_bw(5)_fbands(30)_win(NaN)ms_spec(carney)';
+
 
 fn.load.file = sprintf(fn.load.file_template, data_type);
 fn.load.fullfile = fullfile( fn.load.path, fn.load.file );
-data      = load(fn.load.fullfile);
+data = load(fn.load.fullfile);
 
 spec_st = data.spec_st;
 stim_st = data.stim_st;
@@ -66,42 +66,7 @@ if verbose
     aux.cprintf('UnterminatedStrings', '--> win_size_ms : %g ms\n', win_size_ms);
 end
 
-    
-    
-%% Loop over all n_units for DRY condition only
-%{
-dry_idx = drr.ordered(1);
-Sdry    = spec_st.Sft{dry_idx};     % fry spectrogram
-n_freq  = size(Sdry, 1); 
-
-% Best-frequency correlation coefficient
-BF = nan(n_units, 1);
-R  = nan(n_units, 1);
-N = size(Sdry,2);
-
-for k = 1:n_units    
-    % extract only the dry measurements 
-    ydry =  squeeze( data.H(:,dry_idx,k) );
-    
-    Rn = (Sdry - mean(Sdry,2)) * (ydry - mean(ydry));
-    Rn = (Rn/N)./(std(Sdry,[],2)*std(ydry));   % normalize
-    [~, kbest] = max(Rn);
-    
-    % Get the best frequency over all envelopes of the spectrogram
-    BF(k)= spec_st.f(kbest);    % (Hz)
-    R(k) = Rn(kbest);           % correlation coefficient of the best frequency    
-end
-
-% Add BF as columns into the measurement table
-% Create a new table with all the information of the measurements and save it
-neuron = tbl_data.neuron;
-tbl_BFcc = [table(neuron), table(BF), table(R)]; 
-
-if save_results
-    save([fn.load.fullfile(1:end-4), '_BFcc'], 'tbl_BFcc', 'spec_st', 'stim_st');
-end
-%}
-
+   
 
 
 %% Loop over all n_units for SELECTED DRR condition
@@ -122,10 +87,6 @@ for ix = 1:drr.n_drr
     for k = 1:n_units    
         [BF(k), R(k)] = BFcc(data.H(:,drr_ix,k), Sdrr, spec_st.f);      
     end
-
-%     bfcc_st{ix}.drr_ix = drr_ix;
-%     bfcc_st{ix}.drr_label = drr.labels{drr.ordered( ix )};
-%     bfcc_st{ix}.T = [table(neuron), table(BF), table(R)]; 
     
     % Add BF as columns into the measurement table
     % Create a new table with all the information of the measurements and save it
@@ -136,19 +97,13 @@ for ix = 1:drr.n_drr
     ];     
 end
 
-% % Change the BF1 & R1 names for compatibility:
-% vnames = tbl_BFcc.Properties.VariableNames;
-% vnames(2) = {'BF'};
-% vnames(3) = {'R'};
-% tbl_BFcc.Properties.VariableNames = vnames
-
 neuron = tbl_data.neuron;
 tbl_BFcc = [table(neuron), tbl_BFcc];
 
 tbl_BFcc(1:5,:)
 
 if save_results
-    save([fn.load.fullfile(1:end-4), '_BFcc'], 'bfcc_st', 'tbl_BFcc', 'spec_st', 'stim_st');
+    save([fn.load.fullfile, '_BFcc'], 'bfcc_st', 'tbl_BFcc', 'spec_st', 'stim_st');
 end
 
 
@@ -160,7 +115,7 @@ nbins = 25;
 for k = 1:drr.n_drr
     drr_ix = drr.n_drr-k+1;
     subplot(drr.n_drr, 1, drr_ix);
-    h = histogram(tbl_BFcc.R1, nbins);
+    h = histogram(tbl_BFcc.(sprintf('R%d',k)), nbins);
     h.FaceColor = aux.rpalette(k);
     ylabel(drr.labels{drr.ordered(k)});
 end

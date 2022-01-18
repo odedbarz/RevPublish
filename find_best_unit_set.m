@@ -30,7 +30,7 @@ addParameter(p, 'N', [], @isnumeric);           % total number of units
 
 % - SPK & NOSPK
 % addParameter(p, 'tbl_data', [], @istable);           % total number of units    
-addParameter(p, 'fn_template', [], @iscell);           % total number of units    
+addParameter(p, 'fn_template', [], @(x) ischar(x) || isstr(x));           % total number of units    
 
 
 % - Verbose
@@ -44,16 +44,15 @@ pars = p.Results;
 
 %%
 switch upper(pars.type)
-    case 'CC' 
+    case {'CC', 'BFCC'}
         [fpath, fname, fext] = fileparts(pars.fn);        
-        assert(~isempty(dir( pars.fn )), '--> ERROR: can''t find the DATA file!');
+        assert(~isempty(dir( pars.fn )), sprintf('--> ERROR: can''t find the DATA file: %s!', pars.fn));
         fn_bf = fullfile(fpath, [fname, '_BFcc', fext]);
         assert(~isempty(dir( fn_bf )),...
             '--> ERROR: can''t find the _BF file! If needed, create the file with best_envelope_frequency.m');
         dummy = load( fn_bf );
         tbl_BFcc = dummy.tbl_BFcc;
-        [~, sorted_list] = sort(tbl_BFcc.R, 'descend');
-        
+        [~, sorted_list] = sort(tbl_BFcc.R1, 'descend');
         varargout{1} = tbl_BFcc;
         
     case 'FILE'
@@ -63,7 +62,6 @@ switch upper(pars.type)
         
     case 'SVD'
         % Orthogonalize the measurements
-        %[U, S, ~] = svds(zca(pars.Y), pars.n_svd);
         [U, S, ~] = svds(pars.Y, pars.n_svd);
         Z = U(:, 1:pars.n_svd); % * S(1:pars.n_svd, 1:pars.n_svd);
 
@@ -92,27 +90,57 @@ switch upper(pars.type)
         varargout{1} = {};
         
         
-    case {'SPK', 'SPK-RND'}     
-        data_type = pars.fn_template{3};
-        fn_path = pars.fn_template{1};
-        
-        fn_su = sprintf(pars.fn_template{2}, 'SU');
+    case {'SPK', 'SPK-RND'}    
+        % Loads units of single neurons only
+        fn_su = sprintf(pars.fn_template, 'SU');
+        fn_path = pars.fpath;
         fn_SU_full = fullfile(fn_path, fn_su);
-        data = load(fn_SU_full);
-        tbl_su = data.(sprintf('tbl_%s', 'SU'));
+        fn_SU_full = [fn_SU_full, '.mat'];
+        dummy = load(fn_SU_full, 'tbl_SU');
+        tbl_SU = dummy.tbl_SU;
+        sorted_list = tbl_SU.neuron;        
         
-        fn_mua = sprintf(pars.fn_template{2}, 'MUA');
-        fn_MUA_full = fullfile(fn_path, fn_mua);
-        data = load(fn_MUA_full);
-        tbl_mua = data.(sprintf('tbl_%s', 'MUA'));
+        fn_tbl = sprintf(pars.fn_template, pars.data_type);
+        data = load( fullfile(fn_path, fn_tbl) );
+        tbl = data.(sprintf('tbl_%s',  upper(pars.data_type)));  
+                
+        neurons_logical = false(1, height(tbl));
+        for k = 1:length(sorted_list)
+            neurons_logical(tbl.neuron == sorted_list(k)) = true;            
+        end
+        tbl = tbl(neurons_logical, :);
+                        
+        fn = sprintf(pars.fn_template, pars.data_type);
+        fn_path = pars.fpath;
+        fn_full = fullfile(fn_path, fn);
+        fn_full = [fn_full, '.mat'];
+        [~, tbl_BFcc] = find_best_unit_set('BFcc', 'fn', fn_full); 
+        tbl_BFcc = tbl_BFcc(neurons_logical, :);
         
-        plausible_neurons = intersect(tbl_su.neuron, tbl_mua.neuron);
+        varargout{1} = tbl_BFcc;
+        varargout{2} = tbl;
+        varargout{3} = find(neurons_logical);
         
-        % Get the correct lines in the relevant table
-        tbl_slc = eval(sprintf('tbl_%s', lower(data_type)));   % tbl_mua OR tbl_su
-        sorted_list = arrayfun(@(X) find(tbl_slc.neuron == X), plausible_neurons);      
-        varargout{1} = tbl_su;
-        varargout{2} = tbl_mua;
+%         data_type = pars.fn_template{3};
+%         fn_path = pars.fn_template{1};
+%         
+%         fn_su = sprintf(pars.fn_template{2}, 'SU');
+%         fn_SU_full = fullfile(fn_path, fn_su);
+%         data = load(fn_SU_full);
+%         tbl_su = data.(sprintf('tbl_%s', 'SU'));
+%         
+%         fn_mua = sprintf(pars.fn_template{2}, 'MUA');
+%         fn_MUA_full = fullfile(fn_path, fn_mua);
+%         data = load(fn_MUA_full);
+%         tbl_mua = data.(sprintf('tbl_%s', 'MUA'));
+%         
+%         plausible_neurons = intersect(tbl_su.neuron, tbl_mua.neuron);
+%         
+%         % Get the correct lines in the relevant table
+%         tbl_slc = eval(sprintf('tbl_%s', lower(data_type)));   % tbl_mua OR tbl_su
+%         sorted_list = arrayfun(@(X) find(tbl_slc.neuron == X), plausible_neurons);      
+%         varargout{1} = tbl_su;
+%         varargout{2} = tbl_mua;
         
         
     otherwise
