@@ -98,51 +98,30 @@ switch upper(pars.type)
         fn_SU_full = [fn_SU_full, '.mat'];
         dummy = load(fn_SU_full, 'tbl_SU');
         tbl_SU = dummy.tbl_SU;
-        sorted_list = tbl_SU.neuron;        
+        neuron_list = tbl_SU.neuron;        
         
         fn_tbl = sprintf(pars.fn_template, pars.data_type);
         data = load( fullfile(fn_path, fn_tbl) );
         tbl = data.(sprintf('tbl_%s',  upper(pars.data_type)));  
                 
-        neurons_logical = false(1, height(tbl));
-        for k = 1:length(sorted_list)
-            neurons_logical(tbl.neuron == sorted_list(k)) = true;            
+        sorted_list = false(1, height(tbl));
+        for k = 1:length(neuron_list)
+            sorted_list(tbl.neuron == neuron_list(k)) = true;            
         end
-        tbl = tbl(neurons_logical, :);
+        tbl = tbl(sorted_list, :);
                         
         fn = sprintf(pars.fn_template, pars.data_type);
         fn_path = pars.fpath;
         fn_full = fullfile(fn_path, fn);
         fn_full = [fn_full, '.mat'];
         [~, tbl_BFcc] = find_best_unit_set('BFcc', 'fn', fn_full); 
-        tbl_BFcc = tbl_BFcc(neurons_logical, :);
+        tbl_BFcc = tbl_BFcc(sorted_list, :);
         
         varargout{1} = tbl_BFcc;
         varargout{2} = tbl;
-        varargout{3} = find(neurons_logical);
+        varargout{3} = find(sorted_list);
         
-%         data_type = pars.fn_template{3};
-%         fn_path = pars.fn_template{1};
-%         
-%         fn_su = sprintf(pars.fn_template{2}, 'SU');
-%         fn_SU_full = fullfile(fn_path, fn_su);
-%         data = load(fn_SU_full);
-%         tbl_su = data.(sprintf('tbl_%s', 'SU'));
-%         
-%         fn_mua = sprintf(pars.fn_template{2}, 'MUA');
-%         fn_MUA_full = fullfile(fn_path, fn_mua);
-%         data = load(fn_MUA_full);
-%         tbl_mua = data.(sprintf('tbl_%s', 'MUA'));
-%         
-%         plausible_neurons = intersect(tbl_su.neuron, tbl_mua.neuron);
-%         
-%         % Get the correct lines in the relevant table
-%         tbl_slc = eval(sprintf('tbl_%s', lower(data_type)));   % tbl_mua OR tbl_su
-%         sorted_list = arrayfun(@(X) find(tbl_slc.neuron == X), plausible_neurons);      
-%         varargout{1} = tbl_su;
-%         varargout{2} = tbl_mua;
-        
-        
+
     otherwise
         error('ERROR: type <%s> is unrecognized!', pars.type);
         
