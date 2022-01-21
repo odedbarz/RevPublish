@@ -29,7 +29,10 @@ idx_dry = drr.ordered(1);
 data_type   = 'MUA';       % {'SU', MUA'}
 fn.load.path= load.path_to_data('_data');
 data_type   = upper(data_type);
-fn.load.file_template = 'data_%s_(08-Jan-2021)_bw(5)_fbands(30)_win(NaN)ms_spec(gammatone).mat';
+
+fn.load.file_template = 'data_%s_(13-Jan-2022)_bw(5)_fbands(30)_win(NaN)ms_spec(gammatone-only)';
+
+
 switch data_type
     case 'SU'
         % Loads a struct with fields:
@@ -74,24 +77,11 @@ aux.vprint(verbose, '--> [main_loopover_units.m] Loading file:\n\t...<%s>\n', fn
 
 %% Order the units
 % [sorted_list, tbl_BF] = find_best_unit_set('CC', 'fn', fn.load.fullfile);
-
 sort_type = 'SPK';  % {'RND', 'SVD', 'FILE', 'SPK', 'NOSPK'}
-% Hdry = squeeze( data.H(:,drr.ordered(1),:) ); 
-% sorted_list = find_best_unit_set(sort_type, 'Y', Hdry);                 % {'RND'}
-% sorted_list = find_best_unit_set(sort_type, 'Y', Hdry, 'n_svd', 10);    % {'RND'}
-% sorted_list = find_best_unit_set(sort_type, 'fn', fn.load.fullfile);  % {'CC'}
-% sorted_list = find_best_unit_set(sort_type, 'fn', 'unit_list_MUA_drr(5).mat');  % {'FILE'}
-% find_best_unit_set('FILE', 'fn', 'idx_MUA_good_sorted_unit_thr(0-7).mat'); % {'FILE'}
-sorted_list = find_best_unit_set(sort_type, 'fn_template', ...
-    {fn.load.path, fn.load.file_template, data_type});    % {'SPK', 'NOSPK'}
-
-%     % ONLY FOR THE SU -- get the right spikes
-%     sorted_list = arrayfun(@(N) find(N == tbl_data.neuron) ,intersect(tbl_data.neuron', sorted_list) )
-
-%         H_ = squeeze( data.H(:,drr.ordered(5),:) ); 
-%         D = corrcoef(H_);
-%         [~, ii] = sort( abs(sum(D)), 'descend' );
-%         sorted_list = sorted_list(ii);
+sorted_list = find_best_unit_set(sort_type,...
+    'fpath', load.path_to_data('_data'),...
+    'fn_template', fn.load.file_template, ...
+    'data_type', data_type);
 
 
 %% Reconstruction parameters

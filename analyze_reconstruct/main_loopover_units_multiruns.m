@@ -30,7 +30,7 @@ data_type   = 'MUA';       % {'SU', MUA'}
 fn.load.path= load.path_to_data('_data');
 data_type   = upper(data_type);
 
-fn.load.file_template = 'data_%s_(08-Jan-2021)_bw(5)_fbands(30)_win(NaN)ms_spec(gammatone).mat';
+fn.load.file_template = 'data_%s_(13-Jan-2022)_bw(5)_fbands(30)_win(NaN)ms_spec(gammatone-only)';
 
 
 fn.load.file = sprintf(fn.load.file_template, data_type);
@@ -89,14 +89,21 @@ if verbose
 end
 
 n_random_runs = 11;     % ************************* <<<<<<<<<<<< ========   
-sort_type = 'SPK-RND';
-units = 50;             % ************************* <<<<<<<<<<<< ========   
+units = 100;             % ************************* <<<<<<<<<<<< ========   
 
-sorted_list = find_best_unit_set(sort_type, 'fn_template', ...
-    {fn.load.path, fn.load.file_template, data_type}, 'N', units);
-% sort_type = 'SPK-RND'   % quick and dirty!
+% sorted_list = find_best_unit_set(sort_type, 'fn_template', ...
+%     {fn.load.path, fn.load.file_template, data_type}, 'N', units);
+% % sort_type = 'SPK-RND'   % quick and dirty!
+sort_type = 'SPK-RND';  % {'RND', 'SVD', 'FILE', 'SPK', 'NOSPK'}
+sorted_list = find_best_unit_set(sort_type,...
+    'fpath', load.path_to_data('_data'),...
+    'fn_template', fn.load.file_template, ...
+    'data_type', data_type);
 
-for q = 1    %1:n_drr 
+
+
+%%
+for q = 1 %:n_drr 
     % The training (i.e., truth-level) DRR case
     train_drr = drr.sortby(q); %drr.dry;         
     %train_drr = [3, 4, 5];  '########## Training for more than one DRR #########'
@@ -110,8 +117,8 @@ for q = 1    %1:n_drr
 
         %[sorted_list, ~] = find_best_unit_set(sort_type, 'N', n_units);
         % Randomize:
-        rand_idx = randperm(length(sorted_list), units);
-        H_sorted = data.H( :, 1:n_drr, sorted_list(rand_idx) );        
+        rand_idx = randperm(sum(sorted_list));
+        H_sorted = data.H( :, 1:n_drr, rand_idx(1:units) );        
         
         % >> analyze_units;
         obj_list = cell(n_drr, n_splits);
@@ -230,8 +237,8 @@ for q = 1    %1:n_drr
     % %{
         fprintf('SAVE the analysis data!\n');
         fn.save.path    = '../_data/Reconstruct/';
-        fn.save.file    = sprintf('%d_reconstruct_%s_(%s)_units(%d)_bw(%g)ms_type(%s)_fbands(%d)_lags(%g)ms_cau(%d)',...
-            m, data_type, date, units, binwidth, sort_type, n_bands, lags_ms, iscausal);
+        fn.save.file    = sprintf('%d_reconstruct_%s_(%s)_units(%d)_train(%d)_bw(%g)ms_type(%s)_fbands(%d)_lags(%g)ms',...
+            m, data_type, date, units, train_drr,  binwidth, sort_type, n_bands, lags_ms);
         fn.save.fullfile= fullfile( fn.save.path, fn.save.file );
                 
         stim_st = data.stim_st;
@@ -247,6 +254,7 @@ for q = 1    %1:n_drr
             'fn', ...           filenames, including the data-set filename used here 
             'H_sorted',...      sorted units used for the analysis
             'sorted_list',...    the list of sorted unit used to create H_sorted from data.H
+            'scores', 'scores2',...
             'sort_type' ...
          );         
     %}

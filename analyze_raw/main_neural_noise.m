@@ -30,16 +30,40 @@ file2load = fullfile(fn.load.path, [sprintf(fn.load.file_template, data_type), '
 
 dummy = load(file2load);
 
-spec_st     = dummy.spec_st;
-stim_st     = dummy.stim_st;
-T = dummy.tbl_MUA_all;    % tbl_MUA_all
+spec_st = dummy.spec_st;
+stim_st = dummy.stim_st;
+T       = dummy.tbl_MUA_all;    % tbl_MUA_all
 clear dummy
 
 
 
+%%
+t_ix = false(1, height(T));
+for k = 1:height(T)
+    
+    Tk = T.all_meas{k};
+    if height(Tk) >= 5
+        t_ix(k) = true;
+    end
+
+end
+T = T(t_ix,:);
+
+
+
+%%
+sorted_list = find_best_unit_set('SPK',...
+    'fpath', load.path_to_data('_data'),...
+    'fn_template', fn.load.file_template, ...
+    'data_type', data_type);
+
+
+T = T(sorted_list,:);
+
+
 %% Calc coefficient of variation (CV) 
-n_units = height(T);
 dim = 1;
+n_units = height(T);
 CV = nan(n_units, drr.n_drr);
 
 for k = 1:n_units
@@ -72,10 +96,10 @@ end
 figure(fignum+1);
 clf;
 boxplot(CV, drr.labels(drr.ordered));
-ylabel('$<\sigma/\mu>$');
+ylabel('CV $(<\sigma/\mu>)$');
 xlabel('DRR');
-set(gca, 'FontSize', 24);
-title( sprintf('%s (%d units)', data_type, n_units) );
+set(gca, 'FontSize', 32);
+title( sprintf('Coefficient of variation of raw %s Measurements (%d units)', data_type, n_units) );
 
 
 
