@@ -103,16 +103,17 @@ sorted_list = find_best_unit_set(sort_type,...
 
 
 %%
-for q = 1 %:n_drr 
+'@@@@@@@@ --DEBUG: for q = 1:n_drr @@@@@@@@@@@@@@'
+for q = 1:n_drr 
     % The training (i.e., truth-level) DRR case
-    train_drr = drr.sortby(q); %drr.dry;         
+    train_drr = drr.ordered(q); %drr.dry;         
     %train_drr = [3, 4, 5];  '########## Training for more than one DRR #########'
     if verbose
         fprintf('--> TRAIN DRR: %d, %s\n', train_drr, drr.labels{train_drr});
     end    
 
     % Loop over UNITS
-    for m = 1:n_random_runs
+    for m = 1 %:n_random_runs
         fprintf('%d Starting a new random run...\n', m);
 
         %[sorted_list, ~] = find_best_unit_set(sort_type, 'N', n_units);
@@ -238,7 +239,7 @@ for q = 1 %:n_drr
         fprintf('SAVE the analysis data!\n');
         fn.save.path    = '../_data/Reconstruct/';
         fn.save.file    = sprintf('%d_reconstruct_%s_(%s)_units(%d)_train(%d)_bw(%g)ms_type(%s)_fbands(%d)_lags(%g)ms',...
-            m, data_type, date, units, train_drr,  binwidth, sort_type, n_bands, lags_ms);
+            m, data_type, date, units, q,  binwidth, sort_type, n_bands, lags_ms);
         fn.save.fullfile= fullfile( fn.save.path, fn.save.file );
                 
         stim_st = data.stim_st;
