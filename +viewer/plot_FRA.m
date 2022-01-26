@@ -96,6 +96,9 @@ for kk = 1:len_fra
     ylabel(ax_sub(kk), outerSeq.var, 'Interpreter', 'latex');
     
     % Add the CF (kHz)
+    if isempty(fra{kk}.graphics)
+        continue;
+    end
     xc = fra{kk}.graphics.xc;
     yc = fra{kk}.graphics.yc;
     zc = fra{kk}.graphics.zc;

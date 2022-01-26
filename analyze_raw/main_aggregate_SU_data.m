@@ -45,8 +45,8 @@ end
 fprintf('--> Load stimuli & spectrograms\n');
 spectrogram_type = 'gammatone';      % {['matlab'], 'stft', 'multitaper', 'gammatone', 'meddis', 'carney'}
 f_scale     = 'erb';	% {['lin'], 'log', 'erb'}
-n_bands     = 30      % (1x1) # of bins along the frequency domain of the spectrogram
-binwidth    = 5         % (ms) binwidth of the resulted spectrogram 
+n_bands     = 3*30      % (1x1) # of bins along the frequency domain of the spectrogram
+binwidth    = 1         % (ms) binwidth of the resulted spectrogram 
 amp_to_db   = true
 win_size_ms = nan       % (ms) temporal window size over which to calc the spectrogram; 
                         %      'gammatone' filterbanks do not use it!

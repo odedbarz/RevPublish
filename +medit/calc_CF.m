@@ -1,4 +1,4 @@
-function [CF, graphics] = calc_CF(S, fra_rates, Nq, fignum)
+function [CF, graphics] = calc_CF(S, fra_rates, Nq, n_countors, p_thr, n_min_bars, fignum)
 %
 % function [CF, graphics] = calc_CF(S, fra_rates, Nq, [fignum])
 %
@@ -24,8 +24,21 @@ if 3 > nargin || isempty(Nq)
 end
 
 if 4 > nargin
+    n_countors = 10;
+end
+
+if 5 > nargin
+    p_thr = 5; % for prctile
+end
+
+if 6 > nargin
+    n_min_bars = 4; % for prctile
+end
+
+if 7 > nargin
     fignum = [];    % the interpulation factor
 end
+
 
 assert(strcmpi(S.innerSeq.master.var, 'Frequency'), '--> Error at [calc_CF.m]: cannot find the ''Frequency'' variable!');
 F0 = S.innerSeq.master.values;     % [Hz]
@@ -34,6 +47,37 @@ assert(strcmpi(S.outerSeq.master.var, 'dB SPL'), '--> Error at [calc_CF.m]: cann
 spl = S.outerSeq.master.values;     % [dB SPL]
 
 
+
+%%
+thr_low = prctile(fra_rates(:), p_thr);
+thr_high = prctile(fra_rates(:), 100-p_thr);
+m = median(fra_rates(:)); 
+if abs(m-thr_low) < abs(m-thr_high)
+    % Exitatory neuron
+    fra_rates( thr_high > fra_rates ) = 0.0;
+else
+    % Inhibitory neuron
+    fra_rates( thr_low < fra_rates ) = 0.0;
+end
+
+
+
+%%
+if sum(fra_rates) == 0
+    CF = nan;
+    graphics = [];
+    return
+end
+
+
+%%
+hist_range = [min(fra_rates(:)) : max(fra_rates(:))];
+if nnz( histcounts( fra_rates(:), hist_range ) ) <= n_min_bars
+%     CF = nan;
+%     graphics = nan;
+%     return;
+    fra_rates = 0 * fra_rates;
+end
 
 
 
@@ -63,7 +107,7 @@ Iobrcbr = imreconstruct(imcomplement(Iobrd), imcomplement(Iobr));
 Iobrcbr = imcomplement(Iobrcbr);
 
 % get the contours:
-C = contourc(1e-3*(F0_q+1e-6), spl_q, Iobrcbr, 1);
+C = contourc(1e-3*(F0_q+1e-6), spl_q, Iobrcbr, n_countors);
 
 % Get the longest contour
 Lc = nan(1,size(C,2));

@@ -21,11 +21,12 @@ data_type   = 'SU';       % {'SU', MUA'}
 fn.load.path= load.path_to_data('_data');
 data_type   = upper(data_type);
 
-% fn.load.file_template = 'data_%s_(13-Jan-2022)_bw(5)_fbands(30)_win(NaN)ms_spec(gammatone-only)';
+fn.load.file_template = 'data_%s_(13-Jan-2022)_bw(5)_fbands(30)_win(NaN)ms_spec(gammatone-only)';
 % fn.load.file_template = 'data_%s_(13-Jan-2022)_bw(5)_fbands(30)_win(NaN)ms_spec(gammatone-SyncFilter)';
 % fn.load.file_template = 'data_%s_(13-Jan-2022)_bw(5)_fbands(30)_win(NaN)ms_spec(meddis)';
-fn.load.file_template = 'data_%s_(13-Jan-2022)_bw(5)_fbands(30)_win(NaN)ms_spec(carney)';
-
+% fn.load.file_template = 'data_%s_(13-Jan-2022)_bw(5)_fbands(30)_win(NaN)ms_spec(carney)';
+fn.load.file_template = 'data_%s_(25-Jan-2022)_bw(1)_fbands(90)_win(NaN)ms_spec(gammatone)';
+                        
 
 fn.load.file = sprintf(fn.load.file_template, data_type);
 fn.load.fullfile = fullfile( fn.load.path, fn.load.file );
@@ -81,11 +82,22 @@ for ix = 1:drr.n_drr
 
     % Best-frequency correlation coefficient
     BF = nan(n_units, 1);
-    R  = nan(n_units, 1);
+    CC  = nan(n_units, 1);
+    P   = nan(n_units, 1);
     N = size(Sdrr,2);
 
-    for k = 1:n_units    
-        [BF(k), R(k)] = BFcc(data.H(:,drr_ix,k), Sdrr, spec_st.f);      
+    for k = 1:n_units     
+                    subplot(2,2,1:2)
+        [BF(k), CC(k), P(k)] = BFcc(data.H(:,drr_ix,k), Sdrr, spec_st.f, true);      
+            
+%                     %[tbl_data.neuron(k), tbl_fra{k,:}]
+%                     subplot(2,2,3)
+%                     plot([0, 8000], [0, 8000], '--k')
+%                     hold on
+%                     plot(tbl_fra{k,2}, BF(k), '.');
+%                     scatter(tbl_fra.cf1(k), BF(k), 200, 'filled', 'MarkerFaceAlpha', .6, 'MarkerEdgeColor', 'none');
+%                     %hold off
+        
     end
     
     % Add BF as columns into the measurement table
@@ -93,7 +105,8 @@ for ix = 1:drr.n_drr
     %neuron = tbl_data.neuron;
     tbl_BFcc = [tbl_BFcc,...
         table(BF, 'VariableNames', {sprintf('BF%d',ix)}), ...
-        table(R, 'VariableNames', {sprintf('R%d',ix)}) ...
+        table(CC, 'VariableNames', {sprintf('CC%d',ix)}), ...
+        table(P, 'VariableNames', {sprintf('P%d',ix)}) ...
     ];     
 end
 
@@ -115,7 +128,7 @@ nbins = 25;
 for k = 1:drr.n_drr
     drr_ix = drr.n_drr-k+1;
     subplot(drr.n_drr, 1, drr_ix);
-    h = histogram(tbl_BFcc.(sprintf('R%d',k)), nbins);
+    h = histogram(tbl_BFcc.(sprintf('CC%d',k)), nbins);
     h.FaceColor = aux.rpalette(k);
     ylabel(drr.labels{drr.ordered(k)});
 end

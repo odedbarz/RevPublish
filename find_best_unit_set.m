@@ -45,14 +45,18 @@ pars = p.Results;
 %%
 switch upper(pars.type)
     case {'CC', 'BFCC'}
-        [fpath, fname, fext] = fileparts(pars.fn);        
+        [fpath, fname, fext] = fileparts(pars.fn);  
+        if isempty(fext)
+            fext = '.mat'; 
+            pars.fn = [pars.fn, fext];
+        end
         assert(~isempty(dir( pars.fn )), sprintf('--> ERROR: can''t find the DATA file: %s!', pars.fn));
-        fn_bf = fullfile(fpath, [fname, '_BFcc', fext]);
-        assert(~isempty(dir( fn_bf )),...
+        fn_bfcc = fullfile(fpath, [fname, '_BFcc', fext]);
+        assert(~isempty(dir( fn_bfcc )),...
             '--> ERROR: can''t find the _BF file! If needed, create the file with best_envelope_frequency.m');
-        dummy = load( fn_bf );
+        dummy = load( fn_bfcc );
         tbl_BFcc = dummy.tbl_BFcc;
-        [~, sorted_list] = sort(tbl_BFcc.R1, 'descend');
+        [~, sorted_list] = sort(tbl_BFcc.CC1, 'descend');
         varargout{1} = tbl_BFcc;
         
     case 'FILE'

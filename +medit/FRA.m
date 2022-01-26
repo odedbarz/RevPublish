@@ -48,6 +48,8 @@ t_stim_eff_s = units.ms2sec( t_end - t_start );         % effective stimulus dur
 % * mean fra_rates with respect to # of trials;
 fra.rates = spike_count./nstim/t_stim_eff_s;
 
+fra.spike_count = spike_count;
+fra.nstim       = nstim;
 
 
 %% CF: calc the neuron's characteristic frequecny

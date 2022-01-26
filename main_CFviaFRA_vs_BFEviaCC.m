@@ -13,7 +13,7 @@ clc
 % clear all
 
 fignum = 11;
-verbose     = 0;
+verbose= 0;
 
 setup_environment('../');
 data_path = load.path_to_data('raw');
@@ -25,22 +25,22 @@ warning('off');
 %% Load data
 %   Run [main_aggregate_MUA_data.m] again to update this file if needed
 % 
-data_type   = 'SU';       % {'SU', MUA'}
+data_type   = 'MUA';       % {'SU', MUA'}
 fn.load.path= load.path_to_data('_data');
 data_type   = upper(data_type);
 
-fn.load.file_template = 'data_%s_(08-Jan-2021)_bw(5)_fbands(30)_win(NaN)ms_spec(gammatone)';
-% fn.load.file_template = 'data_%s_(05-Jan-2022)_bw(5)_fbands(30)_win(NaN)ms_spec(gammatone-SYNC)';
-% fn.load.file_template = 'data_%s_(10-Jan-2022)_bw(5)_fbands(30)_win(NaN)ms_spec(gammatone-SYNC)';
+fn.load.file_template = 'data_%s_(13-Jan-2022)_bw(5)_fbands(30)_win(NaN)ms_spec(gammatone-only)';
+
 
 fn.load.file = sprintf(fn.load.file_template, data_type);
 fn.load.fullfile = fullfile( fn.load.path, [fn.load.file, '.mat'] );
-dummy = load(fn.load.fullfile, 'tbl_SU');
+tbl_name = sprintf('tbl_%s',data_type);
+dummy = load(fn.load.fullfile, tbl_name);
 
-tbl_SU = dummy.tbl_SU;
+T = dummy.(tbl_name);
 % tbl_data  = data.(sprintf('tbl_%s', data_type));
 
-n_units = height(tbl_SU);
+n_units = height(T);
 
 
 
@@ -52,6 +52,15 @@ tbl_BFcc = dummy.tbl_BFcc;
 
 
 
+%% Order the units
+sort_type = 'SPK';  % {'RND', 'SVD', 'FILE', 'SPK', 'NOSPK'}
+ix_spk = find_best_unit_set(sort_type,...
+    'fpath', load.path_to_data('_data'),...
+    'fn_template', fn.load.file_template, ...
+    'data_type', data_type);
+spk_list = find(ix_spk);
+
+
 
 %% 
 syncchan = 0;   % Impale notation for syncronized break/new repetition.   
@@ -61,20 +70,23 @@ tbl_fra = array2table(nan(n_units, max_repeated_trials), 'VariableNames', var_na
 
 
 for k = 1:n_units
-    session = tbl_SU.expName{k};
+    if ~any(k == spk_list)
+        continue;
+    end
+    session = T.expName{k};
     session_path = fullfile(data_path, session);
     assert(7 == exist(session_path, 'dir'), sprintf('DirectoryError: no such directory: %s !', data_path));
     
     files = dir( session_path );
     files = {files.name};
-    TF1 = contains(files, sprintf('%s-%d-', session, tbl_SU.unit(k)));
+    TF1 = contains(files, sprintf('%s-%d-', session, T.unit(k)));
     TF2 = contains(files, 'FRA');
     fra_idx = find( TF1 & TF2 );
     if isempty(fra_idx)
         fra_idx = find( TF2 );  % in these sessions I did only one FRA test!
     end        
     num_fra_sessions = length(fra_idx);  % number of FRA files for a given session/directory
-    spikechan = tbl_SU.spikechan(k);        
+    spikechan = T.spikechan(k);        
 
     % In case of multiplications, saves the LAST available FRA 
     c = 1;  % counter for the table
@@ -93,45 +105,38 @@ for k = 1:n_units
         end
         
         % Calc FRA for each of the available spikes
-        fra = arrayfun(@(SPK) medit.FRA(S, SPK, syncchan), spikechan, 'UniformOutput', false) ;
-        assert(1==length(fra), sprintf('length(fra) > 1 !'));
-        cf_m = fra{1}.CF;
+        %fra = arrayfun(@(SPK) medit.FRA(S, SPK, syncchan), spikechan, 'UniformOutput', false) ;
+        %assert(1==length(fra), sprintf('length(fra) > 1 !'));
+        fra =  medit.FRA(S, spikechan, syncchan);
+%         CF = medit.calc_CF(S, fra.rates, 10, 1, 5*2.5);
+        cf_m = fra.CF;
         
         fprintf('\n');
-        fprintf(' (%d) spikechan: %.2f\n', k, spikechan);
+        fprintf(' (%d) spikechan: %d\n', k, spikechan);
         fprintf(' (%d) cf       : %.2f Hz\n', k, cf_m);
-
         
-        if false & ~isnan(cf_m)    
-            figure(1)
-            hold on
-            hk = plot(1e-3*cf_m, 1e-3*tbl_BFcc.BF(k), 'k+', 'MarkerSize', 20, 'LineWidth', 2);
-            ax = viewer.plot_FRA(S, 'spikechan', spikechan, 'figh', figure(2));
-            %pause(1.0);            
-            set(ax, 'XTickLabel', '', 'YTickLabel', '');
-            xlabel('');
-            ylabel('');
-            %caxis([0, 80]);
-            title('');
-            
-            delete(hk)
-        end 
+%                 viewer.plot_FRA(S, 'spikechan', spikechan);
+%                 fprintf(' - spikes: %d\n', sum(sum(fra.spike_count)));
+
+        if sum(fra.spike_count(:)) < 20, continue; end
         
         if isempty(cf_m), continue; end
+        
+        
         tbl_fra{k, c} = cf_m;
         c = c + 1;
     end
     
     
     if verbose
-        fprintf('\t(%d) (neuron: %d; spikechan: %d)\n', k, tbl_SU.neuron(k), spikechan);
-        disp( tbl_SU(1:k,:) );
+        fprintf('\t(%d) (neuron: %d; spikechan: %d)\n', k, T.neuron(k), spikechan);
+        disp( T(1:k,:) );
         disp( tbl_fra(1:k,:) );
     end
 end
 
 % Add the neuron's numbers too
-tbl_fra = [tbl_SU(:,'neuron'), tbl_fra];
+tbl_fra = [T(:,'neuron'), tbl_fra];
 
 
 
@@ -140,29 +145,33 @@ tbl_fra = [tbl_SU(:,'neuron'), tbl_fra];
 cf = nan(n_units,1);
 
 for k = 1:n_units
-    cf_krow = tbl_fra(k,2:end).Variables;
+    cf_k_row = tbl_fra(k,2:end).Variables;
 
     % Option #1
-    %ix = find(~isnan(cf_krow), 1, 'last');
+    %ix = find(~isnan(cf_k_row), 1, 'last');
     
     % Option #2
-    bfcc = tbl_BFcc.BF(k);
-    [~, ix] = min(abs(cf_krow - bfcc).^2);
+    bf1 = tbl_BFcc.BF1(k);
+    [~, ix] = min(abs(cf_k_row - bf1).^2);
     
-    if all(isnan(cf_krow))
+    if all(isnan(cf_k_row))
         continue;
     end
-    cf(k) = cf_krow(ix);
+    cf(k) = cf_k_row(ix);
 end
 
 
 
 
-%% Remove "bad" FRA readings
-ix_bad_fra = [3, 18, 23:24, 30, 32, 37:38, 40, 42, 45:46, 48:50, 53:56, 58, 60, 68:71, ...
-    73:76, 79, 81:83, 85:89, 91, 93, 94, 97:98, 101:102];
 
-cf(ix_bad_fra) = nan;
+
+%% Manually removing "bad" FRA that the algorithm didn't catch
+% ix_bad_fra = [3, 18, 23:24, 30, 32, 37:38, 40, 42, 45:46, 48:50, 53:56, 58, 60, 68:71, ...
+%     73:76, 79, 81:83, 85:89, 91, 93, 94, 97:98, 101:102];
+ix_bad_fra_su = [3, 23, 43, 45:46, 51, 53:57, 60, 70, 74, 76, 81:94]; %, 101:102];
+ix_bad = spk_list(ix_bad_fra_su);
+
+cf(ix_bad) = nan;
 tbl_fra.cf_final = cf;
 tbl_fra.cf_final(51) = tbl_fra.cf4(51);
 
@@ -170,27 +179,49 @@ tbl_fra.cf_final(51) = tbl_fra.cf4(51);
 
 
 
+% tbl_fra.cf_final = cf;  '@@@@@@@@@@@ DEBUG @@@@@@@@@@@'
+
+
 %%
 un  = 1e-3;
 
-ix  = ~isnan(tbl_fra.cf_final);
+% ix  = ~isnan(tbl_fra.cf_final);
+ix  = ~isnan(tbl_fra.cf_final); % & ...
+%     tbl_BFcc.CC1 > median(tbl_BFcc.CC1) & ...
+%     (tbl_fra.cf_final < 8000);
 % ix  = 1 ==( ~isnan(tbl_fra.cf_final) .* (tbl_fra.cf_final < 8000) );
 
 cf  = un * tbl_fra.cf_final( ix );
-bfcc= un * tbl_BFcc.BF( ix );
-R   = 500*abs(tbl_BFcc.R( ix ));
+bf1= un * tbl_BFcc.BF1( ix );
+cc1   = 500*abs(tbl_BFcc.CC1( ix ));
+% cc1 = 200;
 
 
 %% CFs under 8k Hz
 ix_ = ix & (tbl_fra.cf_final < 8000);
-cf_ = un * tbl_fra.cf_final( ix_ );
-bfcc_= un * tbl_BFcc.BF( ix_ );
 
-rr = corrcoef(cf_, bfcc_);
-rr = rr(1,2);
-fprintf('\n- corrcoef(CFs, BFcc): %.2f (R2)\n', rr);
-fprintf('- # of CFs: %d \n', sum(ix));
-fprintf('- # of CFs: %d (regression)\n', sum(ix_));
+% % weights:
+% w = 1/sum(ix_)*ones(sum(ix_), 1);    
+% % w = abs(tbl_BFcc.CC1(ix_));  % CC weights
+% 
+cf_ = un * tbl_fra.cf_final( ix_ );
+% cf_mean = cf_(:) .* w/sum(w);
+% 
+bfcc_= un * tbl_BFcc.BF1( ix_ );
+% bfcc_mean = bfcc_(:) .* w/sum(w);
+% 
+% wcovxy = (w'*((cf_ - cf_mean) .* (bfcc_ - bfcc_mean)))/sum(w);
+% wcovx = (w'*(cf_ - cf_mean).^2)/sum(w);
+% wcovy = (w'*(bfcc_ - bfcc_mean).^2)/sum(w);
+% cc = wcovxy/sqrt( wcovx * wcovy );
+
+[cc, pv] = corrcoef(cf_, bfcc_);
+cc = cc(1,2);
+pv = pv(1,2);
+
+fprintf('\n- corrcoef(CFs, BFcc): %.2f (R2), p: %g\n', cc, pv);
+fprintf('- # of units: %d (total)\n', sum(ix));
+fprintf('- # of units: %d (for regression)\n', sum(ix_));
 
 
 
@@ -198,17 +229,21 @@ fprintf('- # of CFs: %d (regression)\n', sum(ix_));
 fontsize = 24;
 markersize = 52;
 
-figure(5);
+figure(10 + strcmpi('MUA', data_type)*5);
 clf;
 
 % Add a bit of jitterness
 x_rnd = 0.05*randn(sum(ix), 1);
 y_rnd = 0.05*randn(sum(ix), 1);
 
-%plot(1e-3*tbl_fra.cf_final, 1e-3*tbl_BFcc.BF, '.', 'MarkerSize', markersize);
-%h = scatter(1e-3*tbl_fra.cf_final, 1e-3*tbl_BFcc.BF, 200*abs(tbl_BFcc.R), 'filled');
-h = scatter(cf + x_rnd, bfcc + y_rnd, R,...
-    'filled', 'MarkerFaceAlpha',.65 );
+h = scatter(cf + x_rnd, bf1 + y_rnd, cc1, ...
+    'filled', 'MarkerFaceAlpha',.65, 'DisplayName', data_type );
+
+if strcmpi('SU', data_type)
+    h.MarkerFaceColor = aux.rpalette(1);
+else
+    h.MarkerFaceColor = aux.rpalette(2);
+end
 
 xylabels = xlabel('CF Frequency (Hz)');
 xylabels(2) = ylabel('BFcc Frequency (Hz)');
@@ -216,14 +251,20 @@ hold on
 plot(un*[0,18e3], un*[0,18e3], ':');
 hold off
 xlim(un*[0, 16e3]);
-ylim(un*[0, 9e3]);
-axis square
+ylim(un*[0, 9e3]); 
+% axis square
 aux.vline(un*8000, 'LineWidth', 1);
 aux.hline(un*8000, 'LineWidth', 1);
 
 
+title( sprintf('%s (%d Units, $r^2: %.2f$)', data_type, sum(~isnan(cf)), cc), 'fontsize', fix(1.8*fontsize ));
+set(gca, 'fontsize', fix(1.4*fontsize));
+set(xylabels, 'fontsize', fix(1.4*fontsize));
 
-% Fit linear regression line with OLS
+
+
+
+%% Fit linear regression line with OLS
 b = [ones(size(cf_,1),1) cf_]\bfcc_;
 % Use estimated slope and intercept to create regression line
 rline = [ones(size(cf_,1),1) cf_]*b;    % regression line
@@ -234,11 +275,8 @@ hold off
 hreg.DisplayName = sprintf('Regression Line $(y = %0.2f\\cdot x + %0.2f)$',b(2),b(1));
 legend(hreg);
 
-title( sprintf('%d Units $(r^2: %.2f)$', sum(~isnan(cf)), rr), 'fontsize', fix(1.8*fontsize ));
 
 
-set(gca, 'fontsize', fix(1.4*fontsize));
-set(xylabels, 'fontsize', fix(1.4*fontsize));
 
 
 
@@ -258,7 +296,7 @@ SS_X = sum((rline-mean(rline)).^2);
 SS_Y = sum((y-mean(y)).^2);
 SS_XY = sum((rline-mean(rline)).*(y-mean(y)));
 R_squared = SS_XY/sqrt(SS_X*SS_Y);
-fprintf('RMSE: %0.2f | R2: %0.2f\n',RMSE,R_squared)
+fprintf('%s:\n - RMSE: %0.2f\n - R2  : %0.2f\n',data_type, RMSE,R_squared)
 
 
 

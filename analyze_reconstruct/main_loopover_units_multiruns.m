@@ -26,7 +26,7 @@ idx_dry = drr.ordered(1);
 %% Load data
 %   Run [main_aggregate_MUA_data.m] again to update this file if needed
 % 
-data_type   = 'MUA';       % {'SU', MUA'}
+data_type   = 'SU';       % {'SU', MUA'}
 fn.load.path= load.path_to_data('_data');
 data_type   = upper(data_type);
 
@@ -88,12 +88,16 @@ if verbose
     fprintf('========================\n');    
 end
 
-n_random_runs = 11;     % ************************* <<<<<<<<<<<< ========   
+n_random_runs = 10;     % ************************* <<<<<<<<<<<< ========   
+
+% sort_type = 'BFcc';
+% [~, tbl_BFcc] = find_best_unit_set(sort_type, 'fn', fn.load.fullfile);
+% sorted_list = tbl_BFcc.BF1 < 3500
+% units = sum(sorted_list)
+
+
 units = 100;             % ************************* <<<<<<<<<<<< ========   
 
-% sorted_list = find_best_unit_set(sort_type, 'fn_template', ...
-%     {fn.load.path, fn.load.file_template, data_type}, 'N', units);
-% % sort_type = 'SPK-RND'   % quick and dirty!
 sort_type = 'SPK-RND';  % {'RND', 'SVD', 'FILE', 'SPK', 'NOSPK'}
 sorted_list = find_best_unit_set(sort_type,...
     'fpath', load.path_to_data('_data'),...
@@ -113,13 +117,15 @@ for q = 1:n_drr
     end    
 
     % Loop over UNITS
-    for m = 1 %:n_random_runs
+    for m = 1 %2:n_random_runs
         fprintf('%d Starting a new random run...\n', m);
 
         %[sorted_list, ~] = find_best_unit_set(sort_type, 'N', n_units);
         % Randomize:
-        rand_idx = randperm(sum(sorted_list));
-        H_sorted = data.H( :, 1:n_drr, rand_idx(1:units) );        
+        sorted_rows = find(sorted_list);
+        rand_idx = randperm(length(sorted_rows));
+        sorted_rows_rand = sorted_rows(rand_idx);   % randomized list
+        H_sorted = data.H( :, 1:n_drr, sorted_rows_rand(1:units) );        
         
         % >> analyze_units;
         obj_list = cell(n_drr, n_splits);
