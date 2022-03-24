@@ -17,7 +17,7 @@ save_results = true
 %% Load data
 %   Run [main_aggregate_MUA_data.m] again to update this file if needed
 % 
-data_type   = 'SU';       % {'SU', MUA'}
+data_type   = 'MUA';       % {'SU', MUA'}
 fn.load.path= load.path_to_data('_data');
 data_type   = upper(data_type);
 
@@ -25,8 +25,9 @@ fn.load.file_template = 'data_%s_(13-Jan-2022)_bw(5)_fbands(30)_win(NaN)ms_spec(
 % fn.load.file_template = 'data_%s_(13-Jan-2022)_bw(5)_fbands(30)_win(NaN)ms_spec(gammatone-SyncFilter)';
 % fn.load.file_template = 'data_%s_(13-Jan-2022)_bw(5)_fbands(30)_win(NaN)ms_spec(meddis)';
 % fn.load.file_template = 'data_%s_(13-Jan-2022)_bw(5)_fbands(30)_win(NaN)ms_spec(carney)';
-fn.load.file_template = 'data_%s_(25-Jan-2022)_bw(1)_fbands(90)_win(NaN)ms_spec(gammatone)';
-                        
+% fn.load.file_template = 'data_%s_(25-Jan-2022)_bw(1)_fbands(90)_win(NaN)ms_spec(gammatone)';
+%                        fn.load.file_template = 'data_%s_(08-Jan-2021)_bw(5)_fbands(30)_win(NaN)ms_spec(gammatone)';
+ 
 
 fn.load.file = sprintf(fn.load.file_template, data_type);
 fn.load.fullfile = fullfile( fn.load.path, fn.load.file );
@@ -87,17 +88,7 @@ for ix = 1:drr.n_drr
     N = size(Sdrr,2);
 
     for k = 1:n_units     
-                    subplot(2,2,1:2)
-        [BF(k), CC(k), P(k)] = BFcc(data.H(:,drr_ix,k), Sdrr, spec_st.f, true);      
-            
-%                     %[tbl_data.neuron(k), tbl_fra{k,:}]
-%                     subplot(2,2,3)
-%                     plot([0, 8000], [0, 8000], '--k')
-%                     hold on
-%                     plot(tbl_fra{k,2}, BF(k), '.');
-%                     scatter(tbl_fra.cf1(k), BF(k), 200, 'filled', 'MarkerFaceAlpha', .6, 'MarkerEdgeColor', 'none');
-%                     %hold off
-        
+        [BF(k), CC(k), P(k)] = BFcc(data.H(:,drr_ix,k), Sdrr, spec_st.f, false);      
     end
     
     % Add BF as columns into the measurement table

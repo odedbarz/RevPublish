@@ -50,6 +50,10 @@ switch upper(pars.type)
             fext = '.mat'; 
             pars.fn = [pars.fn, fext];
         end
+        if isempty(fpath)
+            fpath = pars.fpath;
+        end
+        pars.fn = fullfile(fpath, [fname, fext]);
         assert(~isempty(dir( pars.fn )), sprintf('--> ERROR: can''t find the DATA file: %s!', pars.fn));
         fn_bfcc = fullfile(fpath, [fname, '_BFcc', fext]);
         assert(~isempty(dir( fn_bfcc )),...

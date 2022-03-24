@@ -25,7 +25,7 @@ drr = get_DRR_list_and_indices;
 
 
 %% Calculate AMs for all frequency bands
-am_nf = 25;
+am_nf = 25;     % number of AM frequencies
 nf = size(Sstim_dry,1);
 n_splits = data.splits.n_splits;
 
@@ -63,7 +63,7 @@ Xam_drr_std  = squeeze(std (Xam_drr,1));
 
 %% Plot AM-grams for one selected frequency
 am_nf = 200;
-fband = 20;     % frequency band to analyze/plot
+fband = 24;     % frequency band to analyze/plot
 
 am_stim_avg_dry = Sam_dry_mean(fband,:)';  % estimated averaged DRY
 am_est_avg_dry = Xam_dry_mean(fband,:)';   % estimated averaged DRY

@@ -51,9 +51,18 @@ ROOT: the project root directory.
 	(6) _REVERB_PAPER/INTRO/MAIN_ANALYZE_DRR_AND_T60.M:
 			* Calculates the reverberation time RT60 for the stimuli.
 
+	(7) _DATA/ANALYSIS/ANALYZE_STIMULUS_FEATURES.PY:
+		* Process and save the voiced/unvoiced segments in a mat file (ANALYZED_LIBROSA.MAT).
+
+		
+
 (C) Plots:
 	(1) FIGS4PAPER/RESULTS - SINGLE UNIT - CC & RMD MG/MAIN_ANALYZE_CCRESPONSE.M:
-		Plots the CC between each response (SU or MU) and the "best envelope". The best envelope is taken from CREATE_BF_TABLE.M (see above). It's the frequency with the highest Pearson correlation (CC) between one of the spectrogram frequency bands and the response.
+		
+		(1.1) Plots the CC between each response (SU or MU) and the "best envelope". The best envelope is taken from CREATE_BF_TABLE.M (see above). It's the frequency with the highest Pearson correlation (CC) between one of the spectrogram frequency bands and the response.
+		
+		(1.2) REVPUBLISH\_REVERB_PAPER\RESULTS - SINGLE MEASUREMENTS\MAIN_ANALYZE_CCANOVA.M:
+		Perform a 2-way ANOVA on Fisher-transformed data with DRR and unit type as factors.
 
 	(2) _Figs4Paper/RESULTS - POPULATION RESPONSE/RESULTS_CC_ANALYSIS.M:
 		(a) Two plots of SU & MUA reconstructions. Each plot shows CC as a function of DRRs for various number

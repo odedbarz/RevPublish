@@ -27,12 +27,13 @@ wav_files = dir( fullfile(timit_root_path, '**', '*.wav') );
 
 
 %%
+MAX_SAMPLES = 256
 n_wav_files = 4620;     % (# of files in train: 4621) number of wav files to use
 sr          = 16000;    % wav sample rate
 
 spectrogram_type = 'gammatone';      % {['matlab'], 'stft', 'multitaper', 'gammatone'}
 f_scale     = 'erb';        % {['lin'], 'log', 'erb'}
-n_freq      = 32, '**!!**'  % (1x1) # of bins along the frequency domain of the spectrogram
+n_freq      = 30, '**!!**'  % (1x1) # of bins along the frequency domain of the spectrogram
 binwidth    = 5             % (ms) binwidth of the resulted spectrogram 
 win_size_ms = nan           % (ms) temporal window size over which to calc the spectrogram; 
                             %      'gammatone' filterbanks do not use it!

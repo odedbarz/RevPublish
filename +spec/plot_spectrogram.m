@@ -1,4 +1,4 @@
-function [ax, surf_h] = plot_spectrogram(t, f, Sft, varargin) 
+function [pars, surf_h] = plot_spectrogram(t, f, Sft, varargin) 
 %
 %   function surf_h = plot_spectrogram(t, f, Sft, [fignum], [nolabels], 
 %       [fontsize], [log_scale]) 

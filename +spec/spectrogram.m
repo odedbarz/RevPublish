@@ -17,7 +17,7 @@ addOptional(p, 'nw', 2, @isnumeric);                % (1x1) for the multitaper s
 addOptional(p, 'win_size_ms', 25, @isnumeric);     
 addOptional(p, 'binwidth', 1, @isnumeric);     
 addOptional(p, 'duration_ms', [], @isnumeric);             
-addOptional(p, 'db_floor', 80, @isnumeric);             
+addOptional(p, 'db_floor', -80, @isnumeric);             
 addOptional(p, 'f_scale', 'log', @isstr);           % {'lin', 'log', 'erb'}
 addOptional(p, 'amp_to_db', true, @(x) isnumeric(x) | islogical(x));      % 
 addOptional(p, 'method', 'matlab', @isstr);         % {'matlab', 'tfspec', 'multitaper', *'meddis'}          
