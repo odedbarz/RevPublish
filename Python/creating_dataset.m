@@ -32,14 +32,14 @@ sr          = 16000;    % wav sample rate
 
 spectrogram_type = 'gammatone';      % {['matlab'], 'stft', 'multitaper', 'gammatone'}
 f_scale     = 'erb';        % {['lin'], 'log', 'erb'}
-n_freq      = 32, '**!!**'  % (1x1) # of bins along the frequency domain of the spectrogram
+n_freq      = 64, '**!!**'  % (1x1) # of bins along the frequency domain of the spectrogram
 binwidth    = 5             % (ms) binwidth of the resulted spectrogram 
 win_size_ms = nan           % (ms) temporal window size over which to calc the spectrogram; 
                             %      'gammatone' filterbanks do not use it!
 lowfreq     = 250;          % (Hz)
 highfreq    = 8000;         % (Hz) 8900 Hz so that to get as high as possible to near 8k Hz with the 
 nw          = [];           % applies only for SPECTROGRAM_TYPE = 'multitaper'
-
+db_floor    = -80;
 
 %% Loads the RIR responses
 dummy = load( fullfile( load.path_to_data('Stimulus'), 'Spch_(36)sec/spch_36_metadata_new.mat') );
@@ -57,7 +57,6 @@ drr_labels = drr_labels(drr_to_use);
 disp( Trir );
 
 
-
 %%
 save_to_path = sprintf('./_datasets/_data_freq(%d)', n_freq);
 if ~isfolder( save_to_path )
@@ -65,6 +64,7 @@ if ~isfolder( save_to_path )
 end
 
 
+%%
 too_short_files = 0;
 
 for k = 1:n_wav_files
@@ -81,9 +81,8 @@ for k = 1:n_wav_files
     y_conv = y_conv(:,1);   % take the *LEFT* size
     
     for n = 1:length(y_conv)
-        yn = y_conv{n}(:,1);    % use the LEFT RIR only!
-        
-        [Sft, spec_st] = spec.spectrogram(yn, fs, ...
+        y_left = y_conv{n}(:,1);    % LEFT RIR        
+        [Sft, spec_st] = spec.spectrogram(y_left, fs, ...
             'n_bands', n_freq,...
             'lowfreq', lowfreq,...
             'highfreq', highfreq,...
@@ -92,19 +91,37 @@ for k = 1:n_wav_files
             'win_size_ms', win_size_ms, ...
             'nw', nw,...                only for spectrogram_type== MULTITAPER
             'f_scale', f_scale,...
-            'db_floor', -100, ...  % (dB)
+            'db_floor', db_floor, ...  % (dB)
             'duration_ms', duration_ms,...
             'method', spectrogram_type, ...
             'fignum', []...
          ); 
-
-        if size(Sft, 2) < MAX_SAMPLES
-            too_short_files = too_short_files + 1;
-            fprintf('- too_short_files: %g (k=%d)\n', too_short_files, k);
-            break;
+     
+        
+        y_right = y_conv{n}(:,2);    % RIGHT RIR    
+        [Sft_right, spec_st] = spec.spectrogram(y_right, fs, ...
+            'n_bands', n_freq,...
+            'lowfreq', lowfreq,...
+            'highfreq', highfreq,...
+            'overlap_ratio', nan,...
+            'binwidth', binwidth,...
+            'win_size_ms', win_size_ms, ...
+            'nw', nw,...                only for spectrogram_type== MULTITAPER
+            'f_scale', f_scale,...
+            'db_floor', db_floor, ...  % (dB)
+            'duration_ms', duration_ms,...
+            'method', spectrogram_type, ...
+            'fignum', []...
+         );       
+     
+    
+%         if size(Sft, 2) < MAX_SAMPLES
+%             too_short_files = too_short_files + 1;
+%             fprintf('- too_short_files: %g (k=%d)\n', too_short_files, k);
+%             break;
         %else
         %   Sft = Sft(:,1:MAX_SAMPLES);
-        end        
+%         end        
      
         save_to_label = fullfile( save_to_path, drr_labels{n} );
         if ~isfolder( save_to_label )
@@ -113,7 +130,7 @@ for k = 1:n_wav_files
         fn = sprintf('%04d_Sft_drr(%s)_freq(%d).mat', k,...
             drr_labels{n}, n_freq);
         fn = fullfile( save_to_label, fn );
-        save(fn, 'Sft');
+        save(fn, 'Sft', 'Sft_right');
         
     end
  

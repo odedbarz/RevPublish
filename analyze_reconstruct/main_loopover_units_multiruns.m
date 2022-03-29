@@ -81,6 +81,13 @@ end
 assert(spec_st.n_time == split_time_idx(end));
 
 
+%% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! DEBUG !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+% Setting frames of 256 in size
+n_splits = floor( split_time_idx(end)/256 )
+split_time_idx = []
+
+% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! DEBUG !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 
 %%
 if verbose

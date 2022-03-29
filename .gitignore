@@ -3,6 +3,7 @@
 .*/
 _*/
 TIMIT*/
+input/*
 
 .DS_Store
 
@@ -21,3 +22,4 @@ TIMIT*/
 *.pptx
 *.doc?
 *.tif
+*.pdf
